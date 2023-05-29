@@ -18,7 +18,7 @@
     };
     "x86_64-darwin" = {
       url = "https://github.com/purescript/purescript/releases/download/v${version}/macos.tar.gz";
-      hash = "1xxg79rlf7li9f73wdbwif1dyy4hnzpypy6wx4zbnvap53habq9f";
+      hash = "sha256-LuGl4ChXbbs+6dz46++3kHjfgot8NT6OS5EeR3M6r/c=";
     };
     "aarch64-darwin" = {
       url = "https://github.com/purescript/purescript/releases/download/v${version}/macos-arm64.tar.gz";
