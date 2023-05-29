@@ -1,0 +1,26 @@
+name: "flake-check"
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@v2
+
+      - name: Build purs
+        run: nix build .#purs
+
+      - name: Verify flake
+        run: nix flake check
