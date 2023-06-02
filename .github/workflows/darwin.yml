@@ -25,5 +25,8 @@ jobs:
             substituters = https://cache.garnix.io
             trusted-public-keys = cache.garnix.io:CTFPyKSLcx5RMJKfLo5EEPUObbA78b0YQ2DTCJXqr9g=
 
-      - name: Verify flake
-        run: nix flake check
+      - name: Build purs
+        run: nix build .#purs
+
+      - name: Build spago
+        run: nix build .#spago
