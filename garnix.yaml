@@ -1,6 +1,7 @@
 builds:
  exclude: []
  include:
- - packages.x86_64-linux.*
- - packages.x86_64-darwin.*
- - packages.aarch64-darwin.*
+ - 'packages.x86_64-linux.*'
+ - 'packages.x86_64-darwin.*'
+ - 'packages.aarch64-linux.*'
+ - 'packages.aarch64-darwin.*'
