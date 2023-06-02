@@ -11,7 +11,7 @@
     nixpkgs,
     spago-nix,
   }: let
-    supportedSystems = ["x86_64-linux" "x86_64-darwin"];
+    supportedSystems = ["x86_64-linux" "x86_64-darwin" "aarch64-darwin"];
     forAllSystems = nixpkgs.lib.genAttrs supportedSystems;
     nixpkgsFor = forAllSystems (system:
       import nixpkgs {
@@ -49,9 +49,6 @@
       default = pkgs.mkShell {
         name = "purescript-nix";
         buildInputs = [
-          pkgs.prefetch-npm-deps
-          pkgs.nix-prefetch-git
-
           self.packages.${system}.spago
           self.packages.${system}.purs
         ];
