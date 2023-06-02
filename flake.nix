@@ -49,9 +49,6 @@
       default = pkgs.mkShell {
         name = "purescript-nix";
         buildInputs = [
-          pkgs.prefetch-npm-deps
-          pkgs.nix-prefetch-git
-
           self.packages.${system}.spago
           self.packages.${system}.purs
         ];
