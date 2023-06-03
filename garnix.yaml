@@ -1,6 +1,7 @@
+# Garnix does not yet support x86_64-darwin so that is covered separately in a
+# GitHub Actions workflow file.
 builds:
   exclude: []
   include:
-    - "packages.x86_64-linux.*"
     - "checks.aarch64-darwin.*"
     - "checks.x86_64-linux.*"
