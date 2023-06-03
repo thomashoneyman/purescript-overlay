@@ -2,39 +2,23 @@
   "nodes": {
     "nixpkgs": {
       "locked": {
-        "lastModified": 1685399834,
-        "narHash": "sha256-Lt7//5snriXSdJo5hlVcDkpERL1piiih0UXIz1RUcC4=",
+        "lastModified": 1685716800,
+        "narHash": "sha256-b6RpYRRsv6Wwl9XG2sjLvqKdkPMvqQqgtiGJHAIyGSw=",
         "owner": "nixos",
         "repo": "nixpkgs",
-        "rev": "58c85835512b0db938600b6fe13cc3e3dc4b364e",
+        "rev": "f3d743463920751eb092930d06e700981398332a",
         "type": "github"
       },
       "original": {
         "owner": "nixos",
-        "ref": "master",
+        "ref": "nixos-23.05",
         "repo": "nixpkgs",
         "type": "github"
       }
     },
     "root": {
       "inputs": {
-        "nixpkgs": "nixpkgs",
-        "spago-nix": "spago-nix"
-      }
-    },
-    "spago-nix": {
-      "locked": {
-        "lastModified": 1685401988,
-        "narHash": "sha256-ErtsGoCUyqLsfFhSOUFX/8ZU20nayPmUZ8wDm0j9tEg=",
-        "owner": "thomashoneyman",
-        "repo": "spago-nix",
-        "rev": "13d7a29c3fd144f2a8e64b53785c70f99ed73413",
-        "type": "github"
-      },
-      "original": {
-        "owner": "thomashoneyman",
-        "repo": "spago-nix",
-        "type": "github"
+        "nixpkgs": "nixpkgs"
       }
     }
   },

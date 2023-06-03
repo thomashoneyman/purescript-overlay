@@ -36,5 +36,8 @@ in
       $PURS --bash-completion-script $PURS > $out/etc/bash_completion.d/purs-completion.bash
     '';
 
-    meta.description = "A strongly-typed functional programming language that compiles to JavaScript";
+    meta = with lib; {
+      description = "Compiler for a strongly-typed language that compiles to JavaScript";
+      homepage = "https://github.com/purescript/purescript";
+    };
   }

@@ -2,21 +2,20 @@
   description = "Nix derivations for PureScript core language tools.";
 
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/master";
-    spago-nix.url = "github:thomashoneyman/spago-nix";
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-23.05";
   };
 
   outputs = {
     self,
     nixpkgs,
-    spago-nix,
   }: let
+    overlay = import ./overlay.nix;
     supportedSystems = ["x86_64-linux" "x86_64-darwin" "aarch64-darwin"];
     forAllSystems = nixpkgs.lib.genAttrs supportedSystems;
     nixpkgsFor = forAllSystems (system:
       import nixpkgs {
         inherit system;
-        overlays = [spago-nix.overlay];
+        overlays = [overlay];
       });
     extractPrefix = lib: str:
       if lib.hasPrefix "purs" str
@@ -25,10 +24,12 @@
       then "spago"
       else (throw "Expected 'purs' or 'spago' prefix but none was found: ${str}");
   in {
+    overlays.default = overlay;
+
     packages = forAllSystems (system: let
       pkgs = nixpkgsFor.${system};
-      purs = pkgs.callPackages ./purs/versions.nix {};
-      spago = pkgs.callPackages ./spago/versions.nix {compilers = purs;};
+      purs = pkgs.purs;
+      spago = pkgs.spago;
     in
       purs // spago);
 
