@@ -60,10 +60,12 @@
       pkgs = nixpkgsFor.${system};
       prefix = extractPrefix pkgs.lib;
       package-checks = pkgs.lib.mapAttrs (name: bin:
-        pkgs.runCommand "test-${name}" {buildInputs = [bin];} ''
+        pkgs.runCommand "test-bin" {buildInputs = [bin];} ''
           touch $out
           set -e
-          VERSION=$(${bin}/bin/${prefix name} --version)
+          # Spago writes --version to stderr, oddly enough, so we need to
+          # capture both in the VERSION var.
+          VERSION="$(${bin}/bin/${prefix name} --version 2>&1)"
           EXPECTED_VERSION="${bin.version}"
           echo "$VERSION should match expected output $EXPECTED_VERSION"
           test "$VERSION" = "$EXPECTED_VERSION"
