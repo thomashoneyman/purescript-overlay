@@ -18,6 +18,12 @@
         inherit system;
         overlays = [spago-nix.overlay];
       });
+    extractPrefix = lib: str:
+      if lib.hasPrefix "purs" str
+      then "purs"
+      else if lib.hasPrefix "spago" str
+      then "spago"
+      else (throw "Expected 'purs' or 'spago' prefix but none was found: ${str}");
   in {
     packages = forAllSystems (system: let
       pkgs = nixpkgsFor.${system};
@@ -28,16 +34,11 @@
 
     apps = forAllSystems (system: let
       pkgs = nixpkgsFor.${system};
-      extractPrefix = str:
-        if pkgs.lib.hasPrefix "purs" str
-        then "purs"
-        else if pkgs.lib.hasPrefix "spago" str
-        then "spago"
-        else (throw "Expected 'purs' or 'spago' prefix but none was found: ${str}");
+      prefix = extractPrefix pkgs.lib;
       apps =
         pkgs.lib.mapAttrs (name: bin: {
           type = "app";
-          program = "${bin}/bin/${extractPrefix name}";
+          program = "${bin}/bin/${prefix name}";
         })
         self.packages.${system};
     in
@@ -57,17 +58,18 @@
 
     checks = forAllSystems (system: let
       pkgs = nixpkgsFor.${system};
-      # purs = pkgs.lib.mapAttrs (name: bin:
-      #   pkgs.runCommand "purs" {buildInputs = [bin];} ''
-      #     touch $out
-      #     set -e
-      #     PURS_VERSION=$(purs --version)
-      #     EXPECTED_VERSION="${bin.version}"
-      #     echo "$PURS_VERSION should match expected output $EXPECTED_VERSION"
-      #     test "$PURS_VERSION" = "$EXPECTED_VERSION"
-      #   '')
-      # self.packages.${system};
+      prefix = extractPrefix pkgs.lib;
+      package-checks = pkgs.lib.mapAttrs (name: bin:
+        pkgs.runCommand "test-${name}" {buildInputs = [bin];} ''
+          touch $out
+          set -e
+          VERSION=$(${bin}/bin/${prefix name} --version)
+          EXPECTED_VERSION="${bin.version}"
+          echo "$VERSION should match expected output $EXPECTED_VERSION"
+          test "$VERSION" = "$EXPECTED_VERSION"
+        '')
+      self.packages.${system};
     in
-      self.packages.${system});
+      package-checks);
   };
 }
