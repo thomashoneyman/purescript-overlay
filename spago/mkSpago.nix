@@ -5,9 +5,9 @@
   esbuild,
   nodejs,
   writeShellScriptBin,
-  # via spago-nix overlay
-  spago-lock,
-  spago-npm-dependencies,
+  # via overlay
+  buildSpagoLock,
+  buildPackageLock,
   # specific version provided via flake
   purs,
   # required additional arguments
@@ -46,8 +46,8 @@ in stdenv.mkDerivation {
   buildInputs = [nodejs];
 
   buildPhase = let
-    npmDependencies = spago-npm-dependencies {inherit src;};
-    workspaces = spago-lock {inherit src;};
+    npmDependencies = buildPackageLock {inherit src;};
+    workspaces = buildSpagoLock {inherit src;};
   in ''
     # Make sure the node_modules folder is available
     ln -s ${npmDependencies}/js/node_modules .
