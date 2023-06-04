@@ -37,45 +37,46 @@
     import { main } from "./output/Main";
     main();
   '';
-in stdenv.mkDerivation {
-  pname = "spago";
-  version = version;
-  src = src; 
+in
+  stdenv.mkDerivation {
+    pname = "spago";
+    version = version;
+    src = src;
 
-  nativeBuildInputs = [purs esbuild];
-  buildInputs = [nodejs];
+    nativeBuildInputs = [purs esbuild];
+    buildInputs = [nodejs];
 
-  buildPhase = let
-    npmDependencies = buildPackageLock {inherit src;};
-    workspaces = buildSpagoLock {inherit src;};
-  in ''
-    # Make sure the node_modules folder is available
-    ln -s ${npmDependencies}/js/node_modules .
+    buildPhase = let
+      npmDependencies = buildPackageLock {inherit src;};
+      workspaces = buildSpagoLock {inherit purs src;};
+    in ''
+      # Make sure the node_modules folder is available
+      ln -s ${npmDependencies}/js/node_modules .
 
-    set -f
-    ${purs}/bin/purs compile $src/bin/src/**/*.purs ${workspaces.spago-bin.dependencies.globs} ${buildInfo}
-    set +f
+      set -f
+      ${purs}/bin/purs compile $src/bin/src/**/*.purs ${workspaces.spago-bin.dependencies.globs} ${buildInfo}
+      set +f
 
-    cp ${entrypoint} entrypoint.js
-    esbuild entrypoint.js \
-      --bundle \
-      --minify \
-      --outfile=bundle.js \
-      --platform=node
-  '';
+      cp ${entrypoint} entrypoint.js
+      esbuild entrypoint.js \
+        --bundle \
+        --minify \
+        --outfile=bundle.js \
+        --platform=node
+    '';
 
-  installPhase = ''
-    mkdir -p $out/bin
-    cp bundle.js $out/bundle.js
-    cat ${buildInfo} > $out/BuildInfo.purs
-    echo '#!/usr/bin/env sh' > $out/bin/spago
-    echo 'exec ${nodejs}/bin/node '"$out/bundle.js"' "$@"' >> $out/bin/spago
-    chmod +x $out/bin/spago
-  '';
+    installPhase = ''
+      mkdir -p $out/bin
+      cp bundle.js $out/bundle.js
+      cat ${buildInfo} > $out/BuildInfo.purs
+      echo '#!/usr/bin/env sh' > $out/bin/spago
+      echo 'exec ${nodejs}/bin/node '"$out/bundle.js"' "$@"' >> $out/bin/spago
+      chmod +x $out/bin/spago
+    '';
 
-  meta = with lib; {
-    description = "PureScript package manager and build tool";
-    homepage = "https://github.com/purescript/spago";
-    license = licenses.bsd3;
-  };
-}
+    meta = with lib; {
+      description = "PureScript package manager and build tool";
+      homepage = "https://github.com/purescript/spago";
+      license = licenses.bsd3;
+    };
+  }

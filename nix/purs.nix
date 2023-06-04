@@ -1,8 +1,11 @@
-{ callPackage, ncurses5, }: rec {
+{
+  callPackage,
+  ncurses5,
+}: rec {
   purs = purs-0_15_9;
   purs-unstable = purs-0_15_10-0;
 
-  purs-0_15_10-0 = callPackage ./nix/mkPursDerivation.nix rec {
+  purs-0_15_10-0 = callPackage ./mkPursDerivation.nix rec {
     ncurses = ncurses5;
     version = "0.15.10-0";
     tarballs = {
@@ -21,7 +24,7 @@
     };
   };
 
-  purs-0_15_9 = callPackage ./nix/mkPursDerivation.nix rec {
+  purs-0_15_9 = callPackage ./mkPursDerivation.nix rec {
     ncurses = ncurses5;
     version = "0.15.9";
     tarballs = {

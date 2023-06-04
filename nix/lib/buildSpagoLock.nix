@@ -3,23 +3,14 @@
   lib,
   fetchurl,
   fetchgit,
-  purescript ? null,
   # Provided via this repository, not nixpkgs, via the overlay.
   fromYAML,
 }: {
   src,
+  purs,
   spagoYAML ? src + "/spago.yaml",
   lockYAML ? src + "/spago.lock",
-  purs ? null,
 }: let
-  # The PureScript compiler, used to build packages.
-  compiler =
-    if purs != null
-    then purs
-    else if purescript != null
-    then purescript
-    else throw "No compiler specified.";
-
   # Helper function for throwing an exception in case a constructed path does
   # not exist.
   pathExists = path:
@@ -151,21 +142,21 @@
   # Union all packages so they can be used as a little package database
   allPackages = lockedPackages // workspacePackages;
 
-  closure = name: {
+  closureEntry = name: {
     key = name;
     package = allPackages.${name} or (builtins.throw ''Missing package "${name}"'');
   };
 
   workspaceClosure = workspace:
     builtins.genericClosure {
-      startSet = map closure workspace.dependencies;
-      operator = entry: map closure entry.package.dependencies;
+      startSet = map closureEntry workspace.dependencies;
+      operator = entry: map closureEntry entry.package.dependencies;
     };
 
-  buildWorkspace = name: drv: {
+  buildWorkspace = name: workspace: {
     dependencies = rec {
       # Get all dependencies of the workspace
-      sources = map (pkg: pkg.package) (workspaceClosure drv);
+      sources = map (pkg: pkg.package) (workspaceClosure workspace);
       # Turn them into glob patterns acceptable for the compiler
       globs = builtins.concatStringsSep " " (map (path: "'${path}/src/**/*.purs'") sources);
     };

@@ -75,10 +75,11 @@
       self.packages.${system};
 
       example-project = pkgs.callPackage ./example {};
-      example-checks = { 
+      example-checks = {
         test-example = pkgs.runCommand "test-example" {buildInputs = [example-project];} ''
-          touch $out
+          mkdir -p $out/bin
           set -e
+          cp ${example-project}/bin/my-app $out/bin/test-example
           ${example-project}/bin/my-app
         '';
       };
