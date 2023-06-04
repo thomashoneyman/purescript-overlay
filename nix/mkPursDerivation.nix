@@ -8,7 +8,7 @@
   # extra arguments
   ncurses,
   version,
-  urls,
+  tarballs,
 }: let
   dynamic-linker = stdenv.cc.bintools.dynamicLinker;
 
@@ -26,14 +26,14 @@ in
     inherit version;
     
     src =
-      if builtins.hasAttr system urls
-      then (fetchurl urls.${system})
+      if builtins.hasAttr system tarballs
+      then (fetchurl tarballs.${system})
       else if system == "aarch64-darwin"
       then let
         arch = "x86_64-darwin";
         msg = "Using the non-native ${arch} binary. While this binary may run under Rosetta 2 translation, no guarantees can be made about stability or performance.";
       in
-        lib.warn msg (fetchurl urls.${arch})
+        lib.warn msg (fetchurl tarballs.${arch})
       else throw "Architecture not supported: ${system}";
 
     buildInputs = [zlib gmp ncurses];

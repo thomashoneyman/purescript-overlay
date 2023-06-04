@@ -9,7 +9,7 @@
     self,
     nixpkgs,
   }: let
-    overlay = import ./nix/overlay.nix;
+    overlay = import ./overlay.nix;
     supportedSystems = ["x86_64-linux" "x86_64-darwin" "aarch64-darwin"];
     forAllSystems = nixpkgs.lib.genAttrs supportedSystems;
     nixpkgsFor = forAllSystems (system:
