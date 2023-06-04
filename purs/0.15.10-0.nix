@@ -1,7 +1,4 @@
 {
-  system,
-  fetchurl,
-  lib,
   callPackage,
   ncurses,
 }: let
@@ -23,17 +20,5 @@
     };
   };
 
-  src =
-    if builtins.hasAttr system urls
-    then (fetchurl urls.${system})
-    else if system == "aarch64-darwin"
-    then let
-      arch = "x86_64-darwin";
-      msg = "Using the non-native ${arch} binary. While this binary may run under Rosetta 2 translation, no guarantees can be made about stability or performance.";
-    in
-      lib.warn msg (fetchurl urls.${arch})
-    else throw "Architecture not supported: ${system}";
 in
-  callPackage ./mkPurs.nix {
-    inherit version src ncurses;
-  }
+  callPackage ./mkPurs.nix { inherit version urls ncurses; }

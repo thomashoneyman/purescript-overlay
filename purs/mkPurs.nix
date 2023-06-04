@@ -1,12 +1,14 @@
 {
+  system,
   stdenv,
   lib,
   zlib,
   gmp,
-  ncurses,
+  fetchurl,
   # extra arguments
+  ncurses,
   version,
-  src,
+  urls,
 }: let
   dynamic-linker = stdenv.cc.bintools.dynamicLinker;
 
@@ -21,7 +23,18 @@
 in
   stdenv.mkDerivation rec {
     pname = "purescript";
-    inherit version src;
+    inherit version;
+    
+    src =
+      if builtins.hasAttr system urls
+      then (fetchurl urls.${system})
+      else if system == "aarch64-darwin"
+      then let
+        arch = "x86_64-darwin";
+        msg = "Using the non-native ${arch} binary. While this binary may run under Rosetta 2 translation, no guarantees can be made about stability or performance.";
+      in
+        lib.warn msg (fetchurl urls.${arch})
+      else throw "Architecture not supported: ${system}";
 
     buildInputs = [zlib gmp ncurses];
     libPath = lib.makeLibraryPath buildInputs;
