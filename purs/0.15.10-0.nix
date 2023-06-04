@@ -21,4 +21,4 @@
   };
 
 in
-  callPackage ./mkPurs.nix { inherit version urls ncurses; }
+  callPackage ../nix/mkPursDerivation.nix { inherit version urls ncurses; }
