@@ -59,9 +59,10 @@
 
     checks = forAllSystems (system: let
       pkgs = nixpkgsFor.${system};
+
       prefix = extractPrefix pkgs.lib;
       package-checks = pkgs.lib.mapAttrs (name: bin:
-        pkgs.runCommand "test-bin" {buildInputs = [bin];} ''
+        pkgs.runCommand "test-${name}" {buildInputs = [bin];} ''
           touch $out
           set -e
           # Spago writes --version to stderr, oddly enough, so we need to
@@ -72,7 +73,16 @@
           test "$VERSION" = "$EXPECTED_VERSION"
         '')
       self.packages.${system};
+
+      example-project = pkgs.callPackage ./example {};
+      example-checks = { 
+        test-example = pkgs.runCommand "test-example" {buildInputs = [example-project];} ''
+          touch $out
+          set -e
+          ${example-project}/bin/my-app
+        '';
+      };
     in
-      package-checks);
+      example-checks // package-checks);
   };
 }

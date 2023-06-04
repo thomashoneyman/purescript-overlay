@@ -1,0 +1,7 @@
+node_modules/
+output/
+.psc*
+.purs*
+.psa*
+.spago
+result
