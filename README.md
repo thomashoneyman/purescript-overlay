@@ -11,9 +11,11 @@ This Nix library also includes helper functions for building PureScript packages
 - `buildSpagoLock`: Discover and build all workspaces and dependencies from a spago.lock file
 - `buildPackageLock`: Discover and download dependencies listed in a package-lock.json (:warning: only suitable for simple projects like typical PureScript FFI; for significant applications there are better solutions like npmlock2nix)
 
+There is an example project in the [`example`](./example) repository which demonstrates how to package a PureScript application using multiple Spago workspaces and foreign Node dependencies into an executable via the utilities in this library. Specifically, see the included [`default.nix`](./example/default.nix).
+
 ## Usage
 
-In a Nix flake, use the provided overlay when importing nixpkgs. For example, the below flake creates a development shell with recent versions of the PureScript compiler and Spago package manager:
+In a Nix flake, use the provided overlay when importing nixpkgs to get access to tools like `purs` and `spago` and functions like `buildSpagoLock`. For example, the below flake creates a development shell with recent versions of the PureScript compiler and Spago package manager:
 
 ```nix
 {
