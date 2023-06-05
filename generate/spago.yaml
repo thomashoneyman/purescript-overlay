@@ -1,0 +1,4 @@
+workspace:
+  lock: true
+  package_set:
+    registry: 24.4.0

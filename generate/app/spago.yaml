@@ -1,0 +1,10 @@
+package:
+  name: generate-app
+  dependencies:
+    - console
+    - effect
+    - prelude
+    - generate-lib
+  test:
+    dependencies: []
+    main: Test.App.Main

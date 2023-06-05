@@ -31,7 +31,7 @@ in
       else if system == "aarch64-darwin"
       then let
         arch = "x86_64-darwin";
-        msg = "Using the non-native ${arch} binary. While this binary may run under Rosetta 2 translation, no guarantees can be made about stability or performance.";
+        msg = "This system is an aarch64-darwin, which is not supported. Falling back to the ${arch} binary, which may run under Rosetta 2 translation.";
       in
         lib.warn msg (fetchurl tarballs.${arch})
       else throw "Architecture not supported: ${system}";

@@ -1,0 +1,9 @@
+package:
+  name: generate-lib
+  dependencies:
+    - console
+    - effect
+    - prelude
+  test:
+    dependencies: []
+    main: Test.Lib.Main

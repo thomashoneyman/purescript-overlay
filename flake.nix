@@ -36,14 +36,22 @@
     apps = forAllSystems (system: let
       pkgs = nixpkgsFor.${system};
       prefix = extractPrefix pkgs.lib;
-      apps =
+      scripts = {
+        generate = {
+          type = "app";
+          program = let
+            script = pkgs.callPackage ./generate {};
+          in "${script}/bin/${script.name}";
+        };
+      };
+      tools =
         pkgs.lib.mapAttrs (name: bin: {
           type = "app";
           program = "${bin}/bin/${prefix name}";
         })
         self.packages.${system};
     in
-      apps);
+      tools // scripts);
 
     devShells = forAllSystems (system: let
       pkgs = nixpkgsFor.${system};
@@ -51,8 +59,8 @@
       default = pkgs.mkShell {
         name = "purescript-nix";
         buildInputs = [
-          self.packages.${system}.spago
-          self.packages.${system}.purs
+          self.packages.${system}.spago-0_93_4
+          self.packages.${system}.purs-0_15_8
         ];
       };
     });

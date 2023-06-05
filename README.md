@@ -47,9 +47,14 @@ In a Nix flake, use the provided overlay when importing nixpkgs to get access to
 
 You can also run individual packages from the flake, e.g.
 
-```sh
-nix run github:thomashoneyman/purescript-nix#purs
+```console
 nix run github:thomashoneyman/purescript-nix#purs-unstable
-nix run github:thomashoneyman/purescript-nix#spago
-nix run github:thomashoneyman/purescript-nix#spago-0_93_4
+```
+
+## Development
+
+There is a generation script stored in the [generate](./generate/) directory which will search for new versions of the tools included in this repository and attempt to produce new derivations for them. This script is run in CI nightly, but can also be run manually:
+
+```console
+nix run .#generate
 ```
