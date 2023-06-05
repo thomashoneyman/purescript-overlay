@@ -1,6 +1,7 @@
 {
-  bin,
+  system,
   callPackage,
+  bin,
 }: let
   builder =
     if bin == "purs"
