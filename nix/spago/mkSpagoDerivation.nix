@@ -8,10 +8,14 @@
   # via overlay
   buildSpagoLock,
   buildPackageLock,
-  # via args
+  pkgs, # for purs only
+}: {
   version,
   rev,
 }: let
+  # TODO: Discover this from the lockfile (needs to be added to the lockfile)
+  purs = pkgs.purs.purs-0_15_9;
+
   repo = builtins.fetchGit {
     url = "https://github.com/purescript/spago.git";
     rev = rev;
@@ -19,9 +23,6 @@
   };
 
   src = repo + "/spaghetto";
-
-  # TODO: Discover this from the lockfile (needs to be added to the lockfile)
-  purs = {version = "0.15.9";};
 
   buildInfo = writeText "BuildInfo.purs" ''
     module Spago.Generated.BuildInfo where

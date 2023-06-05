@@ -5,8 +5,8 @@
   zlib,
   gmp,
   fetchurl,
-  # extra arguments
-  ncurses,
+  ncurses5,
+}: {
   version,
   tarballs,
 }: let
@@ -24,7 +24,7 @@ in
   stdenv.mkDerivation rec {
     pname = "purescript";
     inherit version;
-    
+
     src =
       if builtins.hasAttr system tarballs
       then (fetchurl tarballs.${system})
@@ -36,7 +36,7 @@ in
         lib.warn msg (fetchurl tarballs.${arch})
       else throw "Architecture not supported: ${system}";
 
-    buildInputs = [zlib gmp ncurses];
+    buildInputs = [zlib gmp ncurses5];
     libPath = lib.makeLibraryPath buildInputs;
     dontStrip = true;
 
