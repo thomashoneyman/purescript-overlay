@@ -32,22 +32,19 @@
 
     apps = forAllSystems (system: let
       pkgs = nixpkgsFor.${system};
-      scripts = {
-        generate = {
-          type = "app";
-          program = let
-            script = pkgs.callPackage ./generate {};
-          in "${script}/bin/${script.name}";
-        };
+
+      mkApp = bin: {
+        type = "app";
+        program = "${bin}/bin/${bin.pname or bin.name}";
       };
-      tools =
-        pkgs.lib.mapAttrs (_: bin: {
-          type = "app";
-          program = "${bin}/bin/${bin.pname}";
-        })
-        self.packages.${system};
+
+      packages = pkgs.lib.mapAttrs (_: mkApp) self.packages.${system};
+
+      scripts = {
+        generate = mkApp (pkgs.callPackage ./generate {});
+      };
     in
-      tools // scripts);
+      packages // scripts);
 
     checks = forAllSystems (system: let
       pkgs = nixpkgsFor.${system};
