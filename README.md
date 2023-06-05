@@ -56,9 +56,7 @@ nix run github:thomashoneyman/purescript-nix#purs-unstable
 
 ## Examples
 
-There is an example project in the [`example`](./example) directory which demonstrates how to package a PureScript application using multiple Spago workspaces and foreign Node dependencies into an executable via the utilities in this library. Specifically, see the included [`default.nix`](./example/default.nix).
-
-You can also see the [`generate`](./generate/) directory for a PureScript script implemented using this library.
+The [`generate`](./generate/) directory contains a PureScript script implemented using this library. It has two Spago workspaces and foreign Node dependencies which are packaged into an runnable script via the utilities in this library. Specifically, see the included [`default.nix`](./generate/default.nix).
 
 ## Development
 

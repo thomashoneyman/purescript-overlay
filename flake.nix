@@ -77,23 +77,18 @@
         '')
       self.packages.${system};
 
-      example = pkgs.callPackage ./example {};
-      generate = pkgs.callPackage ./generate {};
-      example-checks = {
-        test-generate = pkgs.runCommand "test-generate" {} ''
-          mkdir -p $out/bin
-          set -e
-          cp ${generate}/bin/app $out/bin/test-generate
-          ${generate}/bin/app --help
-        '';
-        test-example = pkgs.runCommand "test-example" {} ''
-          mkdir -p $out/bin
-          set -e
-          cp ${example}/bin/my-app $out/bin/test-example
-          ${example}/bin/my-app
-        '';
+      test-checks = {
+        test-generate = let
+          bin = pkgs.callPackage ./generate {};
+        in
+          pkgs.runCommand "test-generate" {} ''
+            mkdir -p $out/bin
+            set -e
+            cp ${bin}/bin/app $out/bin/test-generate
+            ${bin}/bin/app --verify
+          '';
       };
     in
-      example-checks // package-checks);
+      test-checks // package-checks);
   };
 }

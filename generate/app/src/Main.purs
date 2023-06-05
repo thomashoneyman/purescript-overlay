@@ -47,7 +47,7 @@ main = Aff.launchAff_ do
       pure command
 
   case mode of
-    Verify ->
+    Verify -> do
       Console.log "Verifying..."
     DryRun ->
       Console.log "Running in dry-run mode..."
