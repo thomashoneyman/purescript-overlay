@@ -61,16 +61,6 @@
     checks = forAllSystems (system: let
       pkgs = nixpkgsFor.${system};
 
-      # PureScript versions pre-0.15.9 can only run on aarch64-darwin using
-      # translation via Rosetta 2, but this is not available on the systems we
-      # use to run tests.
-      filterRosetta = pkgs.lib.filterAttrs (
-        name: bin:
-          if bin.pname == "purs" && system == "aarch64-darwin" && !(builtins.elem "aarch64-darwin" bin.tarballSystems)
-          then false
-          else true
-      );
-
       package-checks = pkgs.lib.mapAttrs (name: bin:
         pkgs.runCommand "test-${name}" {} ''
           touch $out
@@ -82,7 +72,7 @@
           echo "$VERSION should match expected output $EXPECTED_VERSION"
           test "$VERSION" = "$EXPECTED_VERSION"
         '')
-      (filterRosetta self.packages.${system});
+      self.packages.${system};
 
       example-project = pkgs.callPackage ./example {};
       example-checks = {

@@ -25,8 +25,6 @@ in
     pname = "purs";
     inherit version;
 
-    tarballSystems = builtins.attrNames tarballs;
-
     src =
       if builtins.hasAttr system tarballs
       then (fetchurl tarballs.${system})
