@@ -65,12 +65,13 @@
       test-checks = {
         test-generate = let
           bin = pkgs.callPackage ./generate {};
+          manifests = ./manifests;
         in
           pkgs.runCommand "test-generate" {} ''
             mkdir -p $out/bin
             set -e
             cp ${bin}/bin/app $out/bin/test-generate
-            ${bin}/bin/app --verify
+            ${bin}/bin/app verify ${manifests}
           '';
       };
     in
