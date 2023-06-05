@@ -12,14 +12,17 @@ import Effect.Class (liftEffect)
 import Effect.Class.Console as Console
 import Node.Process as Process
 
-data GenerateMode = DryRun | Local
+data GenerateMode = Verify | DryRun | Local
 
 derive instance Eq GenerateMode
 
 parser :: ArgParser GenerateMode
 parser =
   Arg.choose "mode"
-    [ Arg.flag [ "--dry-run" ]
+    [ Arg.flag [ "--verify" ]
+        "Verify that the generation script can read and write the manifests."
+        $> Verify
+    , Arg.flag [ "--dry-run" ]
         "Run the generation script without modifying files (print output)."
         $> DryRun
     , Arg.flag [ "--local" ]
@@ -44,6 +47,8 @@ main = Aff.launchAff_ do
       pure command
 
   case mode of
+    Verify ->
+      Console.log "Verifying..."
     DryRun ->
       Console.log "Running in dry-run mode..."
     Local ->
