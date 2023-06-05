@@ -8,17 +8,14 @@
   # via overlay
   buildSpagoLock,
   buildPackageLock,
-  pkgs, # for purs only
+  purs, # TODO: Discover this from the lockfile (needs to be added to the lockfile)
 }: {
   version,
-  rev,
+  manifest,
 }: let
-  # TODO: Discover this from the lockfile (needs to be added to the lockfile)
-  purs = pkgs.purs.purs-0_15_9;
-
   repo = builtins.fetchGit {
     url = "https://github.com/purescript/spago.git";
-    rev = rev;
+    rev = manifest.rev;
     allRefs = true;
   };
 

@@ -5,12 +5,12 @@
   # from purescript-nix
   buildPackageLock,
   buildSpagoLock,
-  purs,
+  purs-unstable,
   esbuild,
 }: let
   npmDependencies = buildPackageLock {src = ./.;};
   workspaces = buildSpagoLock {
-    purs = purs.purs-unstable;
+    purs = purs-unstable;
     src = ./.;
   };
   entrypoint = writeText "entrypoint.js" ''
@@ -21,7 +21,7 @@ in
   stdenv.mkDerivation rec {
     name = "my-app";
     src = ./.;
-    nativeBuildInputs = [purs.purs-unstable esbuild];
+    nativeBuildInputs = [purs-unstable esbuild];
     buildPhase = ''
       ln -s ${npmDependencies}/js/node_modules .
       set -f

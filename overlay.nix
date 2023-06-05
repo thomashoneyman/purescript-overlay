@@ -1,11 +1,15 @@
 final: prev: let
   fromYAML = prev.callPackage ./nix/lib/fromYAML.nix {};
-  mkPursDerivation = prev.callPackage ./nix/purs/mkPursDerivation.nix {};
-  mkSpagoDerivation = prev.callPackage ./nix/spago/mkSpagoDerivation.nix {};
+  named = builtins.fromJSON (builtins.readFile ./manifests/named.json);
+  mkManifestDerivations = bin: prev.callPackages ./nix/mkManifestDerivations.nix {inherit bin;};
 in {
   # PureScript tools
-  purs = prev.callPackages ./nix/purs/purs.nix {inherit mkPursDerivation;};
-  spago = prev.callPackages ./nix/spago/spago.nix {inherit mkSpagoDerivation;};
+  purs-bin = mkManifestDerivations "purs";
+  purs = final.purs-bin.${named.purs};
+  purs-unstable = final.purs-bin.${named.purs-unstable};
+
+  spago-bin = mkManifestDerivations "spago";
+  spago = final.spago-bin.${named.spago};
 
   # Utilities for building PureScript packages
   buildPackageLock = prev.callPackage ./nix/lib/buildPackageLock.nix {};

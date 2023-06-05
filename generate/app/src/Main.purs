@@ -33,11 +33,13 @@ main = Aff.launchAff_ do
 
   let description = "A generation script for updating PureScript tooling versions."
   mode <- case Arg.parseArgs "generate" description parser args of
-    Left error -> case error of
-      Arg.ArgError _ Arg.ShowHelp ->
-        liftEffect (Process.exit 0)
-      _ ->
-        liftEffect (Process.exit 1)
+    Left error -> do
+      Console.log (Arg.printArgError error)
+      case error of
+        Arg.ArgError _ Arg.ShowHelp -> do
+          liftEffect (Process.exit 0)
+        _ ->
+          liftEffect (Process.exit 1)
     Right command ->
       pure command
 

@@ -23,9 +23,12 @@
     packages = forAllSystems (system: let
       pkgs = nixpkgsFor.${system};
       purs = pkgs.purs;
+      purs-unstable = pkgs.purs-unstable;
+      purs-bin = pkgs.purs-bin;
       spago = pkgs.spago;
+      spago-bin = pkgs.spago-bin;
     in
-      purs // spago);
+      {inherit purs purs-unstable spago;} // purs-bin // spago-bin);
 
     apps = forAllSystems (system: let
       pkgs = nixpkgsFor.${system};
@@ -40,7 +43,7 @@
       tools =
         pkgs.lib.mapAttrs (_: bin: {
           type = "app";
-          program = "${bin}/bin/${bin.name}";
+          program = "${bin}/bin/${bin.pname}";
         })
         self.packages.${system};
     in
