@@ -25,7 +25,7 @@ in
     pname = "purs";
     inherit version;
 
-    needsRosetta = !(builtins.hasAttr system tarballs) && system == "aarch64-darwin";
+    tarballSystems = builtins.attrNames tarballs;
 
     src =
       if builtins.hasAttr system tarballs

@@ -61,8 +61,18 @@
     checks = forAllSystems (system: let
       pkgs = nixpkgsFor.${system};
 
-      package-checks = pkgs.lib.mapAttrs (name: bin: let
-        test-script = ''
+      # PureScript versions pre-0.15.9 can only run on aarch64-darwin using
+      # translation via Rosetta 2, but this is not available on the systems we
+      # use to run tests.
+      filterRosetta = pkgs.lib.filterAttrs (
+        name: bin:
+          if bin.pname == "purs" && system == "aarch64-darwin" && !(builtins.elem "aarch64-darwin" bin.tarballSystems)
+          then false
+          else true
+      );
+
+      package-checks = pkgs.lib.mapAttrs (name: bin:
+        pkgs.runCommand "test-${name}" {} ''
           touch $out
           set -e
           # Spago writes --version to stderr, oddly enough, so we need to
@@ -71,27 +81,8 @@
           EXPECTED_VERSION="${bin.version}"
           echo "$VERSION should match expected output $EXPECTED_VERSION"
           test "$VERSION" = "$EXPECTED_VERSION"
-        '';
-      in
-        # Garnix aarch64-darwin builders do not have Rosetta 2 installed, which
-        # allows for running x86_64-darwin code on an aarch64-darwin system.
-        if bin.needsRosetta or false
-        then
-          pkgs.runCommand "test-${name}" {} ''
-            if sysctl sysctl.proc_translated > /dev/null 2>&1; then
-              echo "Needs translation and Rosetta 2 is installed, running tests..."
-              ${test-script}
-            else
-              echo "Needs translation and Rosetta 2 is not installed, binary will not work, skipping..."
-              touch $out
-            fi
-          ''
-        else
-          pkgs.runCommand "test-${name}" {} ''
-            echo "Does not need translation, running tests..."
-            ${test-script}
-          '')
-      self.packages.${system};
+        '')
+      (filterRosetta self.packages.${system});
 
       example-project = pkgs.callPackage ./example {};
       example-checks = {
