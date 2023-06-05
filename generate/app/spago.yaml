@@ -1,10 +1,13 @@
 package:
-  name: generate-app
+  name: app
   dependencies:
+    - aff
+    - argparse-basic
     - console
     - effect
+    - lib
+    - node-process
     - prelude
-    - generate-lib
   test:
     dependencies: []
     main: Test.App.Main

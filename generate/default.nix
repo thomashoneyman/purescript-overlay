@@ -19,13 +19,13 @@
   '';
 in
   stdenv.mkDerivation rec {
-    name = "generate-app";
+    name = "app";
     src = ./.;
     nativeBuildInputs = [purs.purs-0_15_8 esbuild];
     buildPhase = ''
       ln -s ${npmDependencies}/js/node_modules .
       set -f
-      purs compile $src/app/**/*.purs ${workspaces.${name}.dependencies.globs}
+      purs compile $src/${name}/**/*.purs ${workspaces.${name}.dependencies.globs}
       set +f
       cp ${entrypoint} entrypoint.js
       esbuild entrypoint.js \

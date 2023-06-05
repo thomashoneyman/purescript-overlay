@@ -1,5 +1,5 @@
 package:
-  name: generate-lib
+  name: lib
   dependencies:
     - console
     - effect
