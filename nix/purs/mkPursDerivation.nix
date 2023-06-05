@@ -22,18 +22,20 @@
     '';
 in
   stdenv.mkDerivation rec {
-    pname = "purescript";
+    pname = "purs";
     inherit version;
+
+    needsRosetta = !(builtins.hasAttr system tarballs) && system == "aarch64-darwin";
 
     src =
       if builtins.hasAttr system tarballs
       then (fetchurl tarballs.${system})
       else if system == "aarch64-darwin"
       then let
-        arch = "x86_64-darwin";
-        msg = "This system is an aarch64-darwin, which is not supported. Falling back to the ${arch} binary, which may run under Rosetta 2 translation.";
+        substitute = "x86_64-darwin";
+        msg = "This system is an aarch64-darwin, which is not supported. Falling back to the ${substitute} binary, which may run under Rosetta 2 translation.";
       in
-        lib.warn msg (fetchurl tarballs.${arch})
+        lib.warn msg (fetchurl tarballs.${substitute})
       else throw "Architecture not supported: ${system}";
 
     buildInputs = [zlib gmp ncurses5];
