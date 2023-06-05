@@ -1,9 +1,12 @@
 package:
   name: lib
   dependencies:
-    - console
+    - argonaut-core
+    - codec-argonaut
     - effect
     - prelude
+    - registry-lib
   test:
-    dependencies: []
-    main: Test.Lib.Main
+    main: Test.Lib
+    dependencies:
+      - spec

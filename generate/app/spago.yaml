@@ -7,7 +7,3 @@ package:
     - effect
     - lib
     - node-process
-    - prelude
-  test:
-    dependencies: []
-    main: Test.App.Main
