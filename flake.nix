@@ -74,13 +74,20 @@
         '')
       self.packages.${system};
 
-      example-project = pkgs.callPackage ./example {};
+      example = pkgs.callPackage ./example {};
+      generate = pkgs.callPackage ./generate {};
       example-checks = {
-        test-example = pkgs.runCommand "test-example" {buildInputs = [example-project];} ''
+        test-generate = pkgs.runCommand "test-generate" {} ''
           mkdir -p $out/bin
           set -e
-          cp ${example-project}/bin/my-app $out/bin/test-example
-          ${example-project}/bin/my-app
+          cp ${generate}/bin/app $out/bin/test-generate
+          ${generate}/bin/app --help
+        '';
+        test-example = pkgs.runCommand "test-example" {} ''
+          mkdir -p $out/bin
+          set -e
+          cp ${example}/bin/my-app $out/bin/test-example
+          ${example}/bin/my-app
         '';
       };
     in

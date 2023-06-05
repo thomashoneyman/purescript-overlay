@@ -10,7 +10,6 @@ import Effect (Effect)
 import Effect.Aff as Aff
 import Effect.Class (liftEffect)
 import Effect.Class.Console as Console
-import Effect.Console (log)
 import Node.Process as Process
 
 data GenerateMode = DryRun | Local
@@ -18,14 +17,15 @@ data GenerateMode = DryRun | Local
 derive instance Eq GenerateMode
 
 parser :: ArgParser GenerateMode
-parser = Arg.choose "mode"
-  [ Arg.flag [ "--dry-run" ]
-      "Run the generation script without modifying files (print output)."
-      $> DryRun
-  , Arg.flag [ "--local" ]
-      "Run the generation script and write files locally."
-      $> Local
-  ]
+parser =
+  Arg.choose "mode"
+    [ Arg.flag [ "--dry-run" ]
+        "Run the generation script without modifying files (print output)."
+        $> DryRun
+    , Arg.flag [ "--local" ]
+        "Run the generation script and write files locally."
+        $> Local
+    ] <* Arg.flagHelp
 
 main :: Effect Unit
 main = Aff.launchAff_ do
@@ -33,8 +33,13 @@ main = Aff.launchAff_ do
 
   let description = "A generation script for updating PureScript tooling versions."
   mode <- case Arg.parseArgs "generate" description parser args of
-    Left error -> Console.log (Arg.printArgError error) *> liftEffect (Process.exit 1)
-    Right command -> pure command
+    Left error -> case error of
+      Arg.ArgError _ Arg.ShowHelp ->
+        liftEffect (Process.exit 0)
+      _ ->
+        liftEffect (Process.exit 1)
+    Right command ->
+      pure command
 
   case mode of
     DryRun ->
