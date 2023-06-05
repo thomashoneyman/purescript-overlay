@@ -45,7 +45,6 @@ main = Aff.launchAff_ do
           liftEffect (Process.exit 1)
     Right command ->
       pure command
-
   case mode of
     Verify -> do
       Console.log "Verifying..."

@@ -49,18 +49,6 @@
     in
       tools // scripts);
 
-    devShells = forAllSystems (system: let
-      pkgs = nixpkgsFor.${system};
-    in {
-      default = pkgs.mkShell {
-        name = "purescript-nix";
-        buildInputs = [
-          self.packages.${system}.spago-0_93_4
-          self.packages.${system}.purs-0_15_8
-        ];
-      };
-    });
-
     checks = forAllSystems (system: let
       pkgs = nixpkgsFor.${system};
 
@@ -90,5 +78,17 @@
       };
     in
       test-checks // package-checks);
+
+    devShells = forAllSystems (system: let
+      pkgs = nixpkgsFor.${system};
+    in {
+      default = pkgs.mkShell {
+        name = "purescript-nix";
+        buildInputs = [
+          self.packages.${system}.spago
+          self.packages.${system}.purs
+        ];
+      };
+    });
   };
 }
