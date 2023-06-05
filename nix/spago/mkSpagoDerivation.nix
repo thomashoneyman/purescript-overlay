@@ -8,9 +8,7 @@
   # via overlay
   buildSpagoLock,
   buildPackageLock,
-  # specific version provided via flake
-  purs,
-  # required additional arguments
+  # via args
   version,
   rev,
 }: let
@@ -21,6 +19,9 @@
   };
 
   src = repo + "/spaghetto";
+
+  # TODO: Discover this from the lockfile (needs to be added to the lockfile)
+  purs = {version = "0.15.9";};
 
   buildInfo = writeText "BuildInfo.purs" ''
     module Spago.Generated.BuildInfo where
