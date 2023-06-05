@@ -8,11 +8,13 @@
   # via overlay
   buildSpagoLock,
   buildPackageLock,
-  purs, # TODO: Discover this from the lockfile (needs to be added to the lockfile)
+  purs-bin,
 }: {
   version,
   manifest,
 }: let
+  purs = purs-bin.purs-0_15_9; # TODO: Discover this from the lockfile or manifest?
+
   repo = builtins.fetchGit {
     url = "https://github.com/purescript/spago.git";
     rev = manifest.rev;
@@ -39,8 +41,7 @@
 in
   stdenv.mkDerivation {
     pname = "spago";
-    version = version;
-    src = src;
+    inherit version src;
 
     nativeBuildInputs = [purs esbuild];
     buildInputs = [nodejs];

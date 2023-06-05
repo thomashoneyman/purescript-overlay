@@ -1,5 +1,4 @@
 {
-  system,
   stdenv,
   lib,
   zlib,
@@ -25,16 +24,7 @@ in
     pname = "purs";
     inherit version;
 
-    src =
-      if builtins.hasAttr system manifest
-      then (fetchurl manifest.${system})
-      else if system == "aarch64-darwin"
-      then let
-        substitute = "x86_64-darwin";
-        msg = "This system is an aarch64-darwin, which is not supported. Falling back to the ${substitute} binary, which may run under Rosetta 2 translation.";
-      in
-        lib.warn msg (fetchurl manifest.${substitute})
-      else throw "Architecture not supported: ${system}";
+    src = fetchurl {inherit (manifest) url hash;};
 
     buildInputs = [zlib gmp ncurses5];
     libPath = lib.makeLibraryPath buildInputs;
