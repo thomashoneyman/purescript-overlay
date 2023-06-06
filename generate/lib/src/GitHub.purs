@@ -89,7 +89,7 @@ createPullRequest repo { title, body, branch } = do
   Console.log title
   Console.log "Body:\n"
   Console.log body
-  let pull = { head: branch, base: "master", title, body }
+  let pull = { head: branch, base: "main", title, body }
   let req = requestWithBackoff octokit (Octokit.requestCreatePullRequest { address, content: pull })
   GitHubM $ ExceptT req
 
