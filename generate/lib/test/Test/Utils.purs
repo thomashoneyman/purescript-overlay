@@ -2,7 +2,7 @@ module Test.Utils where
 
 import Prelude
 
-import App.Utils as App.Utils
+import Lib.Utils as App.Utils
 import Control.Monad.Error.Class (class MonadThrow)
 import Data.Argonaut.Core as Argonaut
 import Data.Argonaut.Parser as Argonaut.Parser

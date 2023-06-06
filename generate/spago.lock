@@ -1,7 +1,7 @@
 workspace:
   packages:
-    app:
-      path: app
+    bin:
+      path: bin
       dependencies:
         - aff
         - argparse-basic
@@ -13,9 +13,12 @@ workspace:
     lib:
       path: lib
       dependencies:
+        - aff-promise
         - argonaut-core
         - codec-argonaut
         - effect
+        - http-methods
+        - node-execa
         - prelude
         - registry-lib
       test_dependencies:
@@ -23,10 +26,6 @@ workspace:
   package_set:
     registry: 24.4.0
   extra_packages:
-    registry-foreign:
-      git: https://github.com/purescript/registry-dev.git
-      ref: master
-      subdir: foreign
     registry-lib:
       git: https://github.com/purescript/registry-dev.git
       ref: master
@@ -54,6 +53,13 @@ packages:
       - tailrec
       - transformers
       - unsafe-coerce
+  aff-promise:
+    type: registry
+    version: 4.0.0
+    integrity: sha256-Kq5EupbUpXeUXx4JqGQE7/RTTz/H6idzWhsocwlEFhM=
+    dependencies:
+      - aff
+      - foreign
   ansi:
     type: registry
     version: 7.0.0
@@ -419,6 +425,14 @@ packages:
     dependencies:
       - catenable-lists
       - ordered-collections
+  http-methods:
+    type: registry
+    version: 6.0.0
+    integrity: sha256-Orr7rbDGcp7qoqmUMXPRMjBx+C4jqOQcFe9+gE3nMgU=
+    dependencies:
+      - either
+      - prelude
+      - strings
   identity:
     type: registry
     version: 6.0.0
@@ -454,6 +468,12 @@ packages:
       - foreign
       - integers
       - now
+  js-timers:
+    type: registry
+    version: 6.1.0
+    integrity: sha256-znHWLSSOYw15P5DTcsAdal2lf7nGA2yayLdOZ2t5r7o=
+    dependencies:
+      - effect
   language-cst-parser:
     type: registry
     version: 0.13.0
@@ -548,6 +568,59 @@ packages:
       - maybe
       - st
       - unsafe-coerce
+  node-event-emitter:
+    type: registry
+    version: 1.0.1
+    integrity: sha256-OwJNgvg20g4g5Alp5Zka3C5KMLH8hwTz9KW4DYr82ls=
+    dependencies:
+      - effect
+      - functions
+      - prelude
+      - safe-coerce
+      - unsafe-coerce
+  node-execa:
+    type: registry
+    version: 1.3.2
+    integrity: sha256-kKVeJC+s5Pfye9aJ2V55NUfSyETZ2DZxPP02+zpNS/M=
+    dependencies:
+      - aff
+      - arrays
+      - control
+      - effect
+      - either
+      - exceptions
+      - foldable-traversable
+      - foreign
+      - foreign-object
+      - functions
+      - integers
+      - js-timers
+      - maybe
+      - node-buffer
+      - node-event-emitter
+      - node-fs
+      - node-human-signals
+      - node-path
+      - node-process
+      - node-streams
+      - nullable
+      - numbers
+      - ordered-collections
+      - parallel
+      - parsing
+      - partial
+      - posix-types
+      - prelude
+      - profunctor-lenses
+      - record
+      - refs
+      - safe-coerce
+      - strings
+      - tailrec
+      - transformers
+      - tuples
+      - unsafe-coerce
+      - unsafe-reference
   node-fs:
     type: registry
     version: 8.2.0
@@ -579,6 +652,17 @@ packages:
       - either
       - node-fs
       - node-path
+  node-human-signals:
+    type: registry
+    version: 1.0.0
+    integrity: sha256-HOUfMQTAIuL5AOCUlJJcKq78masah+388eQOdloYH1g=
+    dependencies:
+      - arrays
+      - control
+      - foreign-object
+      - maybe
+      - ordered-collections
+      - prelude
   node-path:
     type: registry
     version: 5.0.0
@@ -751,6 +835,31 @@ packages:
       - invariant
       - newtype
       - prelude
+      - tuples
+  profunctor-lenses:
+    type: registry
+    version: 8.0.0
+    integrity: sha256-K7f29rHRHgVSb2Y/PaSKtfYPriP6n87BJNO7EhsZHas=
+    dependencies:
+      - arrays
+      - bifunctors
+      - const
+      - control
+      - distributive
+      - either
+      - foldable-traversable
+      - foreign-object
+      - functors
+      - identity
+      - lists
+      - maybe
+      - newtype
+      - ordered-collections
+      - partial
+      - prelude
+      - profunctor
+      - record
+      - transformers
       - tuples
   record:
     type: registry
@@ -949,6 +1058,12 @@ packages:
     version: 6.0.0
     integrity: sha256-IqIYW4Vkevn8sI+6aUwRGvd87tVL36BBeOr0cGAE7t0=
     dependencies: []
+  unsafe-reference:
+    type: registry
+    version: 5.0.0
+    integrity: sha256-zU7BhfJU14nXQRZG9iADsp0mSiKhz07OcKyjRB2YT+Y=
+    dependencies:
+      - prelude
   variant:
     type: registry
     version: 8.0.0

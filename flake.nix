@@ -70,8 +70,8 @@
           pkgs.runCommand "test-generate" {} ''
             mkdir -p $out/bin
             set -e
-            cp ${bin}/bin/app $out/bin/test-generate
-            ${bin}/bin/app verify ${manifests}
+            cp ${bin}/bin/${bin.name} $out/bin/test-generate
+            ${bin}/bin/${bin.name} verify ${manifests}
           '';
       };
     in

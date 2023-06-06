@@ -1,8 +1,9 @@
 package:
-  name: app
+  name: bin
   dependencies:
     - aff
     - argparse-basic
     - console
     - effect
+    - lib
     - node-process

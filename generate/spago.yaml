@@ -7,7 +7,3 @@ workspace:
       git: https://github.com/purescript/registry-dev.git
       ref: master
       subdir: lib
-    registry-foreign:
-      git: https://github.com/purescript/registry-dev.git
-      ref: master
-      subdir: foreign
