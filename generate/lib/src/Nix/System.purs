@@ -1,4 +1,4 @@
-module Lib.NixSystem where
+module Lib.Nix.System where
 
 import Prelude
 

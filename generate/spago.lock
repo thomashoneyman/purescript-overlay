@@ -1,21 +1,22 @@
 workspace:
   packages:
-    app:
-      path: app
+    bin:
+      path: bin
       dependencies:
         - aff
         - argparse-basic
         - console
         - effect
-        - lib
         - node-process
       test_dependencies: []
     lib:
       path: lib
       dependencies:
+        - aff-promise
         - argonaut-core
         - codec-argonaut
         - effect
+        - http-methods
         - prelude
         - registry-lib
       test_dependencies:
@@ -23,10 +24,6 @@ workspace:
   package_set:
     registry: 24.4.0
   extra_packages:
-    registry-foreign:
-      git: https://github.com/purescript/registry-dev.git
-      ref: master
-      subdir: foreign
     registry-lib:
       git: https://github.com/purescript/registry-dev.git
       ref: master
@@ -54,6 +51,13 @@ packages:
       - tailrec
       - transformers
       - unsafe-coerce
+  aff-promise:
+    type: registry
+    version: 4.0.0
+    integrity: sha256-Kq5EupbUpXeUXx4JqGQE7/RTTz/H6idzWhsocwlEFhM=
+    dependencies:
+      - aff
+      - foreign
   ansi:
     type: registry
     version: 7.0.0
@@ -419,6 +423,14 @@ packages:
     dependencies:
       - catenable-lists
       - ordered-collections
+  http-methods:
+    type: registry
+    version: 6.0.0
+    integrity: sha256-Orr7rbDGcp7qoqmUMXPRMjBx+C4jqOQcFe9+gE3nMgU=
+    dependencies:
+      - either
+      - prelude
+      - strings
   identity:
     type: registry
     version: 6.0.0

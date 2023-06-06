@@ -8,7 +8,7 @@ import Data.Codec.Argonaut (JsonCodec)
 import Data.Codec.Argonaut as CA
 import Data.String as String
 import Data.Traversable (for)
-import Lib.NixManifest (PursManifest, SpagoManifest, pursManifestCodec, spagoManifestCodec)
+import Lib.Nix.Manifest (PursManifest, SpagoManifest, pursManifestCodec, spagoManifestCodec)
 import Node.Encoding (Encoding(..))
 import Node.FS.Aff as FS.Aff
 import Node.Path as Path

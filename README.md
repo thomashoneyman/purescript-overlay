@@ -5,6 +5,7 @@ An overlay and flake exposing PureScript tools maintained by the core team (ie. 
 - x86_64-linux
 - x86_64-darwin (Intel Mac)
 - aarch64-darwin (M1 Mac)
+- aarch64-linux
 
 Via the overlay you can access tooling versions in one of two ways:
 

@@ -1,4 +1,4 @@
-module Lib.NixManifest where
+module Lib.Nix.Manifest where
 
 import Prelude
 
@@ -7,10 +7,10 @@ import Data.Codec.Argonaut as CA
 import Data.Codec.Argonaut.Record as CA.Record
 import Data.Either as Either
 import Data.Map (Map)
-import Lib.NixSystem (NixSystem)
-import Lib.NixSystem as NixSystem
-import Lib.NixVersion (NixVersion)
-import Lib.NixVersion as NixVersion
+import Lib.Nix.System (NixSystem)
+import Lib.Nix.System as NixSystem
+import Lib.Nix.Version (NixVersion)
+import Lib.Nix.Version as NixVersion
 import Registry.Internal.Codec as Registry.Codec
 import Registry.Sha256 (Sha256)
 import Registry.Sha256 as Sha256

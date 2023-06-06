@@ -1,5 +1,5 @@
 package:
-  name: app
+  name: bin
   dependencies:
     - aff
     - argparse-basic

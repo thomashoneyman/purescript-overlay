@@ -1,9 +1,11 @@
 package:
   name: lib
   dependencies:
+    - aff-promise
     - argonaut-core
     - codec-argonaut
     - effect
+    - http-methods
     - prelude
     - registry-lib
   test:

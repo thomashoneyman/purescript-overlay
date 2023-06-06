@@ -1,4 +1,4 @@
-module Lib.NixVersion where
+module Lib.Nix.Version where
 
 import Prelude
 

@@ -1,8 +1,7 @@
-module App.Main where
+module Bin.Main where
 
 import Prelude
 
-import App.Utils as Utils
 import ArgParse.Basic (ArgParser)
 import ArgParse.Basic as Arg
 import Data.Array as Array
@@ -17,8 +16,9 @@ import Effect.Aff (Aff)
 import Effect.Aff as Aff
 import Effect.Class (liftEffect)
 import Effect.Class.Console as Console
-import Lib.NixManifest (Manifests, PursManifest, SpagoManifest)
-import Lib.NixManifest as NixManifest
+import Lib.Nix.Manifest (Manifests, PursManifest, SpagoManifest)
+import Lib.Nix.Manifest as NixManifest
+import Lib.Utils as Utils
 import Node.Path (FilePath)
 import Node.Path as Path
 import Node.Process as Process
