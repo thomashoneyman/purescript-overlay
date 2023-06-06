@@ -54,7 +54,7 @@ getReleaseByTagName :: Repo -> Tag -> GitHubM Release
 getReleaseByTagName repo tag = do
   octokit <- ask
   let address = repoAddress repo
-  Console.log $ "Listing releases for repo " <> address.owner <> "/" <> address.repo
+  Console.log $ "Getting release identified by tag " <> un Tag tag <> " in repo " <> address.owner <> "/" <> address.repo
   let req = requestWithBackoff octokit (Octokit.requestGetReleaseByTagName address (un Tag tag))
   GitHubM $ ExceptT req
 
@@ -62,7 +62,7 @@ getTagCommitSha :: Repo -> Tag -> GitHubM CommitSha
 getTagCommitSha repo tag = do
   octokit <- ask
   let address = repoAddress repo
-  Console.log $ "Listing releases for repo " <> address.owner <> "/" <> address.repo
+  Console.log $ "Getting commit SHA for tag " <> un Tag tag <> " in repo " <> address.owner <> "/" <> address.repo
   let req = requestWithBackoff octokit (Octokit.requestGetRefCommitSha { address, ref: un Tag tag })
   GitHubM $ ExceptT $ map CommitSha <$> req
 
@@ -70,7 +70,7 @@ getCommitDate :: Repo -> CommitSha -> GitHubM DateTime
 getCommitDate repo sha = do
   octokit <- ask
   let address = repoAddress repo
-  Console.log $ "Listing releases for repo " <> address.owner <> "/" <> address.repo
+  Console.log $ "Getting commit date for commit SHA " <> un CommitSha sha <> " in repo " <> address.owner <> "/" <> address.repo
   let req = requestWithBackoff octokit (Octokit.requestGetCommitDate { address, commitSha: un CommitSha sha })
   GitHubM $ ExceptT req
 
@@ -84,7 +84,11 @@ createPullRequest :: Repo -> PullRequestData -> GitHubM Unit
 createPullRequest repo { title, body, branch } = do
   octokit <- ask
   let address = repoAddress repo
-  Console.log $ "Listing releases for repo " <> address.owner <> "/" <> address.repo
+  Console.log $ "Creating pull request in repo " <> address.owner <> "/" <> address.repo <> " from branch " <> branch
+  Console.log $ "Title:\n"
+  Console.log title
+  Console.log "Body:\n"
+  Console.log body
   let pull = { head: branch, base: "master", title, body }
   let req = requestWithBackoff octokit (Octokit.requestCreatePullRequest { address, content: pull })
   GitHubM $ ExceptT req
