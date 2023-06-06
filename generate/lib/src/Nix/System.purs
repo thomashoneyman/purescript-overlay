@@ -3,6 +3,7 @@ module Lib.Nix.System where
 import Prelude
 
 import Data.Argonaut.Core as Argonaut
+import Data.Array as Array
 import Data.Bifunctor (lmap)
 import Data.Codec.Argonaut (JsonCodec)
 import Data.Codec.Argonaut as CA
@@ -46,3 +47,25 @@ codec = CA.codec' decode encode
 
 nixSystemMapCodec :: forall a. JsonCodec a -> JsonCodec (Map NixSystem a)
 nixSystemMapCodec = Registry.Codec.strMap "NixSystemMap" (Either.hush <<< parse) print
+
+-- | Parse the name of a PureScript release tarball into a Nix system
+fromPursReleaseTarball :: String -> Either String NixSystem
+fromPursReleaseTarball assetName = do
+  name <- Either.note ("Expected .tar.gz suffix: " <> assetName) (String.stripSuffix (String.Pattern ".tar.gz") assetName)
+
+  let
+    aarch64_linux = [ "linux-arm64" ]
+    x86_64_linux = [ "linux64" ]
+    aarch64_darwin = [ "macos-arm64" ]
+    x86_64_darwin = [ "macos" ]
+
+  if Array.elem name aarch64_linux then
+    Right AARCH_64_linux
+  else if Array.elem name x86_64_linux then
+    Right X86_64_linux
+  else if Array.elem name aarch64_darwin then
+    Right AARCH_64_darwin
+  else if Array.elem name x86_64_darwin then
+    Right X86_64_darwin
+  else
+    Left $ "Could not determine which Nix system should be assigned to: " <> name

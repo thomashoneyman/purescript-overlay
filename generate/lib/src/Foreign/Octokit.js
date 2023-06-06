@@ -1,4 +1,4 @@
-import { Octokit as GitHubOctokit } from "@octokit/core";
+import { Octokit as GitHubOctokit } from "@octokit/rest";
 import { retry } from "@octokit/plugin-retry";
 import { throttling } from "@octokit/plugin-throttling";
 

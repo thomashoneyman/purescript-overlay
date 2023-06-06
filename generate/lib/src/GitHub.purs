@@ -12,6 +12,7 @@ import Effect.Aff (Aff)
 import Effect.Aff as Aff
 import Effect.Aff.Class (class MonadAff, liftAff)
 import Effect.Class (class MonadEffect)
+import Effect.Class.Console as Console
 import Lib.Foreign.Octokit (GitHubError(..), Octokit, Release, Request)
 import Lib.Foreign.Octokit as Octokit
 import Lib.Git (CommitSha(..), Tag(..))
@@ -44,25 +45,33 @@ repoAddress = case _ of
 listReleases :: Repo -> GitHubM (Array Release)
 listReleases repo = do
   octokit <- ask
-  let req = requestWithBackoff octokit (Octokit.requestListReleases (repoAddress repo))
+  let address = repoAddress repo
+  Console.log $ "Listing releases for repo " <> address.owner <> "/" <> address.repo
+  let req = requestWithBackoff octokit (Octokit.requestListReleases address)
   GitHubM $ ExceptT req
 
 getReleaseByTagName :: Repo -> Tag -> GitHubM Release
 getReleaseByTagName repo tag = do
   octokit <- ask
-  let req = requestWithBackoff octokit (Octokit.requestGetReleaseByTagName (repoAddress repo) (un Tag tag))
+  let address = repoAddress repo
+  Console.log $ "Listing releases for repo " <> address.owner <> "/" <> address.repo
+  let req = requestWithBackoff octokit (Octokit.requestGetReleaseByTagName address (un Tag tag))
   GitHubM $ ExceptT req
 
 getTagCommitSha :: Repo -> Tag -> GitHubM CommitSha
 getTagCommitSha repo tag = do
   octokit <- ask
-  let req = requestWithBackoff octokit (Octokit.requestGetRefCommitSha { address: repoAddress repo, ref: un Tag tag })
+  let address = repoAddress repo
+  Console.log $ "Listing releases for repo " <> address.owner <> "/" <> address.repo
+  let req = requestWithBackoff octokit (Octokit.requestGetRefCommitSha { address, ref: un Tag tag })
   GitHubM $ ExceptT $ map CommitSha <$> req
 
 getCommitDate :: Repo -> CommitSha -> GitHubM DateTime
 getCommitDate repo sha = do
   octokit <- ask
-  let req = requestWithBackoff octokit (Octokit.requestGetCommitDate { address: repoAddress repo, commitSha: un CommitSha sha })
+  let address = repoAddress repo
+  Console.log $ "Listing releases for repo " <> address.owner <> "/" <> address.repo
+  let req = requestWithBackoff octokit (Octokit.requestGetCommitDate { address, commitSha: un CommitSha sha })
   GitHubM $ ExceptT req
 
 type PullRequestData =
@@ -74,8 +83,10 @@ type PullRequestData =
 createPullRequest :: Repo -> PullRequestData -> GitHubM Unit
 createPullRequest repo { title, body, branch } = do
   octokit <- ask
-  let pull = { head: branch, base: "main", title, body }
-  let req = requestWithBackoff octokit (Octokit.requestCreatePullRequest { address: repoAddress repo, content: pull })
+  let address = repoAddress repo
+  Console.log $ "Listing releases for repo " <> address.owner <> "/" <> address.repo
+  let pull = { head: branch, base: "master", title, body }
+  let req = requestWithBackoff octokit (Octokit.requestCreatePullRequest { address, content: pull })
   GitHubM $ ExceptT req
 
 -- | Apply exponential backoff to requests that hang, but without cancelling

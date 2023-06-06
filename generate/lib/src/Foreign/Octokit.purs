@@ -20,6 +20,8 @@ module Lib.Foreign.Octokit
   , request
   , printGitHubError
   , githubErrorCodec
+  , releaseCodec
+  , releaseAssetCodec
   ) where
 
 import Prelude
@@ -27,6 +29,7 @@ import Prelude
 import Control.Promise (Promise)
 import Control.Promise as Promise
 import Data.Argonaut.Core (Json)
+import Data.Argonaut.Core as Argonaut
 import Data.Array as Array
 import Data.Bifunctor (lmap)
 import Data.Codec.Argonaut (JsonDecodeError, JsonCodec)
@@ -70,24 +73,6 @@ newOctokit = liftEffect newOctokitImpl
 -- | The address of a GitHub repository as a owner/repo pair.
 type Address = { owner :: String, repo :: String }
 
--- | A GitHub release
-type Release =
-  { url :: String
-  , id :: String
-  , tag :: String
-  , draft :: Boolean
-  , prerelease :: Boolean
-  , assets :: Array ReleaseAsset
-  }
-
--- | A GitHub release asset
-type ReleaseAsset =
-  { name :: String
-  , downloadUrl :: String -- "application/gzip" for tarballs
-  , contentType :: String
-  , id :: String
-  }
-
 -- | List repository releases
 requestListReleases :: Address -> Request (Array Release)
 requestListReleases address =
@@ -108,37 +93,60 @@ requestGetReleaseByTagName address tag =
   , codec: releaseCodec
   }
 
+-- | A GitHub release
+type Release =
+  { url :: String
+  , tag :: String
+  , draft :: Boolean
+  , prerelease :: Boolean
+  , assets :: Array ReleaseAsset
+  }
+
 releaseCodec :: JsonCodec Release
 releaseCodec = Profunctor.dimap toJsonRep fromJsonRep $ CA.Record.object "Release"
   { html_url: CA.string
-  , id: CA.string
   , tag_name: CA.string
   , draft: CA.boolean
   , prerelease: CA.boolean
-  , assets: CA.array $ CA.Record.object "ReleaseAsset"
-      { contentType: CA.string
-      , downloadUrl: CA.string
-      , id: CA.string
-      , name: CA.string
-      }
+  , assets: CA.array releaseAssetCodec
   }
   where
-  toJsonRep { url, id, tag, draft, prerelease, assets } =
+  toJsonRep { url, tag, draft, prerelease, assets } =
     { html_url: url
-    , id
     , tag_name: tag
     , draft
     , prerelease
     , assets
     }
 
-  fromJsonRep { html_url, id, tag_name, draft, prerelease, assets } =
+  fromJsonRep { html_url, tag_name, draft, prerelease, assets } =
     { url: html_url
-    , id
     , tag: tag_name
     , draft
     , prerelease
     , assets
+    }
+
+-- | A GitHub release asset
+type ReleaseAsset =
+  { name :: String
+  , downloadUrl :: String
+  }
+
+releaseAssetCodec :: JsonCodec ReleaseAsset
+releaseAssetCodec = Profunctor.dimap toJsonRep fromJsonRep $ CA.Record.object "ReleaseAsset"
+  { browser_download_url: CA.string
+  , name: CA.string
+  }
+  where
+  toJsonRep { downloadUrl, name } =
+    { browser_download_url: downloadUrl
+    , name
+    }
+
+  fromJsonRep { browser_download_url, name } =
+    { downloadUrl: browser_download_url
+    , name
     }
 
 -- | Fetch the commit SHA for a given ref on a GitHub repository
@@ -265,7 +273,7 @@ request octokit { route, headers, args, paginate, codec } = do
       Left decodeError -> Left $ UnexpectedError decodeError
       Right decoded -> Left $ APIError decoded
     Right json -> case CA.decode codec json of
-      Left decodeError -> Left $ DecodeError $ CA.printJsonDecodeError decodeError
+      Left decodeError -> Left $ DecodeError { error: CA.printJsonDecodeError decodeError, raw: Argonaut.stringifyWithIndent 2 json }
       Right parsed -> Right parsed
   where
   decodeGitHubAPIError :: Object Json -> Either String GitHubAPIError
@@ -290,7 +298,7 @@ githubApiErrorCodec = CA.Record.object "GitHubAPIError"
 data GitHubError
   = UnexpectedError String
   | APIError GitHubAPIError
-  | DecodeError String
+  | DecodeError { error :: String, raw :: String }
 
 derive instance Eq GitHubError
 derive instance Ord GitHubError
@@ -299,7 +307,10 @@ githubErrorCodec :: JsonCodec GitHubError
 githubErrorCodec = Profunctor.dimap toVariant fromVariant $ CA.Variant.variantMatch
   { unexpectedError: Right CA.string
   , apiError: Right githubApiErrorCodec
-  , decodeError: Right CA.string
+  , decodeError: Right $ CA.Record.object "DecodeError"
+      { error: CA.string
+      , raw: CA.string
+      }
   }
   where
   toVariant = case _ of
@@ -325,9 +336,11 @@ printGitHubError = case _ of
     , "): "
     , fields.message
     ]
-  DecodeError error -> Array.fold
+  DecodeError { error, raw } -> Array.fold
     [ "Decoding error: "
     , error
+    , "\n\nRaw:\n"
+    , raw
     ]
 
 atKey :: forall a. String -> JsonCodec a -> Object Json -> Either JsonDecodeError a

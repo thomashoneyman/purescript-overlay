@@ -6,6 +6,7 @@ package:
     - codec-argonaut
     - effect
     - http-methods
+    - node-execa
     - prelude
     - registry-lib
   test:

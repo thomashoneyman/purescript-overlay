@@ -11,19 +11,35 @@ import Data.Either (Either(..))
 import Data.Foldable (foldMap)
 import Data.Int as Int
 import Data.Map as Map
+import Data.Maybe (Maybe(..), fromMaybe, isJust)
 import Data.Monoid.Additive (Additive(..))
 import Data.Newtype (alaF)
+import Data.Set (Set)
+import Data.Set as Set
+import Data.String as String
+import Data.Traversable (for, traverse)
+import Data.Tuple (Tuple(..))
 import Effect (Effect)
 import Effect.Aff as Aff
 import Effect.Class (liftEffect)
 import Effect.Class.Console as Console
+import Lib.Foreign.Octokit (Release, ReleaseAsset)
 import Lib.Foreign.Octokit as Octokit
-import Lib.Nix.Manifest (Manifests, PursManifest, SpagoManifest)
-import Lib.Nix.Manifest as NixManifest
+import Lib.Git (Tag(..))
+import Lib.GitHub (Repo(..))
+import Lib.GitHub as GitHub
+import Lib.Nix.Manifest (Manifests, PursManifestEntry, SpagoManifest, PursManifest)
+import Lib.Nix.Manifest as Nix.Manifest
+import Lib.Nix.Prefetch as Nix.Prefetch
+import Lib.Nix.System (NixSystem)
+import Lib.Nix.System as Nix.System
+import Lib.Nix.Version (NixVersion)
+import Lib.Nix.Version as Nix.Version
 import Lib.Utils as Utils
 import Node.Path (FilePath)
 import Node.Path as Path
 import Node.Process as Process
+import Registry.Sha256 as Sha256
 
 data Commit = DoCommit | NoCommit
 
@@ -96,16 +112,20 @@ main = Aff.launchAff_ do
       Console.log $ "Successfully parsed spago.json with " <> Int.toStringAs Int.decimal spagoEntries <> " entries."
 
     Prefetch dir -> do
-      Console.log "Prefetching..."
+      Console.log "Prefetching new releases..."
+
+      Console.log $ "Reading manifests from " <> dir
       manifests <- readManifests dir
+
+      Console.log $ "Fetching all releases and diffing against existing releases..."
       updates <- fetchUpdates manifests
 
       if Map.size updates.purs > 0 then
-        Console.log $ "New purs releases: " <> Utils.printJson NixManifest.pursManifestCodec updates.purs
+        Console.log $ "New purs releases: " <> Utils.printJson Nix.Manifest.pursManifestCodec updates.purs
       else Console.log "No new purs releases."
 
       if Map.size updates.spago > 0 then
-        Console.log $ "New spago releases: " <> Utils.printJson NixManifest.spagoManifestCodec updates.spago
+        Console.log $ "New spago releases: " <> Utils.printJson Nix.Manifest.spagoManifestCodec updates.spago
       else Console.log "No new spago releases."
 
     Update dir commit -> do
@@ -119,13 +139,12 @@ main = Aff.launchAff_ do
       updates <- fetchUpdates manifests
 
       if Map.size updates.purs > 0 then
-        Console.log $ "New purs releases: " <> Utils.printJson NixManifest.pursManifestCodec updates.purs
+        Console.log $ "New purs releases: " <> Utils.printJson Nix.Manifest.pursManifestCodec updates.purs
       else Console.log "No new purs releases."
 
       if Map.size updates.spago > 0 then
-        Console.log $ "New spago releases: " <> Utils.printJson NixManifest.spagoManifestCodec updates.spago
+        Console.log $ "New spago releases: " <> Utils.printJson Nix.Manifest.spagoManifestCodec updates.spago
       else Console.log "No new spago releases."
-      pure unit
 
 readManifests :: FilePath -> AppM Manifests
 readManifests dir = do
@@ -134,33 +153,107 @@ readManifests dir = do
   pure { purs, spago }
 
 readPursManifest :: FilePath -> AppM PursManifest
-readPursManifest dir = Utils.readJsonFile (Path.concat [ dir, "purs.json" ]) NixManifest.pursManifestCodec
+readPursManifest dir = Utils.readJsonFile (Path.concat [ dir, "purs.json" ]) Nix.Manifest.pursManifestCodec
 
 readSpagoManifest :: FilePath -> AppM SpagoManifest
-readSpagoManifest dir = Utils.readJsonFile (Path.concat [ dir, "spago.json" ]) NixManifest.spagoManifestCodec
-
--- | Retrieve all relevant releases for the supported tools which do not already
--- | exist in the input manifests.
-fetchUpdates :: Manifests -> AppM Manifests
-fetchUpdates existing = do
-  releases <- fetchReleases
-  pure
-    { spago: Map.difference releases.spago existing.spago
-    , purs: Map.difference releases.purs existing.purs
-    }
+readSpagoManifest dir = Utils.readJsonFile (Path.concat [ dir, "spago.json" ]) Nix.Manifest.spagoManifestCodec
 
 -- | Retrieve all relevant releases for the various supported tools from GitHub.
-fetchReleases :: AppM Manifests
-fetchReleases = do
-  purs <- fetchPursReleases
+fetchUpdates :: Manifests -> AppM Manifests
+fetchUpdates existing = do
+  Console.log "Fetching releases..."
+  purs <- fetchPursReleases (Set.unions $ map Map.keys $ Map.values existing.purs)
+  Console.log $ "Fetched purs releases: " <> Utils.printJson Nix.Manifest.pursManifestCodec purs
   spago <- fetchSpagoReleases
   pure { purs, spago }
 
--- FIXME: Unimplemented.
-fetchPursReleases :: AppM PursManifest
-fetchPursReleases = pure Map.empty
+-- | Fetch all releases from the PureScript compiler repository and format them
+-- | as Nix-compatible manifests.
+fetchPursReleases :: Set NixVersion -> AppM PursManifest
+fetchPursReleases existing = do
+  Console.log "Fetching purs releases..."
+  eitherReleases <- AppM.runGitHubM $ GitHub.listReleases PursRepo
+  case eitherReleases of
+    Left error -> do
+      Console.log "Failed to fetch purs releases:"
+      Console.log $ Octokit.printGitHubError error
+      liftEffect (Process.exit 1)
+    Right releases -> do
+      manifests <- map Array.catMaybes $ traverse (pursReleaseToManifest existing) releases
+      pure $ Array.foldl (Map.unionWith Map.union) Map.empty manifests
+
+omittedPursReleases :: Array Tag
+omittedPursReleases =
+  [ Tag "v0.13.1" -- https://github.com/purescript/purescript/releases/tag/v0.13.1
+  ]
+
+isPre0_13 :: String -> Boolean
+isPre0_13 input = do
+  let trimmed = fromMaybe input (String.stripPrefix (String.Pattern "v") input)
+  fromMaybe false do
+    let array = String.split (String.Pattern ".") trimmed
+    majorStr <- Array.index array 0
+    minorStr <- Array.index array 1
+    major <- Int.fromString majorStr
+    minor <- Int.fromString minorStr
+    pure $ major == 0 && minor < 13
+
+isSupportedAsset :: ReleaseAsset -> Boolean
+isSupportedAsset asset = do
+  isJust (String.stripSuffix (String.Pattern ".tar.gz") asset.name)
+    && not (String.contains (String.Pattern "win64") asset.name)
+
+-- | Convert a release to a manifest, returning Nothing if the release ought to
+-- | be skipped.
+pursReleaseToManifest :: Set NixVersion -> Release -> AppM (Maybe PursManifest)
+pursReleaseToManifest existing release = do
+  Console.log $ "\nProcessing release " <> release.tag
+  if isPre0_13 release.tag then do
+    Console.log $ "Omitting release " <> release.tag <> " because it is prior to purs-0.13"
+    pure Nothing
+  else if Array.elem (Tag release.tag) omittedPursReleases then do
+    Console.log $ "Omitting release " <> release.tag <> " because it is in the omitted purs releases list."
+    pure Nothing
+  else if release.draft then do
+    Console.log $ "Omitting release " <> release.tag <> " because it is a draft."
+    pure Nothing
+  else case Nix.Version.parse $ fromMaybe release.tag $ String.stripPrefix (String.Pattern "v") release.tag of
+    Left error -> do
+      Console.log $ "Skipping release because it could not be parsed as a Nix version (X.Y.Z or X.Y.Z-N)."
+      Console.log error
+      pure Nothing
+    Right version
+      | Set.member version existing -> do
+          Console.log $ "Skipping release because it already exists in the manifests file."
+          pure Nothing
+      | otherwise -> do
+          let supported = Array.filter isSupportedAsset release.assets
+          when (Array.length supported < 2) do
+            Console.log "PureScript releases always have at least 2 supported release assets, but this release has fewer."
+            Console.log $ Utils.printJson Octokit.releaseCodec release
+            liftEffect (Process.exit 1)
+          entries :: Array (Tuple NixSystem PursManifestEntry) <- for supported \tarball -> do
+            system <- case Nix.System.fromPursReleaseTarball tarball.name of
+              Left error -> do
+                Console.log $ "Failed to parse tarball in release " <> release.tag <> " named " <> tarball.name
+                Console.log error
+                liftEffect (Process.exit 1)
+              Right system -> pure system
+            Console.log $ "Chose Nix system " <> Nix.System.print system <> " for tarball " <> tarball.name
+            sha256 <- Nix.Prefetch.nixPrefetchTarball tarball.downloadUrl >>= case _ of
+              Left error -> do
+                Console.log $ "Could not prefetch hash for tarball at url " <> tarball.downloadUrl
+                Console.log error
+                liftEffect (Process.exit 1)
+              Right sha256 -> pure sha256
+            Console.log $ "Got hash " <> Sha256.print sha256 <> " for tarball " <> tarball.name
+            pure (Tuple system { url: tarball.downloadUrl, hash: sha256 })
+          let union prev (Tuple system entry) = Map.insertWith Map.union system (Map.singleton version entry) prev
+          pure $ Just $ Array.foldl union Map.empty entries
 
 -- TODO: Spago's alpha does not currently have any official releases, so we
 -- don't fetch anything.
 fetchSpagoReleases :: AppM SpagoManifest
-fetchSpagoReleases = pure Map.empty
+fetchSpagoReleases = do
+  Console.log "Fetching spago releases..."
+  pure Map.empty

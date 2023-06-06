@@ -17,3 +17,4 @@ newtype CommitSha = CommitSha String
 derive instance Newtype CommitSha _
 derive newtype instance Eq CommitSha
 derive newtype instance Ord CommitSha
+
