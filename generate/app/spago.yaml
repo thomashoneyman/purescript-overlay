@@ -5,5 +5,4 @@ package:
     - argparse-basic
     - console
     - effect
-    - lib
     - node-process

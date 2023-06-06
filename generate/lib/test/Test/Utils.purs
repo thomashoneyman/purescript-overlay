@@ -2,6 +2,7 @@ module Test.Utils where
 
 import Prelude
 
+import App.Utils as App.Utils
 import Control.Monad.Error.Class (class MonadThrow)
 import Data.Argonaut.Core as Argonaut
 import Data.Argonaut.Parser as Argonaut.Parser
@@ -14,12 +15,6 @@ import Data.String as String
 import Effect.Exception (Error)
 import Test.Spec.Assertions as Assert
 
--- | Partition an array of `Either` values into failure and success  values
-partitionEithers :: forall e a. Array (Either e a) -> { fail :: Array e, success :: Array a }
-partitionEithers = Array.foldMap case _ of
-  Left err -> { fail: [ err ], success: [] }
-  Right res -> { fail: [], success: [ res ] }
-
 type Fixture = { label :: String, value :: String }
 
 -- | Round-trip an input JSON string
@@ -31,7 +26,7 @@ shouldRoundTrip ty codec fixtures = do
         Left error -> Left { label, input: value, error }
         Right result -> Right { label, input: value, result }
 
-    fixtureParseResult = partitionEithers (map parseFixture fixtures)
+    fixtureParseResult = App.Utils.partitionEithers (map parseFixture fixtures)
 
     formatFixtureError { label, input, error } = label <> " failed with " <> error <> " for input:\n" <> input
 
@@ -47,7 +42,7 @@ shouldRoundTrip ty codec fixtures = do
       let input = String.trim fields.input
       if input == printed then Right unit else Left { label: fields.label, input, printed }
 
-    roundtripResult = partitionEithers roundtrip
+    roundtripResult = App.Utils.partitionEithers roundtrip
 
     formatRoundtripError { label, input, printed } =
       String.joinWith "\n"

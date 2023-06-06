@@ -27,6 +27,16 @@
       "url": "https://github.com/purescript/purescript/releases/download/v0.15.10-0/macos.tar.gz"
     }
   },
+  "aarch64-linux": {
+    "0.15.9": {
+      "hash": "sha256-4erC9rG4CRPHg9Os9fLYOfLbE/elkXaXaKXYD5J8EsE=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.9/linux-arm64.tar.gz"
+    },
+    "0.15.10-0": {
+      "hash": "sha256-47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.10-0/linux-arm64.tar.gz"
+    }
+  },
   "aarch64-darwin": {
     "0.15.9": {
       "hash": "sha256-Sni8ez6TPPcqYvRhmD/HjAiTfBJB/mC9rR/w/K4RkZk=",
