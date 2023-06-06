@@ -20,7 +20,12 @@ import Safe.Coerce (coerce)
 newtype NixVersion = NixVersion { version :: Version, pre :: Maybe Int }
 
 derive instance Eq NixVersion
-derive instance Ord NixVersion
+
+instance Ord NixVersion where
+  compare (NixVersion l) (NixVersion r) =
+    case l.version `compare` r.version of
+      EQ -> l.pre `compare` r.pre
+      x -> x
 
 parse :: String -> Either String NixVersion
 parse input = coerce $ case String.split (String.Pattern "-") input of

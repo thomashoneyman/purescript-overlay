@@ -6,6 +6,7 @@ import ArgParse.Basic (ArgParser)
 import ArgParse.Basic as Arg
 import Bin.AppM (AppM)
 import Bin.AppM as AppM
+import Control.Monad.Reader (ask)
 import Data.Array as Array
 import Data.Either (Either(..))
 import Data.Foldable (foldMap)
@@ -102,61 +103,58 @@ main = Aff.launchAff_ do
 
   octokit <- Octokit.newOctokit
 
-  AppM.runAppM { octokit } $ case mode of
-    Verify dir -> do
+  case mode of
+    Verify dir -> AppM.runAppM { octokit, manifestDir: dir } do
       Console.log "Verifying manifests..."
-      manifests <- readManifests dir
+      manifests <- readManifests
       let pursEntries = alaF Additive foldMap Map.size (Map.values manifests.purs)
       Console.log $ "Successfully parsed purs.json with " <> Int.toStringAs Int.decimal pursEntries <> " entries."
       let spagoEntries = Map.size manifests.spago
       Console.log $ "Successfully parsed spago.json with " <> Int.toStringAs Int.decimal spagoEntries <> " entries."
 
-    Prefetch dir -> do
+    Prefetch dir -> AppM.runAppM { octokit, manifestDir: dir } do
       Console.log "Prefetching new releases..."
-
-      Console.log $ "Reading manifests from " <> dir
-      manifests <- readManifests dir
-
-      Console.log $ "Fetching all releases and diffing against existing releases..."
+      manifests <- readManifests
       updates <- fetchUpdates manifests
-
       if Map.size updates.purs > 0 then
         Console.log $ "New purs releases: " <> Utils.printJson Nix.Manifest.pursManifestCodec updates.purs
       else Console.log "No new purs releases."
-
       if Map.size updates.spago > 0 then
         Console.log $ "New spago releases: " <> Utils.printJson Nix.Manifest.spagoManifestCodec updates.spago
       else Console.log "No new spago releases."
 
-    Update dir commit -> do
+    Update dir commit -> AppM.runAppM { octokit, manifestDir: dir } do
       case commit of
         DoCommit ->
-          Console.log "Updating, committing results, and opening a pull request if necessary..."
+          Console.log "Committing is not yet working. Updating locally only (not committing results)."
+        -- committing results, and opening a pull request if necessary..."
         NoCommit ->
           Console.log "Updating locally only (not committing results)"
 
-      manifests <- readManifests dir
+      manifests <- readManifests
       updates <- fetchUpdates manifests
 
-      if Map.size updates.purs > 0 then
+      if Map.size updates.purs > 0 then do
         Console.log $ "New purs releases: " <> Utils.printJson Nix.Manifest.pursManifestCodec updates.purs
-      else Console.log "No new purs releases."
+        Console.log "Writing to disk..."
+        let merged = Map.unionWith Map.union manifests.purs updates.purs
+        writePursManifest merged
+      else do
+        Console.log "No new purs releases."
 
-      if Map.size updates.spago > 0 then
+      if Map.size updates.spago > 0 then do
         Console.log $ "New spago releases: " <> Utils.printJson Nix.Manifest.spagoManifestCodec updates.spago
-      else Console.log "No new spago releases."
+        Console.log "Writing to disk..."
+        let merged = Map.union manifests.spago updates.spago
+        writeSpagoManifest merged
+      else do
+        Console.log "No new spago releases."
 
-readManifests :: FilePath -> AppM Manifests
-readManifests dir = do
-  purs <- readPursManifest dir
-  spago <- readSpagoManifest dir
+readManifests :: AppM Manifests
+readManifests = do
+  purs <- readPursManifest
+  spago <- readSpagoManifest
   pure { purs, spago }
-
-readPursManifest :: FilePath -> AppM PursManifest
-readPursManifest dir = Utils.readJsonFile (Path.concat [ dir, "purs.json" ]) Nix.Manifest.pursManifestCodec
-
-readSpagoManifest :: FilePath -> AppM SpagoManifest
-readSpagoManifest dir = Utils.readJsonFile (Path.concat [ dir, "spago.json" ]) Nix.Manifest.spagoManifestCodec
 
 -- | Retrieve all relevant releases for the various supported tools from GitHub.
 fetchUpdates :: Manifests -> AppM Manifests
@@ -184,7 +182,8 @@ fetchPursReleases existing = do
 
 omittedPursReleases :: Array Tag
 omittedPursReleases =
-  [ Tag "v0.13.1" -- https://github.com/purescript/purescript/releases/tag/v0.13.1
+  [ Tag "v0.13.1" -- https://github.com/purescript/purescript/releases/tag/v0.13.1 (doesn't work)
+  , Tag "v0.13.7" -- https://github.com/purescript/purescript/releases/tag/v0.13.7 (has no releases)
   ]
 
 isPre0_13 :: String -> Boolean
@@ -257,3 +256,33 @@ fetchSpagoReleases :: AppM SpagoManifest
 fetchSpagoReleases = do
   Console.log "Fetching spago releases..."
   pure Map.empty
+
+getPursManifestPath :: AppM FilePath
+getPursManifestPath = do
+  { manifestDir } <- ask
+  pure $ Path.concat [ manifestDir, "purs.json" ]
+
+getSpagoManifestPath :: AppM FilePath
+getSpagoManifestPath = do
+  { manifestDir } <- ask
+  pure $ Path.concat [ manifestDir, "spago.json" ]
+
+readPursManifest :: AppM PursManifest
+readPursManifest = do
+  path <- getPursManifestPath
+  Utils.readJsonFile path Nix.Manifest.pursManifestCodec
+
+writePursManifest :: PursManifest -> AppM Unit
+writePursManifest manifest = do
+  path <- getPursManifestPath
+  Utils.writeJsonFile path Nix.Manifest.pursManifestCodec manifest
+
+readSpagoManifest :: AppM SpagoManifest
+readSpagoManifest = do
+  path <- getSpagoManifestPath
+  Utils.readJsonFile path Nix.Manifest.spagoManifestCodec
+
+writeSpagoManifest :: SpagoManifest -> AppM Unit
+writeSpagoManifest manifest = do
+  path <- getPursManifestPath
+  Utils.writeJsonFile path Nix.Manifest.spagoManifestCodec manifest

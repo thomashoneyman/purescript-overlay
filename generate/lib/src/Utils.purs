@@ -19,6 +19,12 @@ import Node.Encoding (Encoding(..))
 import Node.FS.Aff as FS.Aff
 import Node.Path (FilePath)
 
+writeJsonFile :: forall m a. MonadAff m => FilePath -> JsonCodec a -> a -> m Unit
+writeJsonFile path codec a = liftAff do
+  let encoded = CA.encode codec a
+  let text = Argonaut.stringifyWithIndent 2 encoded
+  FS.Aff.writeTextFile UTF8 path (text <> "\n")
+
 readJsonFile :: forall m a. MonadAff m => FilePath -> JsonCodec a -> m a
 readJsonFile path codec = liftAff do
   text <- FS.Aff.readTextFile UTF8 path

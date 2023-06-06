@@ -1,5 +1,105 @@
 {
   "x86_64-linux": {
+    "0.13.0": {
+      "hash": "sha256-apEgOKcFy6lEkUlu4/qJkVb1MZYf5Z0wVYOZ7ZPB5Rk=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.13.0/linux64.tar.gz"
+    },
+    "0.13.2": {
+      "hash": "sha256-1VVSww26WtWikHH96fa6y9gkhCcLgBW+YQT38ypEVQI=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.13.2/linux64.tar.gz"
+    },
+    "0.13.3": {
+      "hash": "sha256-f1CT9MBY1wR3MFo/BcXqf6q73YYwASjbPYhih0kylvU=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.13.3/linux64.tar.gz"
+    },
+    "0.13.4": {
+      "hash": "sha256-z763KgLfmPZJIJhh+zCAxxnmB7spm4Ffdu39N2OJX6o=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.13.4/linux64.tar.gz"
+    },
+    "0.13.5": {
+      "hash": "sha256-sb8SQmM2m/63c6adh7xQjCGVNtaYBgtcKoisdz3f3AQ=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.13.5/linux64.tar.gz"
+    },
+    "0.13.6": {
+      "hash": "sha256-2tKl552+gfkUID/WCGF81A0Kd2MaihcgNgkrMWS2XwQ=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.13.6/linux64.tar.gz"
+    },
+    "0.13.8": {
+      "hash": "sha256-vteEzT/YEDlYerUxqXLyJbf6ZwWW7NyuF+DVbKhOqwc=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.13.8/linux64.tar.gz"
+    },
+    "0.14.0": {
+      "hash": "sha256-UD589/kXaSPmFDE9B2T/fcaslN35DOcMnk2sT3s9cdA=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.14.0/linux64.tar.gz"
+    },
+    "0.14.1": {
+      "hash": "sha256-W2QYMt9EH+UJuLbZhT2aKcdSqG3NDJUpQ9xhrAAtb8g=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.14.1/linux64.tar.gz"
+    },
+    "0.14.2": {
+      "hash": "sha256-fOrrDdLilPGcuI8jO7oMAtzE+pGTspzX4LQgbkNtZ88=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.14.2/linux64.tar.gz"
+    },
+    "0.14.3": {
+      "hash": "sha256-4KLhxA4EHKYFgQLjGFpY1QF/dw1E4n75egS15670EpU=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.14.3/linux64.tar.gz"
+    },
+    "0.14.4": {
+      "hash": "sha256-oKZnQREOU+hxOLlSRNSMLqIwI96UjvnFGgd9UaiB+kE=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.14.4/linux64.tar.gz"
+    },
+    "0.14.5": {
+      "hash": "sha256-mh9Kb0111KqlfGIlQZ9b0Nr+ikgOgWcmAzj7CIbdfdc=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.14.5/linux64.tar.gz"
+    },
+    "0.14.6": {
+      "hash": "sha256-6bR83C76DHM/LyFTy+mFU9wuXaJLw6GMWhjKpEBBrgY=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.14.6/linux64.tar.gz"
+    },
+    "0.14.7": {
+      "hash": "sha256-yuFqABfGP9g+ApyloBy5/ALKzb2AWx0rJI+bs8Pqkm0=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.14.7/linux64.tar.gz"
+    },
+    "0.14.8": {
+      "hash": "sha256-xv7vQCOv8xznvcSJ/ly0kxukjs/iqEyWOX5s6BAWbbc=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.14.8/linux64.tar.gz"
+    },
+    "0.14.9": {
+      "hash": "sha256-c/qjAeJrsuhgJce9xfmDItics+X/lnDUPvsthaBSPDw=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.14.9/linux64.tar.gz"
+    },
+    "0.15.0": {
+      "hash": "sha256-/VL0k0Xrp+a/++vdLEbuqlnxZpKB4IB5CX7QtzY39/k=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.0/linux64.tar.gz"
+    },
+    "0.15.1": {
+      "hash": "sha256-I7+X1S4K5Hty8Km88YVSWwNa2XVnNSZAyeFmJYJBjK0=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.1/linux64.tar.gz"
+    },
+    "0.15.2": {
+      "hash": "sha256-FVQbrpt9824iJFSnnh/XQVcyTp8tEsD3M/yzmJeZZ9w=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.2/linux64.tar.gz"
+    },
+    "0.15.3": {
+      "hash": "sha256-2zmIPCLa2eGkEXTQzfA4kFEbo7NPk5z8JLIJDGhpdyA=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.3/linux64.tar.gz"
+    },
+    "0.15.4": {
+      "hash": "sha256-PipZ26xJVkt87ttbEC7s8rCyR2Xb/MHu1axOo5bG5o4=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.4/linux64.tar.gz"
+    },
+    "0.15.5": {
+      "hash": "sha256-tt+7WCMDvZhCOFC0vqkPy3FrHxSImgDJEW+1Vyz9jJ0=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.5/linux64.tar.gz"
+    },
+    "0.15.6": {
+      "hash": "sha256-E+DM2Ug6d+tmM3Nth2yDOjGW+AmaFlqDeyV/svuLg+8=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.6/linux64.tar.gz"
+    },
+    "0.15.7": {
+      "hash": "sha256-s1BH/9340Yz3OJL3uVHLCQiAs81IV1QAXj9NQ2bGUgw=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.7/linux64.tar.gz"
+    },
     "0.15.8": {
       "hash": "sha256-Hoh/VpCNXsK5+ql1nMqVS3Qw+6PRMKjgVzEoSVTqV6Q=",
       "url": "https://github.com/purescript/purescript/releases/download/v0.15.8/linux64.tar.gz"
@@ -8,12 +108,344 @@
       "hash": "sha256-A8v0N75PGMT4fP9v3gUnm4ZmZDz7D+BM0As1TaeNS2U=",
       "url": "https://github.com/purescript/purescript/releases/download/v0.15.9/linux64.tar.gz"
     },
+    "0.15.1-0": {
+      "hash": "sha256-t9RD++DSAY/fBr3oryMIvERTkbhx4WcSMYaFlGybT9A=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.1-0/linux64.tar.gz"
+    },
+    "0.15.2-0": {
+      "hash": "sha256-Z9iBPKmGLumrDhduN32hJ/aNavuapLGqohemZyEUeeM=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.2-0/linux64.tar.gz"
+    },
+    "0.15.3-0": {
+      "hash": "sha256-wubh9YFDkDNi67eGOFn03GamY4q1kXdR5pJzgI5w8cE=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.3-0/linux64.tar.gz"
+    },
+    "0.15.4-0": {
+      "hash": "sha256-ATjHOYmALGoG/6+mV0yDlYgrQr6cuDRyG1z5Zda1uLU=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.4-0/linux64.tar.gz"
+    },
+    "0.15.5-0": {
+      "hash": "sha256-vyYQvm1XPDYwZwj146GCL1xEQGytkqtvEoCSzGYAFRs=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.5-0/linux64.tar.gz"
+    },
+    "0.15.6-0": {
+      "hash": "sha256-WvoXWRQ1UUnCZx254o9LAMd3xA8ytfURb+svMQvviqI=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.6-0/linux64.tar.gz"
+    },
+    "0.15.7-0": {
+      "hash": "sha256-ZMPMPcBNP0XTuYRBxcZEVB0uhg4Xs4cRTwUX08kH/nM=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.7-0/linux64.tar.gz"
+    },
+    "0.15.8-0": {
+      "hash": "sha256-O+XXZVCQF6snxscfxk9VhK6Ai2HVQRaw+/tN+5zieOk=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.8-0/linux64.tar.gz"
+    },
+    "0.15.9-0": {
+      "hash": "sha256-yxf+lNmpMJa0nHIy101UYYfK01CuED0zvZTxtVCHeJo=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.9-0/linux64.tar.gz"
+    },
     "0.15.10-0": {
       "hash": "sha256-Kc0PkV4kb7Kq9G7jvnkCfFQdClEf1mn14dF9m66dJVo=",
       "url": "https://github.com/purescript/purescript/releases/download/v0.15.10-0/linux64.tar.gz"
+    },
+    "0.15.1-1": {
+      "hash": "sha256-3qP4XO8unbDLvt2U84NLRX3zf+DV1C7re7SfuN9VNEU=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.1-1/linux64.tar.gz"
+    },
+    "0.15.3-1": {
+      "hash": "sha256-Dg/ssZUq0jnaNzq/gY34Q1uS/UIufDR3rPbanOOljUA=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.3-1/linux64.tar.gz"
+    },
+    "0.15.5-1": {
+      "hash": "sha256-ZqcazOJj0HW9kl8UNkiTNjjIuRHUDRcEWxxJjRAB2mY=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.5-1/linux64.tar.gz"
+    },
+    "0.15.6-1": {
+      "hash": "sha256-lyAfm0kdLRNwpVdfVHIEJVH35AR0tml0o/6FhwpVkm8=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.6-1/linux64.tar.gz"
+    },
+    "0.15.7-1": {
+      "hash": "sha256-xYWBFFGFgYnTeRlNv6omjS4mWumzKlzobNjbpyQ2lzc=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.7-1/linux64.tar.gz"
+    },
+    "0.15.8-1": {
+      "hash": "sha256-9dH0Z3BZJ8JmQb5iyEQ9Ok1lKgb8VinsXpDe8Yo8u2E=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.8-1/linux64.tar.gz"
+    },
+    "0.15.9-1": {
+      "hash": "sha256-C2MHXu0GYTV8MKU25Kyi1ptIW3Fh5ffhLq+Lf1c9mFs=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.9-1/linux64.tar.gz"
+    },
+    "0.15.1-2": {
+      "hash": "sha256-A4bMGcm1uiMVfAkrZtdj1fW7k7L09gw2RKTKWZN97qs=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.1-2/linux64.tar.gz"
+    },
+    "0.15.3-2": {
+      "hash": "sha256-tfL3ZjXBuJMhgYZydCo+PAqjxAfcfpsp34nMsjw7wiw=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.3-2/linux64.tar.gz"
+    },
+    "0.15.5-2": {
+      "hash": "sha256-lT6hJoimk5Yy77suLS61Lr3VjVLqfgGaLS/fRQwTIvE=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.5-2/linux64.tar.gz"
+    },
+    "0.15.7-2": {
+      "hash": "sha256-5TLEGahPPaSmKST9vCes0NpIy5SIHa8yL/iC9HuTrI8=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.7-2/linux64.tar.gz"
+    },
+    "0.15.8-2": {
+      "hash": "sha256-k633fkMmen03mKkADCXsChl8VLecdPjq/jBhsfvWlqA=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.8-2/linux64.tar.gz"
+    },
+    "0.15.9-2": {
+      "hash": "sha256-XRbmSEnf9M9+YOhhaFSG4Am5SNvNQjnF/K0FgcHqGJo=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.9-2/linux64.tar.gz"
+    },
+    "0.15.1-3": {
+      "hash": "sha256-RVNqNB9TJlrGY4cX+F8bQnRTQTFM+2HwyQgWi3RbnvQ=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.1-3/linux64.tar.gz"
+    },
+    "0.15.3-3": {
+      "hash": "sha256-wzk1R/wkaK6LcKEPv0y54i7zJovme1+qwecQLp6o7aU=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.3-3/linux64.tar.gz"
+    },
+    "0.15.5-3": {
+      "hash": "sha256-C3m3aGOwgMj6MUWaZUyR91cmEvXUxFIlqnvABW673Qw=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.5-3/linux64.tar.gz"
+    },
+    "0.15.7-3": {
+      "hash": "sha256-Mqm5Zu8RhmlnaD1Ufv2jTev25VxgVY38KRK8lQu0rZs=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.7-3/linux64.tar.gz"
+    },
+    "0.15.8-3": {
+      "hash": "sha256-WYD7zqbDXLz00rYLCgkCz3wibprZX/Jc2+pIwO3TFSI=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.8-3/linux64.tar.gz"
+    },
+    "0.15.9-3": {
+      "hash": "sha256-Jk/e5I3GCv5PyjJ58V/uVajbEKqqCiEA12KFuPhvuOg=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.9-3/linux64.tar.gz"
+    },
+    "0.15.1-4": {
+      "hash": "sha256-Bmdi2XLO5SpfuPiK1wcJFJDHb0y+XrOb7xIpt+Y0/n4=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.1-4/linux64.tar.gz"
+    },
+    "0.15.3-4": {
+      "hash": "sha256-mNmR3G20A4o4Zt1S/d33DGQ6pbjw/QZfQ6GuiXeDlco=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.3-4/linux64.tar.gz"
+    },
+    "0.15.5-4": {
+      "hash": "sha256-GLgdWeYkiBy1FODHeTF8rXqREfTFWrLpy3WIUzflU8M=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.5-4/linux64.tar.gz"
+    },
+    "0.15.7-4": {
+      "hash": "sha256-XCehOixU4H2PH4yL2e2gFkdqZmvw/pU1kVD4p95Hc+8=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.7-4/linux64.tar.gz"
+    },
+    "0.15.8-4": {
+      "hash": "sha256-8m/kgD4+WO/7qpLZ4v9liaCDN7C139mCmqsOQ6tzTPg=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.8-4/linux64.tar.gz"
+    },
+    "0.15.9-4": {
+      "hash": "sha256-fZtvFwlHo9rAAgsz0g5/nLYNXn22eZZSRlGXAtuj+xM=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.9-4/linux64.tar.gz"
+    },
+    "0.15.1-5": {
+      "hash": "sha256-DwzDl3cJO9lmlxq4cvIOcqhPSKRaQNAVloloQqbZ9ZY=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.1-5/linux64.tar.gz"
+    },
+    "0.15.3-5": {
+      "hash": "sha256-wNfMW/D1K7UQwlRHpPjXzY34vQgGEER9OxYkVGn1ioo=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.3-5/linux64.tar.gz"
+    },
+    "0.15.5-5": {
+      "hash": "sha256-Vc//V5qaTwIQkrEdFHdZS0nYD3eviv2QtiUVWPNkJxY=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.5-5/linux64.tar.gz"
+    },
+    "0.15.7-5": {
+      "hash": "sha256-F46S4olnqlElcX9cMbjBr6yvujL862Ek+9rFUOLPo2Y=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.7-5/linux64.tar.gz"
+    },
+    "0.15.9-5": {
+      "hash": "sha256-yktyZRm6YMyuVvB57zbQnjs85mtwweTnYHSjFDyTuQc=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.9-5/linux64.tar.gz"
+    },
+    "0.15.1-6": {
+      "hash": "sha256-ZqKazQMlqQPetVmnW9CrVzKATbPaETv6d1jnDT1bZWw=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.1-6/linux64.tar.gz"
+    },
+    "0.15.3-6": {
+      "hash": "sha256-8zKde6tPv+vti/NgM8Ad9avOlrwCubxSXexlQO5rrPI=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.3-6/linux64.tar.gz"
+    },
+    "0.15.5-6": {
+      "hash": "sha256-h4/OVKX8E0AwanMqzyp2QVdyVydqbch+pPMbp1hE+KI=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.5-6/linux64.tar.gz"
+    },
+    "0.15.7-6": {
+      "hash": "sha256-Bo0AuHWXukzioUlyEQBr3L8AnE0dC1oYGdskP1Md49Y=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.7-6/linux64.tar.gz"
+    },
+    "0.15.9-6": {
+      "hash": "sha256-FWSlfDwcMT0vEax1sgkY6FCn+zDSU8/CQn68KVr4kIs=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.9-6/linux64.tar.gz"
+    },
+    "0.15.1-7": {
+      "hash": "sha256-Ap8rRaQtZdLwHJf8FE/SePU8X7l+Y7cUp3OF3T+fWUg=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.1-7/linux64.tar.gz"
+    },
+    "0.15.3-7": {
+      "hash": "sha256-pAKVXiDTyeTjWAxMVSur0Vt5Mh9lOmXcp0OGBU2xOC8=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.3-7/linux64.tar.gz"
+    },
+    "0.15.5-7": {
+      "hash": "sha256-OvBlRMr81Wn5Q1SGAGmyqFwrjP7BSg40lI3Qqw8oihM=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.5-7/linux64.tar.gz"
+    },
+    "0.15.7-7": {
+      "hash": "sha256-RgVxRE5cyb/f/SKo1H3SzbI5rJaSR9XN4FWsAiBQdZI=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.7-7/linux64.tar.gz"
+    },
+    "0.15.9-7": {
+      "hash": "sha256-RhJlEevePrE51u8tx53UQuGO0Tw/UO72cP0rf+4rrSI=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.9-7/linux64.tar.gz"
+    },
+    "0.15.3-8": {
+      "hash": "sha256-a5AzM5lQ7SgR6rIy2l2TSPmMqzDcTspYLLkNI2I1LvI=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.3-8/linux64.tar.gz"
+    },
+    "0.15.5-8": {
+      "hash": "sha256-CaINaxChDS9xsfaLY4eKwFRVCCyVJ9XaJdCESq4h4Pc=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.5-8/linux64.tar.gz"
+    },
+    "0.15.7-8": {
+      "hash": "sha256-Mm//aCLwac6r68EfFGonrNko10kizyvaiyoPr1j0JKw=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.7-8/linux64.tar.gz"
+    },
+    "0.15.9-8": {
+      "hash": "sha256-D+a6NS+y0rcQ6Yr0K+nMNFpGz5bnGXmta01nbYMoKAk=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.9-8/linux64.tar.gz"
+    },
+    "0.15.3-9": {
+      "hash": "sha256-PL/AQCokQf46myJCE0/vKHyvUHNJhIBhTAjdSMAw3K4=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.3-9/linux64.tar.gz"
+    },
+    "0.15.5-9": {
+      "hash": "sha256-pclj3nKujKVu7ZoafohYLbg93gRbChl4rOyM4uTVlRg=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.5-9/linux64.tar.gz"
+    },
+    "0.15.7-9": {
+      "hash": "sha256-HrX96+DhIAFoIsxaZjdkQl7BSVoMTBS2Jch2FvNH6vI=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.7-9/linux64.tar.gz"
+    },
+    "0.15.3-10": {
+      "hash": "sha256-oZ3WAO6cAuNmMDvtvITZmV3Kw3OBvlhKgAkqKNsJ0J8=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.3-10/linux64.tar.gz"
+    },
+    "0.15.5-10": {
+      "hash": "sha256-JcSR2In4zU2YwSXkdvnRwR4xSMAQWwx/P8seJnD/e2E=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.5-10/linux64.tar.gz"
     }
   },
   "x86_64-darwin": {
+    "0.13.0": {
+      "hash": "sha256-gMbi5NEb7mdV72QYQmOVsKWANqDNmfq9f87Ih4bX8XY=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.13.0/macos.tar.gz"
+    },
+    "0.13.2": {
+      "hash": "sha256-nyGFvYpRE37T5hWtp7iFMnETZIefmUPF9H3BLVSmW5M=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.13.2/macos.tar.gz"
+    },
+    "0.13.3": {
+      "hash": "sha256-FOoHHib8jDX+0eo68ydOsPY8naExZRUhZZYf2RSG1BM=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.13.3/macos.tar.gz"
+    },
+    "0.13.4": {
+      "hash": "sha256-3ZFZU3KjH5t+tpd3pIkjqZTdTPB0qJ3RDNmHHHJUEmc=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.13.4/macos.tar.gz"
+    },
+    "0.13.5": {
+      "hash": "sha256-1dMkuZKp/HUmvct1VKQfSxDUgvCPrlFGRuM0Biooa6U=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.13.5/macos.tar.gz"
+    },
+    "0.13.6": {
+      "hash": "sha256-RSgJE6ed+yJQiURMuqwPzd8bRPdPmqThvj/6mLOUfBI=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.13.6/macos.tar.gz"
+    },
+    "0.13.8": {
+      "hash": "sha256-IQ0zracCJWmVCAHxAd3cAT3WknTyJFrsbKufRwRHHBU=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.13.8/macos.tar.gz"
+    },
+    "0.14.0": {
+      "hash": "sha256-ekj9IXGfkN12PfoAfwJQfL55+Tau8M36fvv9k1Wx1jU=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.14.0/macos.tar.gz"
+    },
+    "0.14.1": {
+      "hash": "sha256-Gx4ebIOmjc69luAvd6a4AVtDl2MuNMxfC9dea5y9XdQ=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.14.1/macos.tar.gz"
+    },
+    "0.14.2": {
+      "hash": "sha256-7mOLhKLpX1dk+OHCEs0NAtutZ5Rbpjvs9y2cvJKFQr0=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.14.2/macos.tar.gz"
+    },
+    "0.14.3": {
+      "hash": "sha256-UuvJhnd4wSOm4lbReUdCv+WvHhh++OA6GACOPs3V88Y=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.14.3/macos.tar.gz"
+    },
+    "0.14.4": {
+      "hash": "sha256-ybG8nDwEGvjTV+Uq5iX8xk+GMjYA2PuLAA0k5Mri31Q=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.14.4/macos.tar.gz"
+    },
+    "0.14.5": {
+      "hash": "sha256-+7q31FUdKFgFi6cVp+rZCC6WapYaUJcA0pSzkf9dO68=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.14.5/macos.tar.gz"
+    },
+    "0.14.6": {
+      "hash": "sha256-4yqYvZhtRYz2JOYYJM4AmxWWP3nabUHxXOtjRdUj1Hk=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.14.6/macos.tar.gz"
+    },
+    "0.14.7": {
+      "hash": "sha256-LKPoWbb0R2Dfw5rtLI/+ZdqTltQ2s0yAj08eWHY/gF0=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.14.7/macos.tar.gz"
+    },
+    "0.14.8": {
+      "hash": "sha256-lDIKZDc/SkP1Dka328Q6X3xSZ/5uuWRLcgfIpC2j8zw=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.14.8/macos.tar.gz"
+    },
+    "0.14.9": {
+      "hash": "sha256-ZCXWPtDWxKT9KscziqaxJDaTnn+/nRR3N1Uk2HwHc/8=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.14.9/macos.tar.gz"
+    },
+    "0.15.0": {
+      "hash": "sha256-azqglq59JnuOUgBIV/gTIfskou2HTTsqAuw7oxa/qSU=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.0/macos.tar.gz"
+    },
+    "0.15.1": {
+      "hash": "sha256-EIdQ10Zv2dJpmn0zvseK+iGb7yJbQjjNP8XdMxWUy2w=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.1/macos.tar.gz"
+    },
+    "0.15.2": {
+      "hash": "sha256-kGBVfDwChrEiLl+eSxBcpv1KA5Kty8LUsNhtZ33C2hk=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.2/macos.tar.gz"
+    },
+    "0.15.3": {
+      "hash": "sha256-AxBLpNUD0ZIS2x89M2HMV1AmGJnLzToNX4pNpYIcagY=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.3/macos.tar.gz"
+    },
+    "0.15.4": {
+      "hash": "sha256-zQjWP2LH/LVTYRNS8H/QA78rrzI5qq0YReRelJhhemY=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.4/macos.tar.gz"
+    },
+    "0.15.5": {
+      "hash": "sha256-25FOsqeUkgx8pLbXZ0g2CKqS5qTiUoG6vKB1FMPzx+A=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.5/macos.tar.gz"
+    },
+    "0.15.6": {
+      "hash": "sha256-Xawnn2J7x0pHtI3uSIXERry62998YuUgeVSn+3qqhJI=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.6/macos.tar.gz"
+    },
+    "0.15.7": {
+      "hash": "sha256-27R0nuQMclmlCh3E3LHrMHvzEXlDLqzNoYWZP1LWBSs=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.7/macos.tar.gz"
+    },
     "0.15.8": {
       "hash": "sha256-N+fc/8D8ERwEe290mSGm72Tr+hVXBcHqw4NSwT1aBis=",
       "url": "https://github.com/purescript/purescript/releases/download/v0.15.8/macos.tar.gz"
@@ -22,9 +454,241 @@
       "hash": "sha256-LuGl4ChXbbs+6dz46++3kHjfgot8NT6OS5EeR3M6r/c=",
       "url": "https://github.com/purescript/purescript/releases/download/v0.15.9/macos.tar.gz"
     },
+    "0.15.1-0": {
+      "hash": "sha256-j1nXlvVGdB6s3uJltpOTXjxbhMEymM/mk1/CX2cVqe0=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.1-0/macos.tar.gz"
+    },
+    "0.15.2-0": {
+      "hash": "sha256-r0GDB54731HXK+nxiscbwke3rPYvmPPg+lK1cRxmOm8=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.2-0/macos.tar.gz"
+    },
+    "0.15.3-0": {
+      "hash": "sha256-TyOo1JAIg5PYYoB55/5Qw1hb3tQQvHqWqySP+r4ZDKE=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.3-0/macos.tar.gz"
+    },
+    "0.15.4-0": {
+      "hash": "sha256-X2zuhKiubPLi4sdKAU4bDiW8BBlFRfzGzLa7e5Kw4h4=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.4-0/macos.tar.gz"
+    },
+    "0.15.5-0": {
+      "hash": "sha256-H2hYmGQiEZh0D6wSSZVBgx0aM3FSShegqelDu8TKZjA=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.5-0/macos.tar.gz"
+    },
+    "0.15.6-0": {
+      "hash": "sha256-DVJE8OeNAiTInU07JVWvWBpH9EWOMc/c7jfmwBwv/pk=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.6-0/macos.tar.gz"
+    },
+    "0.15.7-0": {
+      "hash": "sha256-VkPRnLHDEiG8Rg5vjyOK73Q26e/9KtcTVnFkNzV8cXs=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.7-0/macos.tar.gz"
+    },
+    "0.15.8-0": {
+      "hash": "sha256-JU9ABrBwlray0SoM3nqleuy7xTYJnAE+pPMzpyACt0U=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.8-0/macos.tar.gz"
+    },
+    "0.15.9-0": {
+      "hash": "sha256-bQ2yTkEnk2XbxIm8i03E0cpEfejvbW+DbUVQGOPuUpQ=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.9-0/macos.tar.gz"
+    },
     "0.15.10-0": {
       "hash": "sha256-a5CTd3nbiAft/QarwOkAQkzHlxhxMUa1mb2FzjDElS0=",
       "url": "https://github.com/purescript/purescript/releases/download/v0.15.10-0/macos.tar.gz"
+    },
+    "0.15.1-1": {
+      "hash": "sha256-5jXplBxtpmzbKydUz4hGIgLxSbrK+AdrpdCyK93DQk4=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.1-1/macos.tar.gz"
+    },
+    "0.15.3-1": {
+      "hash": "sha256-Rw9jfjtqh9C1whPTnxKmVo4ihje4cfVQG/ENxsrcSXM=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.3-1/macos.tar.gz"
+    },
+    "0.15.5-1": {
+      "hash": "sha256-6SCNAduFSLmHKuhtQWibj/aVjKAk28ZHsBNiNMi2+5k=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.5-1/macos.tar.gz"
+    },
+    "0.15.6-1": {
+      "hash": "sha256-G5rUDXSgbLOiSr+4j5tOV1Fu/T/jGqFjPnZqAot5fUw=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.6-1/macos.tar.gz"
+    },
+    "0.15.7-1": {
+      "hash": "sha256-v5co2rlgPlYbbaQqTc1CWKirLucTAeIhgBk91ovpv+Q=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.7-1/macos.tar.gz"
+    },
+    "0.15.8-1": {
+      "hash": "sha256-JNsYZjgdUbcPnB03x+4Er7cT9jNpnVTebthqHHuaci8=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.8-1/macos.tar.gz"
+    },
+    "0.15.9-1": {
+      "hash": "sha256-I28AhwAJlDKe/XRFe7woZt4dA08EtG48fTOjD65nzjA=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.9-1/macos.tar.gz"
+    },
+    "0.15.1-2": {
+      "hash": "sha256-9O+Z4gANwqbs1LOqoFRyMf9pkYskVLiY1HlH47Bs2sE=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.1-2/macos.tar.gz"
+    },
+    "0.15.3-2": {
+      "hash": "sha256-BPDgh8+VMBcF2kymAoGxHz0Lc7bF7H5GXBOUW0y5Sc0=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.3-2/macos.tar.gz"
+    },
+    "0.15.5-2": {
+      "hash": "sha256-kgO/mrtFR9XHz9+4NGXLgMaSB+cRWmSsQi7/wnYC40o=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.5-2/macos.tar.gz"
+    },
+    "0.15.7-2": {
+      "hash": "sha256-UU3SzNkONZ57iTLrdOY1vXKSusV81+i1gS5xmNenT+8=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.7-2/macos.tar.gz"
+    },
+    "0.15.8-2": {
+      "hash": "sha256-dl9B4dRmzM/oeRm/2jjeG8Y3trgUAGVlEhp4Hlc9J7o=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.8-2/macos.tar.gz"
+    },
+    "0.15.9-2": {
+      "hash": "sha256-h+Aln/b8+50b1MnJHVvYLE2V8gFtt2kauhxKGczch0U=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.9-2/macos.tar.gz"
+    },
+    "0.15.1-3": {
+      "hash": "sha256-13Zt2gd8FxH1PfiGQewuwvXWCHRTyWnhoxzVqvZGZWw=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.1-3/macos.tar.gz"
+    },
+    "0.15.3-3": {
+      "hash": "sha256-R5cnd8xhGCgYGfg7IBta1UgaN0oj4O+7HQFs1XsatOY=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.3-3/macos.tar.gz"
+    },
+    "0.15.5-3": {
+      "hash": "sha256-udWC4qUDW0DeyCXcwkGkrtvSL4hAWwu0/y2L1u7V4xA=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.5-3/macos.tar.gz"
+    },
+    "0.15.7-3": {
+      "hash": "sha256-qeVBzOxGTJXkh7f37bdy8e5p2XNo3tODU83QxV4K2NA=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.7-3/macos.tar.gz"
+    },
+    "0.15.8-3": {
+      "hash": "sha256-yCrIVOXG0d9DSSYFnv/Cdt8z4IM+beT64WkpCRttzRk=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.8-3/macos.tar.gz"
+    },
+    "0.15.9-3": {
+      "hash": "sha256-3hwrdO0jeJFP6erXcUFl+FLZauxhrPKlF/GcHy3+PKY=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.9-3/macos.tar.gz"
+    },
+    "0.15.1-4": {
+      "hash": "sha256-kaxKwQEVtvzWKHcvIBzGYf6mKWGg2q9dp1FVVDKW+AE=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.1-4/macos.tar.gz"
+    },
+    "0.15.3-4": {
+      "hash": "sha256-YqZg1MJ4O3uPTB78QGUo8clbyb9gu0E6ofK54IZjOac=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.3-4/macos.tar.gz"
+    },
+    "0.15.5-4": {
+      "hash": "sha256-vtNqubeEhuxszky7pDkj457zi8gYtkO4fvB2mj+IjUI=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.5-4/macos.tar.gz"
+    },
+    "0.15.7-4": {
+      "hash": "sha256-LLeiBg6GeASlnAH+aKG/NIAU+nBvSyX3SIsMZYP8O5E=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.7-4/macos.tar.gz"
+    },
+    "0.15.8-4": {
+      "hash": "sha256-eNrnZId86ZuS/ITUHFOlfufZtqxbUOEg6Uy+UJmY3gw=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.8-4/macos.tar.gz"
+    },
+    "0.15.9-4": {
+      "hash": "sha256-j3yc+pp+rcSMAwJOjk1Rqv1TbJll/nvnjEBL+kD8OhU=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.9-4/macos.tar.gz"
+    },
+    "0.15.1-5": {
+      "hash": "sha256-IQL4vHUntfZsfTebtMTi6M8YuV8w3JeiwHqbDAvmREs=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.1-5/macos.tar.gz"
+    },
+    "0.15.3-5": {
+      "hash": "sha256-pqzGxhyT88X20yGo4Roet5JKdGIAa4F0hJ8vLLJZ7LY=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.3-5/macos.tar.gz"
+    },
+    "0.15.5-5": {
+      "hash": "sha256-E2w2hW1hLdlvkl5cu3OTnP8UYaHDplhKQBlqeu8lQo8=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.5-5/macos.tar.gz"
+    },
+    "0.15.7-5": {
+      "hash": "sha256-+9ylnNLZLKfqzbovkQWlBBJrgyqo9zwFSvXWnIz5Z3Q=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.7-5/macos.tar.gz"
+    },
+    "0.15.9-5": {
+      "hash": "sha256-/RiEGZVE+zwwscTnVSoXyV6L4FY4rYzI7Rzz8uanM7A=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.9-5/macos.tar.gz"
+    },
+    "0.15.1-6": {
+      "hash": "sha256-6UNN5kM3KpNgDiapZgPRnw4EbvJo488VypPHlhaqYLY=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.1-6/macos.tar.gz"
+    },
+    "0.15.3-6": {
+      "hash": "sha256-sef5LSDGPZGF75lx0t4PwbPRsKwsHBvx/8Qxq+rb9HY=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.3-6/macos.tar.gz"
+    },
+    "0.15.5-6": {
+      "hash": "sha256-Nm1HDT7xoVdd1mv7gwLG4ti+a44Sh3uFifW7x4RW9n0=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.5-6/macos.tar.gz"
+    },
+    "0.15.7-6": {
+      "hash": "sha256-V2n/oWqKDpRAXrEV6Yzpi0NswRMolRG8ibEHMxuFHFg=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.7-6/macos.tar.gz"
+    },
+    "0.15.9-6": {
+      "hash": "sha256-/5G1zIrB9sKsDz9Ik14ta2cpWakP8xJ9kDlCU2jtges=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.9-6/macos.tar.gz"
+    },
+    "0.15.1-7": {
+      "hash": "sha256-Q3r3fSwnhDaTSRYQRxdqwXPAd+2ygXAnCP8GWRF3s2E=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.1-7/macos.tar.gz"
+    },
+    "0.15.3-7": {
+      "hash": "sha256-Ay5X0HhpqQ6I7N4JVbu7yxQj8dBH2mNIsFij1g6+CvM=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.3-7/macos.tar.gz"
+    },
+    "0.15.5-7": {
+      "hash": "sha256-MVb7Rg7o4eKPxO2e3E0CPmwOAOcO+QVubMEC2ApYJTY=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.5-7/macos.tar.gz"
+    },
+    "0.15.7-7": {
+      "hash": "sha256-ipWCDUYt9HjZd5Uohcjsm5B6+Pm7W0H52cNpkyjajUw=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.7-7/macos.tar.gz"
+    },
+    "0.15.9-7": {
+      "hash": "sha256-GoMTC/ih1rOngTlVvyxnviELd7O2+YzjHZg4j18pM7k=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.9-7/macos.tar.gz"
+    },
+    "0.15.3-8": {
+      "hash": "sha256-VvjY7+t5dFJKGsuIqNwitErH8EGGamI2Xm5hM6SmGkk=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.3-8/macos.tar.gz"
+    },
+    "0.15.5-8": {
+      "hash": "sha256-PX//ZpMwLD07i9ov82Wgsz9lPO1QECt8bVhmmAU9/6Y=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.5-8/macos.tar.gz"
+    },
+    "0.15.7-8": {
+      "hash": "sha256-GMAeTs4LACabFrsN0d0msIqsa4KbeUGSGTIweBSjgTk=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.7-8/macos.tar.gz"
+    },
+    "0.15.9-8": {
+      "hash": "sha256-g1Fvw6S+gDP5yfklJLGc1z9LTEn16GzXDB28oH7bllA=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.9-8/macos.tar.gz"
+    },
+    "0.15.3-9": {
+      "hash": "sha256-YoQU+huxHfMVhho43D8J56n3nvOIhXq/r9caLK+aqK4=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.3-9/macos.tar.gz"
+    },
+    "0.15.5-9": {
+      "hash": "sha256-k+HcUD1w0SEUNwtEQvqPMf3c7AEHNcLv88kVmgYBFwk=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.5-9/macos.tar.gz"
+    },
+    "0.15.7-9": {
+      "hash": "sha256-oD5AuPQ8jgM/7xODD/goC44aX30APx8gsoCprUj0oP0=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.7-9/macos.tar.gz"
+    },
+    "0.15.3-10": {
+      "hash": "sha256-Bjkn6gbATl4twya5ZtZhVcMQ8Cog2IMer7REEq6nVKo=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.3-10/macos.tar.gz"
+    },
+    "0.15.5-10": {
+      "hash": "sha256-ZNNoGYVSmVlHea3JdUTyG7SRSHYjzezAedqPsXnPAuU=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.5-10/macos.tar.gz"
     }
   },
   "aarch64-linux": {
@@ -35,6 +699,38 @@
     "0.15.10-0": {
       "hash": "sha256-47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=",
       "url": "https://github.com/purescript/purescript/releases/download/v0.15.10-0/linux-arm64.tar.gz"
+    },
+    "0.15.9-1": {
+      "hash": "sha256-XgzgU/Mtqo3ZRQFAK7u9ZDm3GV9R35lhiBTZig2Z+zw=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.9-1/linux-arm64.tar.gz"
+    },
+    "0.15.9-2": {
+      "hash": "sha256-LyFn1JkbnHkDrFgiev2Ac9zM/LAyCHL4ez+93HKLxvo=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.9-2/linux-arm64.tar.gz"
+    },
+    "0.15.9-3": {
+      "hash": "sha256-fMhoZYG40M0ptKKXVh17Cixfxx6ak3+z+hd3084Q8qw=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.9-3/linux-arm64.tar.gz"
+    },
+    "0.15.9-4": {
+      "hash": "sha256-JZfMTNnlw55BpxDqvGgDJBSIAx/sRcF7iCX8Bxt83Qs=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.9-4/linux-arm64.tar.gz"
+    },
+    "0.15.9-5": {
+      "hash": "sha256-IGmzWm431jzkM8WUBpcloWzgpkiErONRGZZjrnOFzmY=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.9-5/linux-arm64.tar.gz"
+    },
+    "0.15.9-6": {
+      "hash": "sha256-sCkMYD8LUyrsLoibm3+zk+AIH2robqoIAHilI2s6Ai0=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.9-6/linux-arm64.tar.gz"
+    },
+    "0.15.9-7": {
+      "hash": "sha256-Fm3oVoeghzAAajwJmB0RDzFqcqD+7g8LLQyXUhMLhzI=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.9-7/linux-arm64.tar.gz"
+    },
+    "0.15.9-8": {
+      "hash": "sha256-ig/OKB3hHNanEwU1o1eKyPpmyQPqq38VgtOVbZ0TJxA=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.9-8/linux-arm64.tar.gz"
     }
   },
   "aarch64-darwin": {
@@ -45,6 +741,38 @@
     "0.15.10-0": {
       "hash": "sha256-nzvmUufMq2cvEYdbhBW2ZE5xncI9J/mup4Q7g6eeqks=",
       "url": "https://github.com/purescript/purescript/releases/download/v0.15.10-0/macos-arm64.tar.gz"
+    },
+    "0.15.9-1": {
+      "hash": "sha256-/yyE/wueZH4GBThAWUHilQHhWKNeK8ZeM0p7j/VLEoQ=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.9-1/macos-arm64.tar.gz"
+    },
+    "0.15.9-2": {
+      "hash": "sha256-IvfJ80ck5qkfnuQRSCy9pPoGrMG3y4hBjt7zXwqpQ7s=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.9-2/macos-arm64.tar.gz"
+    },
+    "0.15.9-3": {
+      "hash": "sha256-k0vpYrvT7hZUZGIEZvOwzZUjrO6V10IC4JZSMopElYw=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.9-3/macos-arm64.tar.gz"
+    },
+    "0.15.9-4": {
+      "hash": "sha256-fEll6k+So2omC61404ItZDlDrrCApadsnmdsdtA46h4=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.9-4/macos-arm64.tar.gz"
+    },
+    "0.15.9-5": {
+      "hash": "sha256-1Xhrv6WNw3GQZYOByYqaeRGFEWxDEFEyqks/4UkEfDE=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.9-5/macos-arm64.tar.gz"
+    },
+    "0.15.9-6": {
+      "hash": "sha256-1wb/+d4fDi0NMQnmhRcgZtIhVVk1vx19GKxJkKd19t0=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.9-6/macos-arm64.tar.gz"
+    },
+    "0.15.9-7": {
+      "hash": "sha256-rYcp5mas9IiCnIDxejn7eTBWH0wjy4HW5OAtcGPtiLA=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.9-7/macos-arm64.tar.gz"
+    },
+    "0.15.9-8": {
+      "hash": "sha256-Y93aF31wsdmwfabqlf6SxbzvBjrTFqR5WN2wQCL9onc=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.9-8/macos-arm64.tar.gz"
     }
   }
 }
