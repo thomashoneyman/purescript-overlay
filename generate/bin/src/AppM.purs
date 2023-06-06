@@ -12,12 +12,16 @@ import Effect.Aff.Class (class MonadAff, liftAff)
 import Effect.Class (class MonadEffect)
 import Lib.Foreign.Octokit (GitHubError, Octokit)
 import Lib.GitHub (GitHubM(..))
+import Node.Path (FilePath)
 
 -- | An app-specific class for functions we want to be made more convenient
 class MonadApp m where
   runGitHubM :: forall a. GitHubM a -> m (Either GitHubError a)
 
-type Env = { octokit :: Octokit }
+type Env =
+  { octokit :: Octokit
+  , manifestDir :: FilePath
+  }
 
 newtype AppM a = AppM (ReaderT Env Aff a)
 
