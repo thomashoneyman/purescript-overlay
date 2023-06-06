@@ -7,6 +7,7 @@ workspace:
         - argparse-basic
         - console
         - effect
+        - lib
         - node-process
       test_dependencies: []
     lib:

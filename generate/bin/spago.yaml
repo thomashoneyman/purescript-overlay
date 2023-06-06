@@ -6,3 +6,4 @@ package:
     - console
     - effect
     - node-process
+    - lib
