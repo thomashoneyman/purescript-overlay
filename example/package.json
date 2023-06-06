@@ -1,8 +1,0 @@
-{
-  "name": "purescript-nix-example",
-  "version": "1.0.0",
-  "private": true,
-  "dependencies": {
-    "spdx-expression-parse": "^3.0.1"
-  }
-}

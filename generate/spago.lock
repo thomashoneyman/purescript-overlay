@@ -1,22 +1,32 @@
 workspace:
   packages:
-    my-app:
-      path: my-app
+    app:
+      path: app
       dependencies:
-        - console: ">=1.0.0 <10.0.0"
+        - aff
+        - argparse-basic
+        - console
         - effect
-        - either
-        - my-library
+        - lib
+        - node-process
+      test_dependencies: []
+    lib:
+      path: lib
+      dependencies:
+        - argonaut-core
+        - codec-argonaut
+        - effect
         - prelude
         - registry-lib
-      test_dependencies: []
-    my-library:
-      path: my-library
-      dependencies: []
-      test_dependencies: []
+      test_dependencies:
+        - spec
   package_set:
-    registry: 21.0.0
+    registry: 24.4.0
   extra_packages:
+    registry-foreign:
+      git: https://github.com/purescript/registry-dev.git
+      ref: master
+      subdir: foreign
     registry-lib:
       git: https://github.com/purescript/registry-dev.git
       ref: master
@@ -44,6 +54,14 @@ packages:
       - tailrec
       - transformers
       - unsafe-coerce
+  ansi:
+    type: registry
+    version: 7.0.0
+    integrity: sha256-ZMB6HD+q9CXvn9fRCmJ8dvuDrOVHcjombL3oNOerVnE=
+    dependencies:
+      - foldable-traversable
+      - lists
+      - strings
   argonaut-core:
     type: registry
     version: 7.0.0
@@ -60,6 +78,26 @@ packages:
       - prelude
       - strings
       - tailrec
+  argparse-basic:
+    type: registry
+    version: 2.0.0
+    integrity: sha256-3Pp8MDfRL2oeBdfxXIUVJBdhGniaahw2UOG4QmHPm58=
+    dependencies:
+      - arrays
+      - bifunctors
+      - control
+      - either
+      - foldable-traversable
+      - integers
+      - lists
+      - maybe
+      - newtype
+      - numbers
+      - prelude
+      - record
+      - strings
+      - tuples
+      - unfoldable
   arraybuffer-types:
     type: registry
     version: 3.0.2
@@ -83,6 +121,17 @@ packages:
       - tuples
       - unfoldable
       - unsafe-coerce
+  avar:
+    type: registry
+    version: 5.0.0
+    integrity: sha256-e7hf0x4hEpcygXP0LtvfvAQ49Bbj2aWtZT3gqM///0A=
+    dependencies:
+      - aff
+      - effect
+      - either
+      - exceptions
+      - functions
+      - maybe
   bifunctors:
     type: registry
     version: 6.0.0
@@ -287,6 +336,12 @@ packages:
       - tuples
       - typelevel-prelude
       - unfoldable
+  fork:
+    type: registry
+    version: 6.0.0
+    integrity: sha256-X7u0SuCvFbLbzuNEKLBNuWjmcroqMqit4xEzpQwAP7E=
+    dependencies:
+      - aff
   formatters:
     type: registry
     version: 7.0.0
@@ -401,8 +456,8 @@ packages:
       - now
   language-cst-parser:
     type: registry
-    version: 0.12.3
-    integrity: sha256-0pnjIJMtW9u1ne+fKB4QbaCeqqwWIGE3fjEQOIU0+ks=
+    version: 0.13.0
+    integrity: sha256-8eeW0hs+PQR+suxqbz5tfbsrcbmonQY3o3IsWobcfi0=
     dependencies:
       - arrays
       - console
@@ -468,6 +523,14 @@ packages:
       - invariant
       - newtype
       - prelude
+  mmorph:
+    type: registry
+    version: 7.0.0
+    integrity: sha256-urZlZNNqGeQFe5D/ClHlR8QgGBNHTMFPtJ5S5IpflTQ=
+    dependencies:
+      - free
+      - functors
+      - transformers
   newtype:
     type: registry
     version: 5.0.0
@@ -652,6 +715,18 @@ packages:
     version: 4.0.0
     integrity: sha256-fwXerld6Xw1VkReh8yeQsdtLVrjfGiVuC5bA1Wyo/J4=
     dependencies: []
+  pipes:
+    type: registry
+    version: 8.0.0
+    integrity: sha256-kvfqGM4cPA/wCcBHbp5psouFw5dZGvku2462x7ZBwSY=
+    dependencies:
+      - aff
+      - lists
+      - mmorph
+      - prelude
+      - tailrec
+      - transformers
+      - tuples
   posix-types:
     type: registry
     version: 6.0.0
@@ -737,6 +812,38 @@ packages:
     integrity: sha256-a1ibQkiUcbODbLE/WAq7Ttbbh9ex+x33VCQ7GngKudU=
     dependencies:
       - unsafe-coerce
+  spec:
+    type: registry
+    version: 7.3.0
+    integrity: sha256-YmmRmlHmSHyAM8j5/QVHLgkMhtAkt2FXytVb5j/Zu0s=
+    dependencies:
+      - aff
+      - ansi
+      - arrays
+      - avar
+      - bifunctors
+      - console
+      - control
+      - datetime
+      - effect
+      - either
+      - exceptions
+      - foldable-traversable
+      - fork
+      - identity
+      - integers
+      - lists
+      - maybe
+      - newtype
+      - now
+      - ordered-collections
+      - parallel
+      - pipes
+      - prelude
+      - strings
+      - tailrec
+      - transformers
+      - tuples
   st:
     type: registry
     version: 6.2.0

@@ -10,7 +10,7 @@
 }: let
   npmDependencies = buildPackageLock {src = ./.;};
   workspaces = buildSpagoLock {
-    purs = purs.purs-unstable;
+    inherit purs;
     src = ./.;
   };
   entrypoint = writeText "entrypoint.js" ''
@@ -19,13 +19,13 @@
   '';
 in
   stdenv.mkDerivation rec {
-    name = "my-app";
+    name = "app";
     src = ./.;
-    nativeBuildInputs = [purs.purs-unstable esbuild];
+    nativeBuildInputs = [purs esbuild];
     buildPhase = ''
       ln -s ${npmDependencies}/js/node_modules .
       set -f
-      purs compile $src/my-app/**/*.purs ${workspaces.${name}.dependencies.globs}
+      purs compile $src/${name}/**/*.purs ${workspaces.${name}.dependencies.globs}
       set +f
       cp ${entrypoint} entrypoint.js
       esbuild entrypoint.js \

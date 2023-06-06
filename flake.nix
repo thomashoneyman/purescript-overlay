@@ -10,40 +10,72 @@
     nixpkgs,
   }: let
     overlay = import ./overlay.nix;
-    supportedSystems = ["x86_64-linux" "x86_64-darwin" "aarch64-darwin"];
+    supportedSystems = ["x86_64-linux" "x86_64-darwin" "aarch64-linux" "aarch64-darwin"];
     forAllSystems = nixpkgs.lib.genAttrs supportedSystems;
     nixpkgsFor = forAllSystems (system:
       import nixpkgs {
         inherit system;
         overlays = [overlay];
       });
-    extractPrefix = lib: str:
-      if lib.hasPrefix "purs" str
-      then "purs"
-      else if lib.hasPrefix "spago" str
-      then "spago"
-      else (throw "Expected 'purs' or 'spago' prefix but none was found: ${str}");
   in {
     overlays.default = overlay;
 
     packages = forAllSystems (system: let
       pkgs = nixpkgsFor.${system};
       purs = pkgs.purs;
+      purs-unstable = pkgs.purs-unstable;
+      purs-bin = pkgs.purs-bin;
       spago = pkgs.spago;
+      spago-bin = pkgs.spago-bin;
     in
-      purs // spago);
+      {inherit purs purs-unstable spago;} // purs-bin // spago-bin);
 
     apps = forAllSystems (system: let
       pkgs = nixpkgsFor.${system};
-      prefix = extractPrefix pkgs.lib;
-      apps =
-        pkgs.lib.mapAttrs (name: bin: {
-          type = "app";
-          program = "${bin}/bin/${prefix name}";
-        })
-        self.packages.${system};
+
+      mkApp = bin: {
+        type = "app";
+        program = "${bin}/bin/${bin.pname or bin.name}";
+      };
+
+      packages = pkgs.lib.mapAttrs (_: mkApp) self.packages.${system};
+
+      scripts = {
+        generate = mkApp (pkgs.callPackage ./generate {});
+      };
     in
-      apps);
+      packages // scripts);
+
+    checks = forAllSystems (system: let
+      pkgs = nixpkgsFor.${system};
+
+      package-checks = pkgs.lib.mapAttrs (name: bin:
+        pkgs.runCommand "test-${name}" {} ''
+          touch $out
+          set -e
+          # Spago writes --version to stderr, oddly enough, so we need to
+          # capture both in the VERSION var.
+          VERSION="$(${bin}/bin/${bin.pname} --version 2>&1)"
+          EXPECTED_VERSION="${bin.version}"
+          echo "$VERSION should match expected output $EXPECTED_VERSION"
+          test "$VERSION" = "$EXPECTED_VERSION"
+        '')
+      self.packages.${system};
+
+      test-checks = {
+        test-generate = let
+          bin = pkgs.callPackage ./generate {};
+          manifests = ./manifests;
+        in
+          pkgs.runCommand "test-generate" {} ''
+            mkdir -p $out/bin
+            set -e
+            cp ${bin}/bin/app $out/bin/test-generate
+            ${bin}/bin/app verify ${manifests}
+          '';
+      };
+    in
+      test-checks // package-checks);
 
     devShells = forAllSystems (system: let
       pkgs = nixpkgsFor.${system};
@@ -56,34 +88,5 @@
         ];
       };
     });
-
-    checks = forAllSystems (system: let
-      pkgs = nixpkgsFor.${system};
-
-      prefix = extractPrefix pkgs.lib;
-      package-checks = pkgs.lib.mapAttrs (name: bin:
-        pkgs.runCommand "test-${name}" {buildInputs = [bin];} ''
-          touch $out
-          set -e
-          # Spago writes --version to stderr, oddly enough, so we need to
-          # capture both in the VERSION var.
-          VERSION="$(${bin}/bin/${prefix name} --version 2>&1)"
-          EXPECTED_VERSION="${bin.version}"
-          echo "$VERSION should match expected output $EXPECTED_VERSION"
-          test "$VERSION" = "$EXPECTED_VERSION"
-        '')
-      self.packages.${system};
-
-      example-project = pkgs.callPackage ./example {};
-      example-checks = {
-        test-example = pkgs.runCommand "test-example" {buildInputs = [example-project];} ''
-          mkdir -p $out/bin
-          set -e
-          cp ${example-project}/bin/my-app $out/bin/test-example
-          ${example-project}/bin/my-app
-        '';
-      };
-    in
-      example-checks // package-checks);
   };
 }

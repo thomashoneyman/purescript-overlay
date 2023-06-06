@@ -8,15 +8,16 @@
   # via overlay
   buildSpagoLock,
   buildPackageLock,
-  # specific version provided via flake
-  purs,
-  # required additional arguments
+  purs-bin,
+}: {
   version,
-  rev,
+  manifest,
 }: let
+  purs = purs-bin.purs-0_15_9; # TODO: Discover this from the lockfile or manifest?
+
   repo = builtins.fetchGit {
     url = "https://github.com/purescript/spago.git";
-    rev = rev;
+    rev = manifest.rev;
     allRefs = true;
   };
 
@@ -40,8 +41,7 @@
 in
   stdenv.mkDerivation {
     pname = "spago";
-    version = version;
-    src = src;
+    inherit version src;
 
     nativeBuildInputs = [purs esbuild];
     buildInputs = [nodejs];
