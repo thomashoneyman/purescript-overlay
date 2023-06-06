@@ -184,6 +184,7 @@ omittedPursReleases :: Array Tag
 omittedPursReleases =
   [ Tag "v0.13.1" -- https://github.com/purescript/purescript/releases/tag/v0.13.1 (doesn't work)
   , Tag "v0.13.7" -- https://github.com/purescript/purescript/releases/tag/v0.13.7 (has no releases)
+  , Tag "v0.15.1" -- https://github.com/purescript/purescript/releases/tag/v0.15.1 (incorrect version number, identical to 0.15.2)
   ]
 
 isPre0_13 :: String -> Boolean

@@ -72,10 +72,6 @@
       "hash": "sha256-/VL0k0Xrp+a/++vdLEbuqlnxZpKB4IB5CX7QtzY39/k=",
       "url": "https://github.com/purescript/purescript/releases/download/v0.15.0/linux64.tar.gz"
     },
-    "0.15.1": {
-      "hash": "sha256-I7+X1S4K5Hty8Km88YVSWwNa2XVnNSZAyeFmJYJBjK0=",
-      "url": "https://github.com/purescript/purescript/releases/download/v0.15.1/linux64.tar.gz"
-    },
     "0.15.2": {
       "hash": "sha256-FVQbrpt9824iJFSnnh/XQVcyTp8tEsD3M/yzmJeZZ9w=",
       "url": "https://github.com/purescript/purescript/releases/download/v0.15.2/linux64.tar.gz"
@@ -417,10 +413,6 @@
     "0.15.0": {
       "hash": "sha256-azqglq59JnuOUgBIV/gTIfskou2HTTsqAuw7oxa/qSU=",
       "url": "https://github.com/purescript/purescript/releases/download/v0.15.0/macos.tar.gz"
-    },
-    "0.15.1": {
-      "hash": "sha256-EIdQ10Zv2dJpmn0zvseK+iGb7yJbQjjNP8XdMxWUy2w=",
-      "url": "https://github.com/purescript/purescript/releases/download/v0.15.1/macos.tar.gz"
     },
     "0.15.2": {
       "hash": "sha256-kGBVfDwChrEiLl+eSxBcpv1KA5Kty8LUsNhtZ33C2hk=",
