@@ -4,6 +4,8 @@ import Prelude
 
 import ArgParse.Basic (ArgParser)
 import ArgParse.Basic as Arg
+import Bin.AppM (AppM)
+import Bin.AppM as AppM
 import Data.Array as Array
 import Data.Either (Either(..))
 import Data.Foldable (foldMap)
@@ -12,10 +14,10 @@ import Data.Map as Map
 import Data.Monoid.Additive (Additive(..))
 import Data.Newtype (alaF)
 import Effect (Effect)
-import Effect.Aff (Aff)
 import Effect.Aff as Aff
 import Effect.Class (liftEffect)
 import Effect.Class.Console as Console
+import Lib.Foreign.Octokit as Octokit
 import Lib.Nix.Manifest (Manifests, PursManifest, SpagoManifest)
 import Lib.Nix.Manifest as NixManifest
 import Lib.Utils as Utils
@@ -82,7 +84,9 @@ main = Aff.launchAff_ do
     Right command ->
       pure command
 
-  case mode of
+  octokit <- Octokit.newOctokit
+
+  AppM.runAppM { octokit } $ case mode of
     Verify dir -> do
       Console.log "Verifying manifests..."
       manifests <- readManifests dir
@@ -123,21 +127,21 @@ main = Aff.launchAff_ do
       else Console.log "No new spago releases."
       pure unit
 
-readManifests :: FilePath -> Aff Manifests
+readManifests :: FilePath -> AppM Manifests
 readManifests dir = do
   purs <- readPursManifest dir
   spago <- readSpagoManifest dir
   pure { purs, spago }
 
-readPursManifest :: FilePath -> Aff PursManifest
+readPursManifest :: FilePath -> AppM PursManifest
 readPursManifest dir = Utils.readJsonFile (Path.concat [ dir, "purs.json" ]) NixManifest.pursManifestCodec
 
-readSpagoManifest :: FilePath -> Aff SpagoManifest
+readSpagoManifest :: FilePath -> AppM SpagoManifest
 readSpagoManifest dir = Utils.readJsonFile (Path.concat [ dir, "spago.json" ]) NixManifest.spagoManifestCodec
 
 -- | Retrieve all relevant releases for the supported tools which do not already
 -- | exist in the input manifests.
-fetchUpdates :: Manifests -> Aff Manifests
+fetchUpdates :: Manifests -> AppM Manifests
 fetchUpdates existing = do
   releases <- fetchReleases
   pure
@@ -146,17 +150,17 @@ fetchUpdates existing = do
     }
 
 -- | Retrieve all relevant releases for the various supported tools from GitHub.
-fetchReleases :: Aff Manifests
-fetchReleases = Aff.sequential ado
-  purs <- Aff.parallel fetchPursReleases
-  spago <- Aff.parallel fetchSpagoReleases
-  in { purs, spago }
+fetchReleases :: AppM Manifests
+fetchReleases = do
+  purs <- fetchPursReleases
+  spago <- fetchSpagoReleases
+  pure { purs, spago }
 
 -- FIXME: Unimplemented.
-fetchPursReleases :: Aff PursManifest
+fetchPursReleases :: AppM PursManifest
 fetchPursReleases = pure Map.empty
 
 -- TODO: Spago's alpha does not currently have any official releases, so we
 -- don't fetch anything.
-fetchSpagoReleases :: Aff SpagoManifest
+fetchSpagoReleases :: AppM SpagoManifest
 fetchSpagoReleases = pure Map.empty

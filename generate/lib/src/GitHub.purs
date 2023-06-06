@@ -2,8 +2,8 @@ module Lib.GitHub where
 
 import Prelude
 
-import Control.Monad.Except (ExceptT(..), runExceptT)
-import Control.Monad.Reader (class MonadAsk, ReaderT, ask, runReaderT)
+import Control.Monad.Except (ExceptT(..))
+import Control.Monad.Reader (class MonadAsk, ReaderT, ask)
 import Data.DateTime (DateTime)
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
@@ -12,7 +12,7 @@ import Effect.Aff (Aff)
 import Effect.Aff as Aff
 import Effect.Aff.Class (class MonadAff, liftAff)
 import Effect.Class (class MonadEffect)
-import Lib.Foreign.Octokit (GitHubError(..), Octokit, RateLimit, Release, Request)
+import Lib.Foreign.Octokit (GitHubError(..), Octokit, Release, Request)
 import Lib.Foreign.Octokit as Octokit
 import Lib.Git (CommitSha(..), Tag(..))
 import Lib.Utils as Utils
@@ -29,9 +29,6 @@ derive newtype instance Monad GitHubM
 derive newtype instance MonadEffect GitHubM
 derive newtype instance MonadAff GitHubM
 derive newtype instance MonadAsk Octokit GitHubM
-
-runGitHubM :: forall a. Octokit -> GitHubM a -> Aff (Either GitHubError a)
-runGitHubM octokit (GitHubM run) = runReaderT (runExceptT run) octokit
 
 data Repo
   = PursRepo
