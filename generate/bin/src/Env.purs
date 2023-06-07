@@ -52,4 +52,12 @@ lookupRequired (EnvKey { key, decode }) = liftEffect $ Process.lookupEnv key >>=
 
 -- | A user GitHub token at the REPO_TOKEN key.
 githubToken :: EnvKey GitHubToken
-githubToken = EnvKey { key: "REPO_TOKEN", decode: Right <<< GitHubToken }
+githubToken = EnvKey
+  { key: "REPO_TOKEN"
+  , decode: \str -> do
+      if String.null str then
+        Left "Token string is empty."
+      else case String.stripPrefix (String.Pattern "ghp_") str of
+        Nothing -> Left "Expected prefix ghp_ on token, but it wasn't found."
+        Just _ -> Right (GitHubToken str)
+  }
