@@ -61,7 +61,7 @@ derive newtype instance Ord CommitSha
 type Committer = { name :: String, email :: String }
 
 manifestBot :: Committer
-manifestBot = { name: "manifest-bot", email: "manifest-bot@no-reply.com" }
+manifestBot = { name: "robo-trh", email: "thomashoneyman@pm.me" }
 
 repoName :: String
 repoName = "purescript-nix"
