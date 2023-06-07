@@ -24,7 +24,13 @@ derive instance Eq NixVersion
 instance Ord NixVersion where
   compare (NixVersion l) (NixVersion r) =
     case l.version `compare` r.version of
-      EQ -> l.pre `compare` r.pre
+      -- We want to invert the normal Nothing < Just ordering of Maybe because
+      -- the Just case represents a prerelease.
+      EQ -> case l.pre, r.pre of
+        Nothing, Nothing -> EQ
+        Just _, Nothing -> LT
+        Nothing, Just _ -> GT
+        Just x, Just y -> x `compare` y
       x -> x
 
 parse :: String -> Either String NixVersion

@@ -334,7 +334,7 @@ pursReleaseToManifest existing release = do
   if isPre0_13 release.tag then do
     Console.log $ "Omitting release " <> release.tag <> " because it is prior to purs-0.13"
     pure Nothing
-  else if Array.elem (Tag release.tag) omittedPursReleases then do
+  else if Array.any (\(Tag tag) -> String.contains (String.Pattern tag) release.tag) omittedPursReleases then do
     Console.log $ "Omitting release " <> release.tag <> " because it is in the omitted purs releases list."
     pure Nothing
   else if release.draft then do
