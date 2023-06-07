@@ -1,6 +1,6 @@
 # PureScript Nix
 
-An overlay and flake exposing PureScript tools maintained by the core team (ie. the compiler, `purs`, and package manager, `spago`). Tested on the following architectures:
+An overlay and flake exposing PureScript tools maintained by the core team (ie. the compiler, `purs`, and package manager, `spago`). Auto-updates every day to check for new tool versions. Tested on the following architectures:
 
 - x86_64-linux
 - x86_64-darwin (Intel Mac)
