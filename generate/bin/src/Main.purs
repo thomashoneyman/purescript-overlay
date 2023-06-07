@@ -157,9 +157,14 @@ main = Aff.launchAff_ do
       let envFile = Path.concat [ dir, "..", "generate", ".env" ]
       Console.log $ "Loading .env file from " <> envFile
       liftAff $ Env.loadEnvFile envFile
-      octokit <- Env.lookupOptional Env.githubToken >>= case _ of
-        Nothing -> Octokit.newOctokit
-        Just tok -> Octokit.newAuthOctokit tok
+      octokit <- case commit of
+        DoCommit -> do
+          token <- Env.lookupRequired Env.githubToken
+          Octokit.newAuthOctokit token
+        NoCommit -> do
+          Env.lookupOptional Env.githubToken >>= case _ of
+            Nothing -> Octokit.newOctokit
+            Just tok -> Octokit.newAuthOctokit tok
       AppM.runAppM { octokit, manifestDir: dir, gitBranch: branch, tmpDir: tmp } do
         manifests <- readManifests
         updates <- fetchUpdates manifests
