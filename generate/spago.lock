@@ -6,6 +6,7 @@ workspace:
         - aff
         - argparse-basic
         - console
+        - dotenv
         - effect
         - lib
         - node-process
@@ -241,6 +242,32 @@ packages:
       - prelude
       - tuples
       - type-equality
+  dotenv:
+    type: registry
+    version: 4.0.0
+    integrity: sha256-iqWz97FnrHLlfJ/pIsTfTNprpqpqZsh5OmLNjVlMLDo=
+    dependencies:
+      - aff
+      - arrays
+      - control
+      - effect
+      - either
+      - exceptions
+      - foldable-traversable
+      - lists
+      - maybe
+      - node-buffer
+      - node-child-process
+      - node-fs-aff
+      - node-process
+      - parsing
+      - prelude
+      - run
+      - strings
+      - sunde
+      - transformers
+      - tuples
+      - typelevel-prelude
   effect:
     type: registry
     version: 4.0.0
@@ -567,6 +594,20 @@ packages:
       - effect
       - maybe
       - st
+      - unsafe-coerce
+  node-child-process:
+    type: registry
+    version: 9.0.0
+    integrity: sha256-bi7hXHcrgqw6UQzD4p0kr2flPxdqyRHv3bLcffZYpm0=
+    dependencies:
+      - exceptions
+      - foreign
+      - foreign-object
+      - functions
+      - node-fs
+      - node-streams
+      - nullable
+      - posix-types
       - unsafe-coerce
   node-event-emitter:
     type: registry
@@ -915,6 +956,25 @@ packages:
       - strings
       - transformers
       - tuples
+  run:
+    type: registry
+    version: 5.0.0
+    integrity: sha256-uCCGBqPXOSTnQoVzQUoCcEYyGvi+dWZp+lLsxtNG6+U=
+    dependencies:
+      - aff
+      - effect
+      - either
+      - free
+      - maybe
+      - newtype
+      - prelude
+      - profunctor
+      - tailrec
+      - tuples
+      - type-equality
+      - typelevel-prelude
+      - unsafe-coerce
+      - variant
   safe-coerce:
     type: registry
     version: 2.0.0
@@ -983,6 +1043,15 @@ packages:
       - tuples
       - unfoldable
       - unsafe-coerce
+  sunde:
+    type: registry
+    version: 3.0.0
+    integrity: sha256-+b+nYymr9tqFPNruhKfuaO7eN2gBLA80PfUgd1kJA4g=
+    dependencies:
+      - aff
+      - effect
+      - node-child-process
+      - prelude
   tailrec:
     type: registry
     version: 6.1.0

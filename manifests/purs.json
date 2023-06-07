@@ -1,9 +1,5 @@
 {
   "x86_64-linux": {
-    "0.13.0": {
-      "hash": "sha256-apEgOKcFy6lEkUlu4/qJkVb1MZYf5Z0wVYOZ7ZPB5Rk=",
-      "url": "https://github.com/purescript/purescript/releases/download/v0.13.0/linux64.tar.gz"
-    },
     "0.13.2": {
       "hash": "sha256-1VVSww26WtWikHH96fa6y9gkhCcLgBW+YQT38ypEVQI=",
       "url": "https://github.com/purescript/purescript/releases/download/v0.13.2/linux64.tar.gz"
@@ -342,10 +338,6 @@
     }
   },
   "x86_64-darwin": {
-    "0.13.0": {
-      "hash": "sha256-gMbi5NEb7mdV72QYQmOVsKWANqDNmfq9f87Ih4bX8XY=",
-      "url": "https://github.com/purescript/purescript/releases/download/v0.13.0/macos.tar.gz"
-    },
     "0.13.2": {
       "hash": "sha256-nyGFvYpRE37T5hWtp7iFMnETZIefmUPF9H3BLVSmW5M=",
       "url": "https://github.com/purescript/purescript/releases/download/v0.13.2/macos.tar.gz"

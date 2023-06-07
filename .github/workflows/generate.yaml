@@ -1,0 +1,25 @@
+# Runs the generate script on a daily basis to look for new tooling updates.
+name: "generate"
+
+# The importer is run every day at 07:00 UTC and can also be run manually from
+# the 'Actions' tab.
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 7 * * *"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    env:
+      REPO_TOKEN: ${{ secrets.REPO_TOKEN }}
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@v2
+
+      - name: Run the generate script
+        run: nix run .#generate -- update manifests --commit

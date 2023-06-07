@@ -4,3 +4,4 @@ output/
 .purs*
 .psa*
 .spago
+.env
