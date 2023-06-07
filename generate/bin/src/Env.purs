@@ -9,7 +9,7 @@ import Dotenv as Dotenv
 import Effect.Aff (Aff)
 import Effect.Aff as Aff
 import Effect.Class (class MonadEffect, liftEffect)
-import Effect.Exception as Exception
+import Effect.Class.Console as Console
 import Lib.Foreign.Octokit (GitHubToken(..))
 import Node.Encoding (Encoding(..))
 import Node.FS.Aff as FS.Aff
@@ -37,17 +37,25 @@ lookupOptional (EnvKey { key, decode }) = liftEffect $ Process.lookupEnv key >>=
   Nothing -> pure Nothing
   Just "" -> pure Nothing
   Just value -> case decode value of
-    Left error -> Exception.throw $ "Found " <> key <> " in the environment with value " <> value <> ", but it could not be decoded: " <> error
+    Left error -> do
+      Console.log $ "Found " <> key <> " in the environment with value " <> value <> ", but it could not be decoded: " <> error
+      liftEffect (Process.exit 1)
     Right decoded -> pure $ Just decoded
 
 -- | Look up a required environment variable, throwing an exception if it is
 -- | missing, an empty string, or present but cannot be decoded.
 lookupRequired :: forall m a. MonadEffect m => EnvKey a -> m a
 lookupRequired (EnvKey { key, decode }) = liftEffect $ Process.lookupEnv key >>= case _ of
-  Nothing -> Exception.throw $ key <> " is not present in the environment."
-  Just "" -> Exception.throw $ "Found " <> key <> " in the environment, but its value was an empty string."
+  Nothing -> do
+    Console.log $ key <> " is not present in the environment."
+    liftEffect (Process.exit 1)
+  Just "" -> do
+    Console.log $ "Found " <> key <> " in the environment, but its value was an empty string."
+    liftEffect (Process.exit 1)
   Just value -> case decode value of
-    Left error -> Exception.throw $ "Found " <> key <> " in the environment with value " <> value <> ", but it could not be decoded: " <> error
+    Left error -> do
+      Console.log $ "Found " <> key <> " in the environment with value " <> value <> ", but it could not be decoded: " <> error
+      liftEffect (Process.exit 1)
     Right decoded -> pure decoded
 
 -- | A user GitHub token at the REPO_TOKEN key.
