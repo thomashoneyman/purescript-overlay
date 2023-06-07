@@ -1,6 +1,7 @@
 -- | Low-level bindings to Octokit and its request functions.
 module Lib.Foreign.Octokit
   ( Address
+  , GitHubToken(..)
   , GitHubAPIError
   , GitHubError(..)
   , GitHubRoute
@@ -9,14 +10,17 @@ module Lib.Foreign.Octokit
   , RateLimit
   , Release
   , ReleaseAsset
+  , PullRequest
   , Request
   , newOctokit
+  , newAuthOctokit
   , requestListReleases
   , requestGetReleaseByTagName
   , requestGetRefCommitSha
   , requestGetCommitDate
   , requestCreatePullRequest
   , requestRateLimit
+  , requestGetPullRequests
   , request
   , printGitHubError
   , githubErrorCodec
@@ -46,29 +50,38 @@ import Data.Map (Map)
 import Data.Map as Map
 import Data.Maybe (Maybe)
 import Data.Maybe as Maybe
-import Data.Newtype (unwrap)
+import Data.Newtype (class Newtype, unwrap)
+import Data.Nullable (Nullable)
+import Data.Nullable as Nullable
 import Data.Profunctor as Profunctor
 import Data.String as String
 import Data.Tuple (Tuple(..))
 import Data.Variant as Variant
-import Effect (Effect)
 import Effect.Aff as Aff
 import Effect.Aff.Class (class MonadAff, liftAff)
 import Effect.Class (class MonadEffect, liftEffect)
-import Effect.Uncurried (EffectFn6, runEffectFn6)
+import Effect.Class.Console as Console
+import Effect.Uncurried (EffectFn1, EffectFn6, runEffectFn1, runEffectFn6)
 import Foreign.Object (Object)
 import Foreign.Object as Object
 import Registry.Internal.Codec as Internal.Codec
 import Type.Proxy (Proxy(..))
 import Unsafe.Coerce (unsafeCoerce)
 
+newtype GitHubToken = GitHubToken String
+
+derive instance Newtype GitHubToken _
+
 -- | An instance of GitHub's Octokit client
 foreign import data Octokit :: Type
 
-foreign import newOctokitImpl :: Effect Octokit
+foreign import newOctokitImpl :: EffectFn1 (Nullable GitHubToken) Octokit
 
 newOctokit :: forall m. MonadEffect m => m Octokit
-newOctokit = liftEffect newOctokitImpl
+newOctokit = liftEffect $ runEffectFn1 newOctokitImpl Nullable.null
+
+newAuthOctokit :: forall m. MonadEffect m => GitHubToken -> m Octokit
+newAuthOctokit token = liftEffect $ runEffectFn1 newOctokitImpl (Nullable.notNull token)
 
 -- | The address of a GitHub repository as a owner/repo pair.
 type Address = { owner :: String, repo :: String }
@@ -184,13 +197,37 @@ requestGetCommitDate { address, commitSha } =
 type PullContent = { head :: String, base :: String, title :: String, body :: String }
 
 -- | Create a new pull request
-requestCreatePullRequest :: { address :: Address, content :: PullContent } -> Request Unit
+requestCreatePullRequest :: { address :: Address, content :: PullContent } -> Request { url :: String }
 requestCreatePullRequest { address, content: { title, body, head, base } } =
   { route: GitHubRoute POST [ "repos", address.owner, address.repo, "pulls" ] Map.empty
   , headers: Object.empty
   , args: unsafeToJSArgs { title, body, head, base }
   , paginate: false
-  , codec: CA.codec' (\_ -> pure unit) (CA.encode CA.null)
+  , codec: CA.Record.object "PullRequestResponse"
+      { url: CA.string
+      }
+  }
+
+type PullRequest =
+  { url :: String
+  , state :: String
+  , number :: Int
+  , title :: String
+  }
+
+-- | Create a new pull request
+requestGetPullRequests :: Address -> Request (Array PullRequest)
+requestGetPullRequests address =
+  { route: GitHubRoute GET [ "repos", address.owner, address.repo, "pulls" ] Map.empty
+  , headers: Object.empty
+  , args: noArgs
+  , paginate: true
+  , codec: CA.array $ CA.Record.object "PullRequest"
+      { url: CA.string
+      , state: CA.string
+      , number: CA.int
+      , title: CA.string
+      }
   }
 
 type RateLimit =
@@ -267,7 +304,9 @@ foreign import paginateImpl :: forall r. EffectFn6 Octokit String (Object String
 -- | Make a request to the GitHub API
 request :: forall m a. MonadAff m => Octokit -> Request a -> m (Either GitHubError a)
 request octokit { route, headers, args, paginate, codec } = do
-  result <- liftAff $ Promise.toAffE $ runEffectFn6 (if paginate then paginateImpl else requestImpl) octokit (printGitHubRoute route) headers args Left Right
+  let printedRoute = printGitHubRoute route
+  Console.log $ "Octokit: requesting " <> printedRoute
+  result <- liftAff $ Promise.toAffE $ runEffectFn6 (if paginate then paginateImpl else requestImpl) octokit printedRoute headers args Left Right
   pure $ case result of
     Left githubError -> case decodeGitHubAPIError githubError of
       Left decodeError -> Left $ UnexpectedError decodeError

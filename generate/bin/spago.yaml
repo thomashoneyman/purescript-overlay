@@ -4,6 +4,7 @@ package:
     - aff
     - argparse-basic
     - console
+    - dotenv
     - effect
     - lib
     - node-process

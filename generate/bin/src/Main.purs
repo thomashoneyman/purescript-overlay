@@ -2,31 +2,40 @@ module Bin.Main where
 
 import Prelude
 
+import App.Env as Env
 import ArgParse.Basic (ArgParser)
 import ArgParse.Basic as Arg
 import Bin.AppM (AppM)
 import Bin.AppM as AppM
 import Control.Monad.Reader (ask)
 import Data.Array as Array
+import Data.DateTime.Instant as Instant
 import Data.Either (Either(..))
 import Data.Foldable (foldMap)
 import Data.Int as Int
 import Data.Map as Map
 import Data.Maybe (Maybe(..), fromMaybe, isJust)
+import Data.Monoid (guard)
 import Data.Monoid.Additive (Additive(..))
-import Data.Newtype (alaF)
+import Data.Newtype (alaF, un)
+import Data.Number.Format as Number
 import Data.Set (Set)
 import Data.Set as Set
 import Data.String as String
 import Data.Traversable (for, traverse)
 import Data.Tuple (Tuple(..))
 import Effect (Effect)
+import Effect.Aff (Milliseconds(..))
 import Effect.Aff as Aff
+import Effect.Aff.Class (liftAff)
 import Effect.Class (liftEffect)
 import Effect.Class.Console as Console
+import Effect.Now as Now
 import Lib.Foreign.Octokit (Release, ReleaseAsset)
 import Lib.Foreign.Octokit as Octokit
+import Lib.Foreign.Tmp as Tmp
 import Lib.Git (Tag(..))
+import Lib.Git as Git
 import Lib.GitHub (Repo(..))
 import Lib.GitHub as GitHub
 import Lib.Nix.Manifest (Manifests, PursManifestEntry, SpagoManifest, PursManifest)
@@ -36,6 +45,7 @@ import Lib.Nix.System (NixSystem)
 import Lib.Nix.System as Nix.System
 import Lib.Nix.Version (NixVersion)
 import Lib.Nix.Version as Nix.Version
+import Lib.Nix.Version as NixVersion
 import Lib.Utils as Utils
 import Node.Path (FilePath)
 import Node.Path as Path
@@ -101,54 +111,162 @@ main = Aff.launchAff_ do
     Right command ->
       pure command
 
-  octokit <- Octokit.newOctokit
+  -- Set up the environment...
+  tmp <- Tmp.mkTmpDir
+  now <- liftEffect Now.now
+  let random = Number.toString $ un Milliseconds $ Instant.unInstant now
+  let branch = "generate/" <> fromMaybe random (String.stripSuffix (String.Pattern ".0") random)
 
   case mode of
-    Verify dir -> AppM.runAppM { octokit, manifestDir: dir } do
-      Console.log "Verifying manifests..."
-      manifests <- readManifests
-      let pursEntries = alaF Additive foldMap Map.size (Map.values manifests.purs)
-      Console.log $ "Successfully parsed purs.json with " <> Int.toStringAs Int.decimal pursEntries <> " entries."
-      let spagoEntries = Map.size manifests.spago
-      Console.log $ "Successfully parsed spago.json with " <> Int.toStringAs Int.decimal spagoEntries <> " entries."
+    Verify dir -> do
+      let envFile = Path.concat [ dir, "..", "generate", ".env" ]
+      Console.log $ "Loading .env file from " <> envFile
+      liftAff $ Env.loadEnvFile envFile
+      token <- Env.lookupOptional Env.githubToken
+      octokit <- case token of
+        Nothing -> Octokit.newOctokit
+        Just tok -> Octokit.newAuthOctokit tok
+      AppM.runAppM { octokit, manifestDir: dir, gitBranch: branch, tmpDir: tmp } do
+        Console.log "Verifying manifests..."
+        manifests <- readManifests
+        let pursEntries = alaF Additive foldMap Map.size (Map.values manifests.purs)
+        Console.log $ "Successfully parsed purs.json with " <> Int.toStringAs Int.decimal pursEntries <> " entries."
+        let spagoEntries = Map.size manifests.spago
+        Console.log $ "Successfully parsed spago.json with " <> Int.toStringAs Int.decimal spagoEntries <> " entries."
 
-    Prefetch dir -> AppM.runAppM { octokit, manifestDir: dir } do
-      Console.log "Prefetching new releases..."
-      manifests <- readManifests
-      updates <- fetchUpdates manifests
-      if Map.size updates.purs > 0 then
-        Console.log $ "New purs releases: " <> Utils.printJson Nix.Manifest.pursManifestCodec updates.purs
-      else Console.log "No new purs releases."
-      if Map.size updates.spago > 0 then
-        Console.log $ "New spago releases: " <> Utils.printJson Nix.Manifest.spagoManifestCodec updates.spago
-      else Console.log "No new spago releases."
+    Prefetch dir -> do
+      let envFile = Path.concat [ dir, "..", "generate", ".env" ]
+      Console.log $ "Loading .env file from " <> envFile
+      liftAff $ Env.loadEnvFile envFile
+      token <- Env.lookupOptional Env.githubToken
+      octokit <- case token of
+        Nothing -> Octokit.newOctokit
+        Just tok -> Octokit.newAuthOctokit tok
+      AppM.runAppM { octokit, manifestDir: dir, gitBranch: branch, tmpDir: tmp } do
+        Console.log "Prefetching new releases..."
+        manifests <- readManifests
+        updates <- fetchUpdates manifests
+        if Map.size updates.purs > 0 then
+          Console.log $ "New purs releases: " <> Utils.printJson Nix.Manifest.pursManifestCodec updates.purs
+        else Console.log "No new purs releases."
+        if Map.size updates.spago > 0 then
+          Console.log $ "New spago releases: " <> Utils.printJson Nix.Manifest.spagoManifestCodec updates.spago
+        else Console.log "No new spago releases."
 
-    Update dir commit -> AppM.runAppM { octokit, manifestDir: dir } do
-      case commit of
-        DoCommit ->
-          Console.log "Committing is not yet working. Updating locally only (not committing results)."
-        -- committing results, and opening a pull request if necessary..."
-        NoCommit ->
-          Console.log "Updating locally only (not committing results)"
+    Update dir commit -> do
+      let envFile = Path.concat [ dir, "..", "generate", ".env" ]
+      Console.log $ "Loading .env file from " <> envFile
+      liftAff $ Env.loadEnvFile envFile
+      octokit <- Env.lookupOptional Env.githubToken >>= case _ of
+        Nothing -> Octokit.newOctokit
+        Just tok -> Octokit.newAuthOctokit tok
+      AppM.runAppM { octokit, manifestDir: dir, gitBranch: branch, tmpDir: tmp } do
+        manifests <- readManifests
+        updates <- fetchUpdates manifests
+        let pursUpdateCount = Map.size updates.purs
+        let spagoUpdateCount = Map.size updates.spago
 
-      manifests <- readManifests
-      updates <- fetchUpdates manifests
+        when (pursUpdateCount + spagoUpdateCount == 0) do
+          Console.log "No updates!"
+          liftEffect (Process.exit 0)
 
-      if Map.size updates.purs > 0 then do
-        Console.log $ "New purs releases: " <> Utils.printJson Nix.Manifest.pursManifestCodec updates.purs
-        Console.log "Writing to disk..."
-        let merged = Map.unionWith Map.union manifests.purs updates.purs
-        writePursManifest merged
-      else do
-        Console.log "No new purs releases."
+        case commit of
+          NoCommit -> do
+            Console.log "Updating locally only (not committing results)"
 
-      if Map.size updates.spago > 0 then do
-        Console.log $ "New spago releases: " <> Utils.printJson Nix.Manifest.spagoManifestCodec updates.spago
-        Console.log "Writing to disk..."
-        let merged = Map.union manifests.spago updates.spago
-        writeSpagoManifest merged
-      else do
-        Console.log "No new spago releases."
+            if pursUpdateCount > 0 then do
+              Console.log $ "New purs releases: " <> Utils.printJson Nix.Manifest.pursManifestCodec updates.purs
+              Console.log "Writing to disk..."
+              let merged = Map.unionWith Map.union manifests.purs updates.purs
+              writePursManifest merged
+            else do
+              Console.log "No new purs releases."
+
+            if spagoUpdateCount > 0 then do
+              Console.log $ "New spago releases: " <> Utils.printJson Nix.Manifest.spagoManifestCodec updates.spago
+              Console.log "Writing to disk..."
+              let merged = Map.union manifests.spago updates.spago
+              writeSpagoManifest merged
+            else do
+              Console.log "No new spago releases."
+
+          DoCommit -> do
+            Console.log "Cloning purescript-nix, opening a branch, committing, and opening a pull request..."
+            token <- Env.lookupRequired Env.githubToken
+            gitCommitResult <- AppM.runGitM do
+              Git.gitCloneUpstream
+
+              if pursUpdateCount > 0 then do
+                let merged = Map.unionWith Map.union manifests.purs updates.purs
+                Utils.writeJsonFile (Path.concat [ tmp, "purescript-nix", "manifests", "purs.json" ]) Nix.Manifest.pursManifestCodec merged
+              else do
+                Console.log "No new purs releases."
+              if spagoUpdateCount > 0 then do
+                let merged = Map.union manifests.spago updates.spago
+                Utils.writeJsonFile (Path.concat [ tmp, "purescript-nix", "manifests", "spago.json" ]) Nix.Manifest.spagoManifestCodec merged
+              else do
+                Console.log "No new spago releases."
+
+              -- TODO: Commit message could be a lot more informative.
+              Git.gitCommitManifests "Update manifests" >>= case _ of
+                Git.NothingToCommit -> do
+                  Console.log "No files were changed, not committing."
+                  liftEffect (Process.exit 1)
+                Git.Committed ->
+                  Console.log "Committed changes!"
+
+            case gitCommitResult of
+              Left error -> do
+                Console.log error
+                liftEffect (Process.exit 1)
+              Right _ -> pure unit
+
+            let
+              pursVersions = Set.unions $ map Map.keys $ Map.values updates.purs
+              spagoVersions = Map.keys updates.spago
+              title = "Update " <> String.joinWith " "
+                [ guard (Set.size pursVersions > 0) $ "purs (" <> String.joinWith ", " (Set.toUnfoldable (Set.map NixVersion.print pursVersions)) <> ")"
+                , guard (Set.size spagoVersions > 0) $ "spago (" <> String.joinWith ", " (Set.toUnfoldable (Set.map NixVersion.print spagoVersions)) <> ")"
+                ]
+              -- TODO: What would be the most informative thing to do here?
+              body = "Update manifest files to new tooling versions."
+
+            existing <- AppM.runGitHubM GitHub.getPullRequests >>= case _ of
+              Left error -> do
+                Console.log $ Octokit.printGitHubError error
+                liftEffect (Process.exit 1)
+              Right existing -> pure existing
+
+            -- TODO: Title comparison is a bit simplistic. Better to compare
+            -- on like the new hashes or something?
+            createPullResult <- case Array.find (eq title <<< _.title) existing of
+              Nothing -> do
+                pushResult <- AppM.runGitM $ Git.gitPushBranch token >>= case _ of
+                  Git.NothingToPush -> do
+                    Console.log "Did not push branch because we're up-to-date (expected to push change)."
+                    liftEffect (Process.exit 1)
+                  Git.Pushed ->
+                    Console.log "Pushed changes!"
+                case pushResult of
+                  Left error -> do
+                    Console.log error
+                    liftEffect (Process.exit 1)
+                  Right _ ->
+                    AppM.runGitHubM $ GitHub.createPullRequest { title, body, branch }
+
+              Just pull -> do
+                Console.log "A pull request with this title is already open: "
+                Console.log pull.url
+                liftEffect (Process.exit 1)
+
+            case createPullResult of
+              Left error -> do
+                Console.log "Failed to create pull request:"
+                Console.log $ Octokit.printGitHubError error
+                liftEffect (Process.exit 1)
+              Right { url } -> do
+                Console.log "Successfully created pull request!"
+                Console.log url
 
 readManifests :: AppM Manifests
 readManifests = do

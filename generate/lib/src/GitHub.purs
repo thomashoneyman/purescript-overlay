@@ -2,6 +2,7 @@ module Lib.GitHub where
 
 import Prelude
 
+import Control.Monad.Error.Class (class MonadThrow)
 import Control.Monad.Except (ExceptT(..))
 import Control.Monad.Reader (class MonadAsk, ReaderT, ask)
 import Data.DateTime (DateTime)
@@ -13,7 +14,7 @@ import Effect.Aff as Aff
 import Effect.Aff.Class (class MonadAff, liftAff)
 import Effect.Class (class MonadEffect)
 import Effect.Class.Console as Console
-import Lib.Foreign.Octokit (GitHubError(..), Octokit, Release, Request)
+import Lib.Foreign.Octokit (GitHubError(..), Octokit, Release, Request, PullRequest)
 import Lib.Foreign.Octokit as Octokit
 import Lib.Git (CommitSha(..), Tag(..))
 import Lib.Utils as Utils
@@ -30,6 +31,9 @@ derive newtype instance Monad GitHubM
 derive newtype instance MonadEffect GitHubM
 derive newtype instance MonadAff GitHubM
 derive newtype instance MonadAsk Octokit GitHubM
+derive newtype instance MonadThrow GitHubError GitHubM
+
+newtype GitHubToken = GitHubToken String
 
 data Repo
   = PursRepo
@@ -80,17 +84,26 @@ type PullRequestData =
   , branch :: String
   }
 
-createPullRequest :: Repo -> PullRequestData -> GitHubM Unit
-createPullRequest repo { title, body, branch } = do
+createPullRequest :: PullRequestData -> GitHubM { url :: String }
+createPullRequest { title, body, branch } = do
   octokit <- ask
-  let address = repoAddress repo
-  Console.log $ "Creating pull request in repo " <> address.owner <> "/" <> address.repo <> " from branch " <> branch
-  Console.log $ "Title:\n"
+  let address = { owner: "thomashoneyman", repo: "purescript-nix" }
+  let base = "main"
+  Console.log $ "\nCreating pull request in repo " <> address.owner <> "/" <> address.repo <> " from branch " <> branch
+  Console.log $ "Title:"
   Console.log title
-  Console.log "Body:\n"
+  Console.log "Body"
   Console.log body
-  let pull = { head: branch, base: "main", title, body }
+  let pull = { head: branch, base, title, body }
   let req = requestWithBackoff octokit (Octokit.requestCreatePullRequest { address, content: pull })
+  GitHubM $ ExceptT req
+
+getPullRequests :: GitHubM (Array PullRequest)
+getPullRequests = do
+  octokit <- ask
+  let address = { owner: "thomashoneyman", repo: "purescript-nix" }
+  Console.log $ "Fetching pull requests from  repo " <> address.owner <> "/" <> address.repo
+  let req = requestWithBackoff octokit (Octokit.requestGetPullRequests address)
   GitHubM $ ExceptT req
 
 -- | Apply exponential backoff to requests that hang, but without cancelling
