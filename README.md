@@ -41,7 +41,7 @@ In a Nix flake, use the provided overlay when importing nixpkgs to get access to
         devShells.default = pkgs.mkShell {
           buildInputs = [
             pkgs.purs-unstable
-            pkgs.spago-bin.spago-0_93_4
+            pkgs.spago-bin.spago-0_93_5
           ];
         };
       }
