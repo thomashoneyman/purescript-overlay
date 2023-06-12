@@ -23,3 +23,6 @@ jobs:
 
       - name: Build spago
         run: nix build .#spago
+
+      - name: Flake check
+        run: nix flake check
