@@ -41,16 +41,16 @@ import Lib.GitHub as GitHub
 import Lib.Nix.Manifest (Manifests, PursManifestEntry, SpagoManifest, PursManifest)
 import Lib.Nix.Manifest as Nix.Manifest
 import Lib.Nix.Prefetch as Nix.Prefetch
-import Lib.Nix.System (NixSystem)
+import Lib.Nix.System (NixSystem(..))
 import Lib.Nix.System as Nix.System
-import Lib.Nix.Version (NixVersion)
+import Lib.Nix.Version (NixVersion(..))
 import Lib.Nix.Version as Nix.Version
-import Lib.Nix.Version as NixVersion
 import Lib.Utils as Utils
 import Node.Path (FilePath)
 import Node.Path as Path
 import Node.Process as Process
 import Registry.Sha256 as Sha256
+import Registry.Version as Version
 
 data Commit = DoCommit | NoCommit
 
@@ -230,8 +230,8 @@ main = Aff.launchAff_ do
               pursVersions = Set.unions $ map Map.keys $ Map.values updates.purs
               spagoVersions = Map.keys updates.spago
               title = "Update " <> String.joinWith " "
-                [ guard (Set.size pursVersions > 0) $ "purs (" <> String.joinWith ", " (Set.toUnfoldable (Set.map NixVersion.print pursVersions)) <> ")"
-                , guard (Set.size spagoVersions > 0) $ "spago (" <> String.joinWith ", " (Set.toUnfoldable (Set.map NixVersion.print spagoVersions)) <> ")"
+                [ guard (Set.size pursVersions > 0) $ "purs (" <> String.joinWith ", " (Set.toUnfoldable (Set.map Nix.Version.print pursVersions)) <> ")"
+                , guard (Set.size spagoVersions > 0) $ "spago (" <> String.joinWith ", " (Set.toUnfoldable (Set.map Nix.Version.print spagoVersions)) <> ")"
                 ]
               -- TODO: What would be the most informative thing to do here?
               body = "Update manifest files to new tooling versions."
@@ -321,6 +321,16 @@ isPre0_13 input = do
     minor <- Int.fromString minorStr
     pure $ major == 0 && minor < 13
 
+-- | Prerelease versions for x86_64-darwin were incorrect for the 0.15 series
+-- | of the compiler up to 0.15.10.
+isInvalidDarwinPrerelease :: NixSystem -> NixVersion -> Boolean
+isInvalidDarwinPrerelease system (NixVersion { version, pre }) = do
+  if system == X86_64_darwin then case pre of
+    Nothing -> false
+    Just _ -> Version.patch version < 10
+  else
+    false
+
 isSupportedAsset :: ReleaseAsset -> Boolean
 isSupportedAsset asset = do
   isJust (String.stripSuffix (String.Pattern ".tar.gz") asset.name)
@@ -334,7 +344,7 @@ pursReleaseToManifest existing release = do
   if isPre0_13 release.tag then do
     Console.log $ "Omitting release " <> release.tag <> " because it is prior to purs-0.13"
     pure Nothing
-  else if Array.any (\(Tag tag) -> String.contains (String.Pattern tag) release.tag) omittedPursReleases then do
+  else if Array.any (\(Tag omitted) -> release.tag == omitted) omittedPursReleases then do
     Console.log $ "Omitting release " <> release.tag <> " because it is in the omitted purs releases list."
     pure Nothing
   else if release.draft then do
@@ -350,12 +360,12 @@ pursReleaseToManifest existing release = do
           Console.log $ "Skipping release because it already exists in the manifests file."
           pure Nothing
       | otherwise -> do
-          let supported = Array.filter isSupportedAsset release.assets
-          when (Array.length supported < 2) do
+          let supportedAssets = Array.filter isSupportedAsset release.assets
+          when (Array.length supportedAssets < 2) do
             Console.log "PureScript releases always have at least 2 supported release assets, but this release has fewer."
             Console.log $ Utils.printJson Octokit.releaseCodec release
             liftEffect (Process.exit 1)
-          entries :: Array (Tuple NixSystem PursManifestEntry) <- for supported \tarball -> do
+          entries :: Array (Maybe (Tuple NixSystem PursManifestEntry)) <- for supportedAssets \tarball -> do
             system <- case Nix.System.fromPursReleaseTarball tarball.name of
               Left error -> do
                 Console.log $ "Failed to parse tarball in release " <> release.tag <> " named " <> tarball.name
@@ -363,16 +373,20 @@ pursReleaseToManifest existing release = do
                 liftEffect (Process.exit 1)
               Right system -> pure system
             Console.log $ "Chose Nix system " <> Nix.System.print system <> " for tarball " <> tarball.name
-            sha256 <- Nix.Prefetch.nixPrefetchTarball tarball.downloadUrl >>= case _ of
-              Left error -> do
-                Console.log $ "Could not prefetch hash for tarball at url " <> tarball.downloadUrl
-                Console.log error
-                liftEffect (Process.exit 1)
-              Right sha256 -> pure sha256
-            Console.log $ "Got hash " <> Sha256.print sha256 <> " for tarball " <> tarball.name
-            pure (Tuple system { url: tarball.downloadUrl, hash: sha256 })
+            if isInvalidDarwinPrerelease system version then do
+              Console.log "This version has an invalid prerelease version on darwin, skipping for that system."
+              pure Nothing
+            else do
+              sha256 <- Nix.Prefetch.nixPrefetchTarball tarball.downloadUrl >>= case _ of
+                Left error -> do
+                  Console.log $ "Could not prefetch hash for tarball at url " <> tarball.downloadUrl
+                  Console.log error
+                  liftEffect (Process.exit 1)
+                Right sha256 -> pure sha256
+              Console.log $ "Got hash " <> Sha256.print sha256 <> " for tarball " <> tarball.name
+              pure (Just (Tuple system { url: tarball.downloadUrl, hash: sha256 }))
           let union prev (Tuple system entry) = Map.insertWith Map.union system (Map.singleton version entry) prev
-          pure $ Just $ Array.foldl union Map.empty entries
+          pure $ Just $ Array.foldl union Map.empty $ Array.catMaybes entries
 
 -- TODO: Spago's alpha does not currently have any official releases, so we
 -- don't fetch anything.
