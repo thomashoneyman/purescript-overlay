@@ -89,7 +89,7 @@
     in {
       default = pkgs.mkShell {
         name = "purescript-nix";
-        buildInputs = [self.packages.${system}.spago self.packages.${system}.purs];
+        buildInputs = [self.packages.${system}.spago self.packages.${system}.purs-0_15_8];
       };
     });
   };
