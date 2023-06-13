@@ -7,6 +7,6 @@
   args = {inherit (testUtils) runTests;};
 in
   builtins.attrValues {
-    testFromYAML = callPackage ./unit/fromYAML.nix args;
-    testBuildPackageLock = callPackage ./unit/buildPackageLock.nix args;
+    testFromYAML = callPackage ./unit/from-yaml.nix args;
+    testPackageLock = callPackage ./unit/package-lock.nix args;
   }
