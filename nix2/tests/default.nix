@@ -8,4 +8,5 @@
 in
   builtins.attrValues {
     testFromYAML = callPackage ./unit/fromYAML.nix args;
+    testBuildPackageLock = callPackage ./unit/buildPackageLock.nix args;
   }
