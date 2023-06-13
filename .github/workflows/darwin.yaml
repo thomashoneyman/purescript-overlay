@@ -4,9 +4,8 @@
 name: "darwin-check"
 
 on:
-  push:
-    branches: [main]
-  pull_request:
+  check_suite:
+    types: [completed]
 
 jobs:
   build:

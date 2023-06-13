@@ -1,9 +1,7 @@
 {
   description = "Nix derivations for PureScript core language tools.";
 
-  inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-23.05";
-  };
+  inputs = {nixpkgs.url = "github:nixos/nixpkgs/release-23.05";};
 
   outputs = {
     self,
@@ -46,6 +44,15 @@
     in
       packages // scripts);
 
+    # Tests can be run via `nix eval .#tests`
+    tests = forAllSystems (
+      system: let
+        pkgs = nixpkgsFor.${system};
+        results = pkgs.callPackage ./nix2/tests {};
+      in
+        results
+    );
+
     checks = forAllSystems (system: let
       pkgs = nixpkgsFor.${system};
 
@@ -63,7 +70,7 @@
       self.packages.${system};
 
       test-checks = {
-        test-generate = let
+        generate = let
           bin = pkgs.callPackage ./generate {};
           manifests = ./manifests;
         in
@@ -82,10 +89,7 @@
     in {
       default = pkgs.mkShell {
         name = "purescript-nix";
-        buildInputs = [
-          self.packages.${system}.spago
-          self.packages.${system}.purs
-        ];
+        buildInputs = [self.packages.${system}.spago self.packages.${system}.purs];
       };
     });
   };
