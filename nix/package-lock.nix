@@ -8,6 +8,8 @@
   # Read a package-lock.json as a Nix attrset
   readPackageLock = lockfile: builtins.fromJSON (builtins.readFile lockfile);
 
+  normalizePackageName = name: lib.last (lib.strings.splitString "node_modules/" name);
+
   # Read the dependencies listed in a package-lock.json file where each key is
   # the name of a dependency and each value is an attrset with the following
   # keys:
@@ -18,22 +20,17 @@
     # Don't include the current package, as it isn't a dependency.
     removeCurrent = packages: removeAttrs packages [""];
 
-    # Remove node_modules prefixes from package names listed in the lockfile and
-    # ensure deps have all required fields.
-    normalizePackage = name: value: {
-      name = lib.last (lib.strings.splitString "node_modules/" name);
-      value = {
-        version = value.version or (throw "Dependency ${name} does not have a 'version' key");
-        integrity = value.integrity or (throw "Dependency ${name} does not have an 'integrity' key");
-        resolved = value.resolved or (throw "Dependency ${name} does not have a 'resolved' key");
-      };
+    verifyPackage = name: value: {
+      version = value.version or (throw "Dependency ${name} does not have a 'version' key");
+      integrity = value.integrity or (throw "Dependency ${name} does not have an 'integrity' key");
+      resolved = value.resolved or (throw "Dependency ${name} does not have a 'resolved' key");
     };
 
     # NPM lockfiles differ depending on their version. v1 lockfiles used a
     # "dependencies" key, while v2 lockfiles use a "packages" key.
     allDependencies = lock.packages or lock.dependencies or {};
   in
-    lib.mapAttrs' normalizePackage (removeCurrent allDependencies);
+    lib.mapAttrs verifyPackage (removeCurrent allDependencies);
 
   # Turn each dependency into a fetchurl call. At the moment, this code does not
   # support any other type of dependency; for that, see other NPM lockfile
