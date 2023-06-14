@@ -1,5 +1,5 @@
 # Runs the generate script on a daily basis to look for new tooling updates.
-name: "generate"
+name: "daily-update"
 
 # The importer is run every day at 07:00 UTC and can also be run manually from
 # the 'Actions' tab.

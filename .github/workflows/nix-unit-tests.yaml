@@ -1,4 +1,4 @@
-name: "nix-eval"
+name: "nix-unit-tests"
 
 on:
   push:

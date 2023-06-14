@@ -1,7 +1,4 @@
 {lib}: {
-  # Reads a given file (either drv, path or string) and returns its sha256 hash
-  hashFile = file: builtins.hashString "sha256" (builtins.readFile file);
-
   # Takes an attrset of tests and throws an error if any of them fail. A test
   # is an attrset where keys are test names and values are { expr, expected }
   runTests = tests: let

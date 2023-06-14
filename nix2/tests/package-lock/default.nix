@@ -13,11 +13,4 @@ in
         };
       };
     };
-
-    testSimpleTarballs = {
-      expr = lock.listDependencyTarballs (builtins.mapAttrs lock.fetchDependencyTarball (lock.getDependencies (lock.readPackageLock ./simple.json)));
-      expected = ''
-        /nix/store/f33qz45a96dzl1dh1wzfy705cm5bswq9-leftpad-0.0.1
-      '';
-    };
   }

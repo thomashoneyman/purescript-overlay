@@ -65,7 +65,9 @@
         '')
       self.packages.${system};
 
-      test-checks = {
+      example-checks = pkgs.callPackages ./nix2/examples {};
+
+      script-checks = {
         generate = let
           bin = pkgs.callPackage ./generate {};
           manifests = ./manifests;
@@ -78,7 +80,7 @@
           '';
       };
     in
-      test-checks // package-checks);
+      package-checks // example-checks // script-checks);
 
     devShells = forAllSystems (system: let
       pkgs = nixpkgsFor.${system};

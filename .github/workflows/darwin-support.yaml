@@ -1,7 +1,7 @@
 # Garnix does not yet support x86_64-darwin, so we can manually add it as a
 # classic build via GitHub Actions.
 # https://github.com/garnix-io/issues/issues/16
-name: "darwin-check"
+name: "darwin-support"
 
 on:
   check_suite:
