@@ -39,10 +39,7 @@
     stdenv.mkDerivation {
       name = name;
       version = attr.version;
-      dependencies =
-        if attr.dependencies == "[]"
-        then []
-        else attr.dependencies;
+      dependencies = attr.dependencies;
 
       src = fetchurl {
         name = "${name}-${attr.version}.tar.gz";
@@ -71,10 +68,7 @@
   in
     stdenv.mkDerivation {
       name = name;
-      dependencies =
-        if attr.dependencies == "[]"
-        then []
-        else attr.dependencies;
+      dependencies = attr.dependencies;
       src =
         if builtins.hasAttr "subdir" attr
         then "${fetched}/${attr.subdir}"
@@ -92,10 +86,7 @@
   readLocalPackage = src: name: attr:
     stdenv.mkDerivation {
       name = name;
-      dependencies =
-        if attr.dependencies == "[]"
-        then []
-        else attr.dependencies;
+      dependencies = attr.dependencies;
       src = pathExists "${src}/${attr.path}";
       installPhase = ''
         cp -R . "$out"
@@ -135,16 +126,13 @@
         name = name;
         # The workspace packages list version ranges with their dependencies, so
         # we want to take only the keys.
-        dependencies =
-          if attr.dependencies == "[]"
-          then []
-          else let
-            toNames = dep:
-              if builtins.typeOf dep == "set"
-              then lib.attrNames dep
-              else [dep];
-          in
-            lib.concatMap toNames attr.dependencies;
+        dependencies = let
+          toNames = dep:
+            if builtins.typeOf dep == "set"
+            then lib.attrNames dep
+            else [dep];
+        in
+          lib.concatMap toNames attr.dependencies;
         src =
           if attr.path == "./"
           then src
