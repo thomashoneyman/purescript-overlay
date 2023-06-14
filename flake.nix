@@ -22,7 +22,7 @@
     # e.g. `nix eval .#lib`.
     lib = forAllSystems (system: let
       pkgs = nixpkgsFor.${system};
-      tests = pkgs.callPackage ./nix2/tests {};
+      tests = pkgs.callPackage ./nix/tests {};
     in
       tests);
 
@@ -65,7 +65,7 @@
         '')
       self.packages.${system};
 
-      example-checks = pkgs.callPackages ./nix2/examples {};
+      example-checks = pkgs.callPackages ./nix/examples {};
 
       script-checks = {
         generate = let

@@ -47,8 +47,11 @@ in
     buildInputs = [nodejs];
 
     buildPhase = let
-      npmDependencies = buildPackageLock {inherit src;};
-      workspaces = buildSpagoLock {inherit purs src;};
+      npmDependencies = buildPackageLock.buildPackageLock {src = src;};
+      workspaces = buildSpagoLock.workspaces {
+        src = src;
+        lockfile = src + "/spago.lock";
+      };
     in ''
       # Make sure the node_modules folder is available
       ln -s ${npmDependencies}/js/node_modules .

@@ -12,7 +12,6 @@ in
     name = "bin";
     src = ./.;
     buildPhase = ''
-      exit 1
       touch $out
     '';
     installPhase = ''
