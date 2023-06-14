@@ -1,0 +1,9 @@
+workspace:
+  lock: true
+  package_set:
+    registry: 24.4.0
+  extra_packages:
+    registry-lib:
+      git: https://github.com/purescript/registry-dev.git
+      ref: master
+      subdir: lib

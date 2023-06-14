@@ -11,4 +11,12 @@ in
         builtins.attrNames (locked.packages // locked.workspace.packages);
       expected = ["basic" "console" "effect" "prelude"];
     };
+
+    testWorkspaces = {
+      expr = let
+        locked = lock.readSpagoLock ./workspaces.lock;
+      in
+        builtins.attrNames (locked.workspace.packages);
+      expected = ["bin" "lib"];
+    };
   }

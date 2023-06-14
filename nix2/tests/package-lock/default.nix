@@ -3,7 +3,7 @@
   lock = callPackage ../../package-lock.nix {};
 in
   utils.runTests {
-    testSimple = {
+    testSimpleDependencies = {
       expr = lock.getDependencies (lock.readPackageLock ./simple.json);
       expected = {
         leftpad = {
@@ -12,5 +12,12 @@ in
           resolved = "https://registry.npmjs.org/leftpad/-/leftpad-0.0.1.tgz";
         };
       };
+    };
+
+    testSimpleTarballs = {
+      expr = lock.listDependencyTarballs (builtins.mapAttrs lock.fetchDependencyTarball (lock.getDependencies (lock.readPackageLock ./simple.json)));
+      expected = ''
+        /nix/store/f33qz45a96dzl1dh1wzfy705cm5bswq9-leftpad-0.0.1
+      '';
     };
   }

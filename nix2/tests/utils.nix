@@ -20,6 +20,6 @@
       failures;
   in
     if builtins.length failures == 0
-    then "All succeeded"
+    then []
     else builtins.throw message;
 }
