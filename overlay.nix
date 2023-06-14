@@ -1,23 +1,13 @@
 final: prev: let
-  fromYAML = prev.callPackage ./nix/lib/fromYAML.nix {};
+  fromYAML = prev.callPackage ./nix/from-yaml.nix {};
 
-  mkManifestDerivations = bin: prev.callPackages ./nix/mkManifestDerivations.nix {inherit bin;};
+  # All of the tools supported by this repo
+  tooling = import ./manifests {inherit (prev) callPackage callPackages;};
 
-  # The 'named.json' file records what packages should be mapped to the default
-  # package names. This is the latest stable or unstable version for each package.
-  namedPackages = builtins.mapAttrs (name: value: let
-    bin-name = "${builtins.replaceStrings ["-unstable"] [""] name}-bin";
-  in
-    final.${bin-name}.${value})
-  (builtins.fromJSON (builtins.readFile ./manifests/named.json));
+  # All of the library functions supported by this repo
+  library = {
+    buildPackageLock = prev.callPackage ./nix/package-lock.nix {};
+    buildSpagoLock = prev.callPackage ./nix/spago-lock.nix {inherit fromYAML;};
+  };
 in
-  {
-    # PureScript tools
-    purs-bin = mkManifestDerivations "purs";
-    spago-bin = mkManifestDerivations "spago";
-
-    # Utilities for building PureScript packages
-    buildPackageLock = prev.callPackage ./nix/lib/buildPackageLock.nix {};
-    buildSpagoLock = prev.callPackage ./nix/lib/buildSpagoLock.nix {inherit fromYAML;};
-  }
-  // namedPackages
+  tooling // library

@@ -3,14 +3,9 @@
   lib,
   fetchurl,
   fetchgit,
-  # Provided via this repository, not nixpkgs, via the overlay.
+  # The following are present via the overlay
   fromYAML,
-}: {
-  src,
-  purs,
-  spagoYAML ? src + "/spago.yaml",
-  lockYAML ? src + "/spago.lock",
-}: let
+}: rec {
   # Helper function for throwing an exception in case a constructed path does
   # not exist.
   pathExists = path:
@@ -19,10 +14,10 @@
     else throw "Path does not exist: ${path}";
 
   # Read the Spago config file
-  config = fromYAML (builtins.readFile spagoYAML);
+  readSpagoConfig = config: fromYAML (builtins.readFile config);
 
   # Read the Spago lock file
-  lock = fromYAML (builtins.readFile lockYAML);
+  readSpagoLock = lockfile: fromYAML (builtins.readFile lockfile);
 
   # Read a package listed in the lockfile
   readLockedPackage = name: attr:
@@ -94,7 +89,7 @@
   #   "type": "local",
   #   "path": "my-library"
   # },
-  readLocalPackage = name: attr:
+  readLocalPackage = src: name: attr:
     stdenv.mkDerivation {
       name = name;
       dependencies =
@@ -108,60 +103,65 @@
     };
 
   # Read all the locked packages
-  lockedPackages = lib.mapAttrs readLockedPackage lock.packages;
+  lockedPackages = lock: lib.mapAttrs readLockedPackage lock.packages;
 
-  # Read a workspace package. These are listed at the top of the
-  # lockfile, not in the main packages list.
-  readWorkspacePackage = name: attr:
-    stdenv.mkDerivation {
-      name = name;
-      # The workspace packages list version ranges with their dependencies, so
-      # we want to take only the keys.
-      dependencies =
-        if attr.dependencies == "[]"
-        then []
-        else let
-          toNames = dep:
-            if builtins.typeOf dep == "set"
-            then lib.attrNames dep
-            else [dep];
-        in
-          lib.concatMap toNames attr.dependencies;
-      src =
-        if attr.path == "./"
-        then src
-        else pathExists "${src}/${attr.path}";
-      installPhase = ''
-        cp -R . $out
-      '';
+  workspaces = {
+    lockfile,
+    src,
+  }: let
+    lock = readSpagoLock lockfile;
+
+    # Read the workspace packages
+    workspacePackages = lib.mapAttrs readWorkspacePackage lock.workspace.packages;
+
+    # Union all packages so they can be used as a little package database
+    allPackages = lockedPackages lock // workspacePackages;
+
+    closureEntry = name: {
+      key = name;
+      package = allPackages.${name} or (builtins.throw ''Missing package "${name}"'');
     };
 
-  # Read the workspace packages
-  workspacePackages = lib.mapAttrs readWorkspacePackage lock.workspace.packages;
+    workspaceClosure = workspace:
+      builtins.genericClosure {
+        startSet = map closureEntry workspace.dependencies;
+        operator = entry: map closureEntry entry.package.dependencies;
+      };
 
-  # Union all packages so they can be used as a little package database
-  allPackages = lockedPackages // workspacePackages;
+    # Read a workspace package. These are listed at the top of the
+    # lockfile, not in the main packages list.
+    readWorkspacePackage = name: attr:
+      stdenv.mkDerivation {
+        name = name;
+        # The workspace packages list version ranges with their dependencies, so
+        # we want to take only the keys.
+        dependencies =
+          if attr.dependencies == "[]"
+          then []
+          else let
+            toNames = dep:
+              if builtins.typeOf dep == "set"
+              then lib.attrNames dep
+              else [dep];
+          in
+            lib.concatMap toNames attr.dependencies;
+        src =
+          if attr.path == "./"
+          then src
+          else pathExists "${src}/${attr.path}";
+        installPhase = ''
+          cp -R . $out
+        '';
+      };
 
-  closureEntry = name: {
-    key = name;
-    package = allPackages.${name} or (builtins.throw ''Missing package "${name}"'');
-  };
-
-  workspaceClosure = workspace:
-    builtins.genericClosure {
-      startSet = map closureEntry workspace.dependencies;
-      operator = entry: map closureEntry entry.package.dependencies;
+    buildWorkspace = name: workspace: {
+      dependencies = rec {
+        # Get all dependencies of the workspace
+        sources = map (pkg: pkg.package) (workspaceClosure workspace);
+        # Turn them into glob patterns acceptable for the compiler
+        globs = builtins.concatStringsSep " " (map (path: "'${path}/src/**/*.purs'") sources);
+      };
     };
-
-  buildWorkspace = name: workspace: {
-    dependencies = rec {
-      # Get all dependencies of the workspace
-      sources = map (pkg: pkg.package) (workspaceClosure workspace);
-      # Turn them into glob patterns acceptable for the compiler
-      globs = builtins.concatStringsSep " " (map (path: "'${path}/src/**/*.purs'") sources);
-    };
-  };
-
-  workspaces = lib.mapAttrs buildWorkspace workspacePackages;
-in
-  workspaces
+  in
+    lib.mapAttrs buildWorkspace workspacePackages;
+}

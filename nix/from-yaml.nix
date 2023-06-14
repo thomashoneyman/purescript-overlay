@@ -10,7 +10,23 @@
 
     # Remove empty lines. If Spago introduces other special lines
     # (like comments) then this can be expanded.
-    filtered = lib.filter (line: (builtins.match ''[[:space:]]*'' line == null)) lines;
+    filtered = let
+      noEmpties = lib.filter (line: (builtins.match "[[:space:]]*" line == null)) lines;
+    in
+      if noEmpties == []
+      then throw "Empty YAML file"
+      else noEmpties;
+
+    # Spago indicates empty lists and objects by including the key along with
+    # an empty list or object as the value. By default we only consider YAML
+    # objects (key: value) and lists (- value) when parsing structured data,
+    # so this gives us a chance to handle these special cases.
+    parseEmptyElem = elem:
+      if elem == "[]"
+      then []
+      else if elem == "{}"
+      then {}
+      else elem;
 
     # Match the following structure for each line:
     #
@@ -22,13 +38,13 @@
     # }
     matchLine = line: let
       # Single line key value statement
-      singleLine = builtins.match ''([ -]*)(.*): (.*)'' line;
+      singleLine = builtins.match "([ -]*)(.*): (.*)" line;
       # Multi line key value (line contains only key)
-      multiLine = builtins.match ''([ -]*)(.*):$'' line;
+      multiLine = builtins.match "([ -]*)(.*):$" line;
       # Is the line starting a new list element?
-      listEntry = builtins.match ''([[:space:]]*-[[:space:]]+)(.*)'' line;
-    in
+      listEntry = builtins.match "([[:space:]]*-[[:space:]]+)(.*)" line;
       # Handle list elements (lines starting with ' -')
+    in
       if listEntry != null
       then rec {
         isListEntry = true;
@@ -48,7 +64,7 @@
         isListEntry = false;
         indent = (builtins.stringLength (builtins.elemAt singleLine 0)) / 2;
         key = builtins.elemAt singleLine 1;
-        value = builtins.elemAt singleLine 2;
+        value = parseEmptyElem (builtins.elemAt singleLine 2);
       }
       # Handle multi-line key -> object assignment
       else if multiLine != null
@@ -90,7 +106,10 @@
         then -1
         else match.indent;
 
-      childrenMustBeList = nextMatch.indent > indent && nextMatch.isListEntry;
+      childrenMustBeList =
+        nextMatch.indent
+        > indent
+        && nextMatch.isListEntry;
 
       findChildIndices = searchIndex: let
         matchSearch = builtins.elemAt matched searchIndex;
@@ -119,8 +138,7 @@
       childObjects = builtins.map (processLines lines) childIndices;
 
       childrenMerged =
-        lib.foldl
-        (all: currentObject: (
+        lib.foldl (all: currentObject: (
           if builtins.isAttrs currentObject
           then
             (
@@ -149,22 +167,38 @@
           if match.key != null && match.value != null
           then
             # Attrs element follows
-            if match.indent == nextMatch.indent && ! nextMatch.isListEntry
-            then [({"${match.key}" = match.value;} // nextLine)]
+            if match.indent == nextMatch.indent && !nextMatch.isListEntry
+            then [
+              ({"${match.key}" = match.value;} // nextLine)
+            ]
             # List or unindent follows
-            else [{"${match.key}" = match.value;}]
+            else [
+              {
+                "${match.key}" = match.value;
+              }
+            ]
           # List begin with only a key (child list/attrs follow)
           else if match.key != null
-          then [{"${match.key}" = childrenMerged;}]
+          then [
+            {
+              "${match.key}" = childrenMerged;
+            }
+          ]
           # Value only (list elem with plain value)
-          else [match.value]
+          else [
+            match.value
+          ]
         # Not a list entry
         else
           # Has key and value
           if match.key != null && match.value != null
-          then {"${match.key}" = match.value;}
+          then {
+            "${match.key}" = match.value;
+          }
           # Key only
-          else {"${match.key}" = childrenMerged;};
+          else {
+            "${match.key}" = childrenMerged;
+          };
     in
       result;
   in

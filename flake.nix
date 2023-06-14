@@ -1,9 +1,7 @@
 {
   description = "Nix derivations for PureScript core language tools.";
 
-  inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-23.05";
-  };
+  inputs = {nixpkgs.url = "github:nixos/nixpkgs/release-23.05";};
 
   outputs = {
     self,
@@ -20,6 +18,14 @@
   in {
     overlays.default = overlay;
 
+    # A warning-free top-level flake output suitable for running unit tests via
+    # e.g. `nix eval .#lib`.
+    lib = forAllSystems (system: let
+      pkgs = nixpkgsFor.${system};
+      tests = pkgs.callPackage ./nix/tests {};
+    in
+      tests);
+
     packages = forAllSystems (system: let
       pkgs = nixpkgsFor.${system};
       purs = pkgs.purs;
@@ -32,19 +38,16 @@
 
     apps = forAllSystems (system: let
       pkgs = nixpkgsFor.${system};
-
       mkApp = bin: {
         type = "app";
         program = "${bin}/bin/${bin.pname or bin.name}";
       };
-
-      packages = pkgs.lib.mapAttrs (_: mkApp) self.packages.${system};
-
+      apps = pkgs.lib.mapAttrs (_: mkApp) self.packages.${system};
       scripts = {
         generate = mkApp (pkgs.callPackage ./generate {});
       };
     in
-      packages // scripts);
+      apps // scripts);
 
     checks = forAllSystems (system: let
       pkgs = nixpkgsFor.${system};
@@ -62,8 +65,10 @@
         '')
       self.packages.${system};
 
-      test-checks = {
-        test-generate = let
+      example-checks = pkgs.callPackages ./nix/examples {};
+
+      script-checks = {
+        generate = let
           bin = pkgs.callPackage ./generate {};
           manifests = ./manifests;
         in
@@ -75,17 +80,14 @@
           '';
       };
     in
-      test-checks // package-checks);
+      package-checks // example-checks // script-checks);
 
     devShells = forAllSystems (system: let
       pkgs = nixpkgsFor.${system};
     in {
       default = pkgs.mkShell {
         name = "purescript-nix";
-        buildInputs = [
-          self.packages.${system}.spago
-          self.packages.${system}.purs
-        ];
+        buildInputs = [self.packages.${system}.spago self.packages.${system}.purs];
       };
     });
   };
