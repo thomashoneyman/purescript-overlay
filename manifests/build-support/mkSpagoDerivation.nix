@@ -6,8 +6,7 @@
   nodejs,
   writeShellScriptBin,
   # via overlay
-  buildSpagoLock,
-  buildPackageLock,
+  purix,
   purs-bin,
 }: {
   version,
@@ -47,8 +46,8 @@ in
     buildInputs = [nodejs];
 
     buildPhase = let
-      npmDependencies = buildPackageLock.buildPackageLock {src = src;};
-      workspaces = buildSpagoLock.workspaces {
+      npmDependencies = purix.buildPackageLock {src = src;};
+      workspaces = purix.buildSpagoLock {
         src = src;
         lockfile = src + "/spago.lock";
       };

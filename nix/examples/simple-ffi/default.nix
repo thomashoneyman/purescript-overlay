@@ -1,11 +1,9 @@
 {
   stdenv,
-  purs,
-  buildSpagoLock,
-  buildPackageLock,
+  purix,
 }: let
-  packageLock = buildPackageLock.buildPackageLock {src = ./.;};
-  spagoLock = buildSpagoLock.workspaces {
+  packageLock = purix.buildPackageLock {src = ./.;};
+  spagoLock = purix.buildSpagoLock {
     src = ./.;
     lockfile = ./spago.lock;
   };

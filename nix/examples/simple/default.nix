@@ -1,9 +1,8 @@
 {
   stdenv,
-  purs,
-  buildSpagoLock,
+  purix,
 }: let
-  lock = buildSpagoLock.workspaces {
+  lock = purix.buildSpagoLock {
     src = ./.;
     lockfile = ./spago.lock;
   };

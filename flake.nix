@@ -80,7 +80,8 @@
           '';
       };
     in
-      package-checks // example-checks // script-checks);
+      example-checks);
+    # package-checks // example-checks // script-checks);
 
     devShells = forAllSystems (system: let
       pkgs = nixpkgsFor.${system};

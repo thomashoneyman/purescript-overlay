@@ -5,9 +5,12 @@ final: prev: let
   tooling = import ./manifests {inherit (prev) callPackage callPackages;};
 
   # All of the library functions supported by this repo
-  library = {
-    buildPackageLock = prev.callPackage ./nix/package-lock.nix {};
-    buildSpagoLock = prev.callPackage ./nix/spago-lock.nix {inherit fromYAML;};
+  buildPackageLock = prev.callPackage ./nix/package-lock.nix {};
+  buildSpagoLock = prev.callPackage ./nix/spago-lock.nix {inherit fromYAML;};
+  purix = {
+    lib = buildPackageLock // buildSpagoLock;
+    buildPackageLock = buildPackageLock.buildPackageLock;
+    buildSpagoLock = buildSpagoLock.workspaces;
   };
 in
-  tooling // library
+  {inherit purix;} // tooling
