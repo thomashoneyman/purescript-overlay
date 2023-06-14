@@ -18,6 +18,14 @@
   in {
     overlays.default = overlay;
 
+    # A warning-free top-level flake output suitable for running unit tests via
+    # e.g. `nix eval .#lib`.
+    lib = forAllSystems (system: let
+      pkgs = nixpkgsFor.${system};
+      tests = pkgs.callPackage ./nix2/tests {};
+    in
+      tests);
+
     packages = forAllSystems (system: let
       pkgs = nixpkgsFor.${system};
       purs = pkgs.purs;
@@ -30,28 +38,16 @@
 
     apps = forAllSystems (system: let
       pkgs = nixpkgsFor.${system};
-
       mkApp = bin: {
         type = "app";
         program = "${bin}/bin/${bin.pname or bin.name}";
       };
-
-      packages = pkgs.lib.mapAttrs (_: mkApp) self.packages.${system};
-
+      apps = pkgs.lib.mapAttrs (_: mkApp) self.packages.${system};
       scripts = {
         generate = mkApp (pkgs.callPackage ./generate {});
       };
     in
-      packages // scripts);
-
-    # Tests can be run via `nix eval .#tests`
-    tests = forAllSystems (
-      system: let
-        pkgs = nixpkgsFor.${system};
-        results = pkgs.callPackage ./nix2/tests {};
-      in
-        results
-    );
+      apps // scripts);
 
     checks = forAllSystems (system: let
       pkgs = nixpkgsFor.${system};
@@ -89,7 +85,7 @@
     in {
       default = pkgs.mkShell {
         name = "purescript-nix";
-        buildInputs = [self.packages.${system}.spago self.packages.${system}.purs-0_15_8];
+        buildInputs = [self.packages.${system}.spago self.packages.${system}.purs];
       };
     });
   };

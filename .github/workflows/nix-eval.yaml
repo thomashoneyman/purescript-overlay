@@ -15,5 +15,5 @@ jobs:
       - name: Install Nix
         uses: DeterminateSystems/nix-installer-action@v2
 
-      - name: Run unit tests
-        run: nix eval .#tests
+      - name: Run tests
+        run: nix eval .#lib
