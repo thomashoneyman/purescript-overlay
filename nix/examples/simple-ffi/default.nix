@@ -2,8 +2,10 @@
   stdenv,
   purs,
   buildSpagoLock,
+  buildPackageLock,
 }: let
-  lock = buildSpagoLock.workspaces {
+  packageLock = buildPackageLock.buildPackageLock {src = ./.;};
+  spagoLock = buildSpagoLock.workspaces {
     src = ./.;
     lockfile = ./spago.lock;
   };
@@ -12,7 +14,8 @@ in
     name = "bin";
     src = ./.;
     buildPhase = ''
-      echo ${lock.simple.dependencies.globs}
+      ln -s ${packageLock}/js/node_modules .
+      echo ${spagoLock.simple.dependencies.globs}
       touch $out
     '';
     installPhase = ''

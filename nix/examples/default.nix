@@ -2,4 +2,5 @@
 # action, suitable for inclusion in the flake checks as a test suite.
 {callPackage}: {
   simple = callPackage ./simple {};
+  simple-ffi = callPackage ./simple-ffi {};
 }

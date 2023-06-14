@@ -40,49 +40,23 @@
   # libraries like npmlock2nix.
   fetchDependencyTarball = name: dependency:
     fetchurl {
-      inherit name;
       version = dependency.version or (throw "Dependency ${name} does not have a 'version' key");
       url = dependency.resolved or (throw "Dependency ${name} does not have a 'resolved' key");
       hash = dependency.integrity or (throw "Dependency ${name} does not have an 'integrity' key");
     };
 
-  # Tarballs to cache
-  listDependencyTarballs = tarballs:
-    (builtins.concatStringsSep "\n" (builtins.attrValues tarballs)) + "\n";
-
+  # Build a package from a package-lock.json file. This will fetch all the
+  # tarballs for the dependencies listed in the lockfile and then run `npm ci`
   buildPackageLock = {src}: let
     packageLock = readPackageLock (src + "/package-lock.json");
 
-    # FIXME The section until the next FIXME works, whereas this derivation
-    # doesn't otherwise. Need to troubleshoot.
-    omitted = [""];
-
-    deps =
-      builtins.attrValues (removeAttrs packageLock.packages omitted)
-      ++ builtins.attrValues (removeAttrs (packageLock.dependencies or {}) omitted);
-
-    # Turn each dependency into a fetchurl call
-    tarballz = builtins.map (entry:
-      fetchurl {
-        url = entry.resolved or (throw "Dependency does not have a 'resolved' key: ${builtins.trace entry ""}");
-        hash = entry.integrity or (throw "Dependency does not have an 'integrity' key: ${builtins.trace entry ""}");
-      })
-    deps;
-
-    # Tarballs to cache
-    lines = (builtins.concatStringsSep "\n" tarballz) + "\n";
+    # Fetch all the tarballs for the dependencies
+    tarballs = builtins.attrValues (builtins.mapAttrs fetchDependencyTarball (getDependencies packageLock));
 
     # Write a file with the list of tarballs
     tarballsFile = writeTextFile {
       name = "tarballs";
-      text = lines;
-    };
-    # FIXME TMP
-
-    dependencies = getDependencies packageLock;
-    tarballs = writeTextFile {
-      name = "tarballs";
-      text = listDependencyTarballs (builtins.mapAttrs fetchDependencyTarball dependencies);
+      text = (builtins.concatStringsSep "\n" tarballs) + "\n";
     };
   in
     stdenv.mkDerivation {
