@@ -9,13 +9,57 @@ import Data.Codec.Argonaut.Record as CA.Record
 import Data.Either (Either(..))
 import Data.Either as Either
 import Data.Map (Map)
+import Data.String as String
 import Lib.Nix.System (NixSystem)
 import Lib.Nix.System as NixSystem
 import Lib.Nix.Version (NixVersion)
+import Lib.Nix.Version as Nix.Version
 import Lib.Nix.Version as NixVersion
+import Lib.Tool (Tool)
+import Lib.Tool as Tool
 import Registry.Internal.Codec as Registry.Codec
 import Registry.Sha256 (Sha256)
 import Registry.Sha256 as Sha256
+
+type NamedManifest = Map ToolName NixVersion
+
+namedManifestCodec :: JsonCodec NamedManifest
+namedManifestCodec = do
+  let encodeKey = printToolName
+  let decodeKey = Either.hush <<< parseToolName
+  Registry.Codec.strMap "NamedManifest" decodeKey encodeKey Nix.Version.codec
+
+data ToolName = ToolName Tool Channel
+
+derive instance Eq ToolName
+derive instance Ord ToolName
+
+printToolName :: ToolName -> String
+printToolName (ToolName tool channel) = Tool.print tool <> "-" <> printChannel channel
+
+parseToolName :: String -> Either String ToolName
+parseToolName str = case String.split (String.Pattern "-") str of
+  [ toolStr, channelStr ] -> do
+    tool <- Tool.parse toolStr
+    channel <- parseChannel channelStr
+    pure $ ToolName tool channel
+  _ -> Left "Expected a tool name in the form 'tool-channel'"
+
+data Channel = Stable | Unstable
+
+derive instance Eq Channel
+derive instance Ord Channel
+
+printChannel :: Channel -> String
+printChannel = case _ of
+  Stable -> "stable"
+  Unstable -> "unstable"
+
+parseChannel :: String -> Either String Channel
+parseChannel = case _ of
+  "stable" -> Right Stable
+  "unstable" -> Right Unstable
+  _ -> Left "Expected 'stable' or 'unstable'"
 
 type SpagoManifest = Map NixVersion (Either GitRev FetchUrl)
 

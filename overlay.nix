@@ -2,7 +2,7 @@ final: prev: let
   fromYAML = prev.callPackage ./nix/from-yaml.nix {};
 
   # All of the tools supported by this repo
-  tooling = import ./manifests {inherit (prev) callPackage callPackages;};
+  tooling = import ./manifests {inherit (prev) lib callPackage callPackages;};
 
   # All of the library functions supported by this repo
   buildPackageLock = prev.callPackage ./nix/package-lock.nix {};

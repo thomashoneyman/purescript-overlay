@@ -56,6 +56,11 @@ data Commit = DoCommit | NoCommit
 
 derive instance Eq Commit
 
+-- TODO: Allow specifying one or more specific tools to include (default to all).
+-- Make the manifest dir optional (default: use git rev-parse to go to the root,
+-- look for a "manifests" directory containing "purs.json" and "spago.json").
+--
+-- Then, commands mean "verify <tool> using <dir>" or "update <tool>"
 data Command
   = Verify FilePath
   | Prefetch FilePath
@@ -380,6 +385,9 @@ pursReleaseToManifest existing release = do
 
 -- TODO: Spago's alpha does not currently have any official releases, so we
 -- don't fetch anything.
+--
+-- TODO: Actually, fetch the releases, and decide based on the tag whether to
+-- use the fetchurl approach or use the git rev approach.
 fetchSpagoReleases :: AppM SpagoManifest
 fetchSpagoReleases = do
   Console.log "Fetching spago releases..."
