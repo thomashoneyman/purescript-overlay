@@ -38,7 +38,7 @@ import Lib.Git (Tag(..))
 import Lib.Git as Git
 import Lib.GitHub (Repo(..))
 import Lib.GitHub as GitHub
-import Lib.Nix.Manifest (Manifests, PursManifestEntry, SpagoManifest, PursManifest)
+import Lib.Nix.Manifest (PursManifest, SpagoManifest, FetchUrl)
 import Lib.Nix.Manifest as Nix.Manifest
 import Lib.Nix.Prefetch as Nix.Prefetch
 import Lib.Nix.System (NixSystem(..))
@@ -128,10 +128,11 @@ main = Aff.launchAff_ do
         Just tok -> Octokit.newAuthOctokit tok
       AppM.runAppM { octokit, manifestDir: dir, gitBranch: branch, tmpDir: tmp } do
         Console.log "Verifying manifests..."
-        manifests <- readManifests
-        let pursEntries = alaF Additive foldMap Map.size (Map.values manifests.purs)
+        pursManifest <- readPursManifest
+        let pursEntries = alaF Additive foldMap Map.size (Map.values pursManifest)
         Console.log $ "Successfully parsed purs.json with " <> Int.toStringAs Int.decimal pursEntries <> " entries."
-        let spagoEntries = Map.size manifests.spago
+        spagoManifest <- readSpagoManifest
+        let spagoEntries = Map.size spagoManifest
         Console.log $ "Successfully parsed spago.json with " <> Int.toStringAs Int.decimal spagoEntries <> " entries."
 
     Prefetch dir -> do
@@ -144,13 +145,14 @@ main = Aff.launchAff_ do
         Just tok -> Octokit.newAuthOctokit tok
       AppM.runAppM { octokit, manifestDir: dir, gitBranch: branch, tmpDir: tmp } do
         Console.log "Prefetching new releases..."
-        manifests <- readManifests
-        updates <- fetchUpdates manifests
-        if Map.size updates.purs > 0 then
-          Console.log $ "New purs releases: " <> Utils.printJson Nix.Manifest.pursManifestCodec updates.purs
+        pursManifest <- readPursManifest
+        pursUpdates <- fetchPursReleases (Set.unions $ map Map.keys $ Map.values pursManifest)
+        if Map.size pursUpdates > 0 then
+          Console.log $ "New purs releases: " <> Utils.printJson Nix.Manifest.pursManifestCodec pursUpdates
         else Console.log "No new purs releases."
-        if Map.size updates.spago > 0 then
-          Console.log $ "New spago releases: " <> Utils.printJson Nix.Manifest.spagoManifestCodec updates.spago
+        spagoUpdates <- fetchSpagoReleases
+        if Map.size spagoUpdates > 0 then
+          Console.log $ "New spago releases: " <> Utils.printJson Nix.Manifest.spagoManifestCodec spagoUpdates
         else Console.log "No new spago releases."
 
     Update dir commit -> do
@@ -166,10 +168,13 @@ main = Aff.launchAff_ do
             Nothing -> Octokit.newOctokit
             Just tok -> Octokit.newAuthOctokit tok
       AppM.runAppM { octokit, manifestDir: dir, gitBranch: branch, tmpDir: tmp } do
-        manifests <- readManifests
-        updates <- fetchUpdates manifests
-        let pursUpdateCount = Map.size updates.purs
-        let spagoUpdateCount = Map.size updates.spago
+        pursManifest <- readPursManifest
+        pursUpdates <- fetchPursReleases (Set.unions $ map Map.keys $ Map.values pursManifest)
+        let pursUpdateCount = Map.size pursUpdates
+
+        spagoManifest <- readSpagoManifest
+        spagoUpdates <- fetchSpagoReleases
+        let spagoUpdateCount = Map.size spagoUpdates
 
         when (pursUpdateCount + spagoUpdateCount == 0) do
           Console.log "No updates!"
@@ -180,17 +185,17 @@ main = Aff.launchAff_ do
             Console.log "Updating locally only (not committing results)"
 
             if pursUpdateCount > 0 then do
-              Console.log $ "New purs releases: " <> Utils.printJson Nix.Manifest.pursManifestCodec updates.purs
+              Console.log $ "New purs releases: " <> Utils.printJson Nix.Manifest.pursManifestCodec pursUpdates
               Console.log "Writing to disk..."
-              let merged = Map.unionWith Map.union manifests.purs updates.purs
+              let merged = Map.unionWith Map.union pursManifest pursUpdates
               writePursManifest merged
             else do
               Console.log "No new purs releases."
 
             if spagoUpdateCount > 0 then do
-              Console.log $ "New spago releases: " <> Utils.printJson Nix.Manifest.spagoManifestCodec updates.spago
+              Console.log $ "New spago releases: " <> Utils.printJson Nix.Manifest.spagoManifestCodec spagoUpdates
               Console.log "Writing to disk..."
-              let merged = Map.union manifests.spago updates.spago
+              let merged = Map.union spagoManifest spagoUpdates
               writeSpagoManifest merged
             else do
               Console.log "No new spago releases."
@@ -202,12 +207,12 @@ main = Aff.launchAff_ do
               Git.gitCloneUpstream
 
               if pursUpdateCount > 0 then do
-                let merged = Map.unionWith Map.union manifests.purs updates.purs
+                let merged = Map.unionWith Map.union pursManifest pursUpdates
                 Utils.writeJsonFile (Path.concat [ tmp, "purescript-nix", "manifests", "purs.json" ]) Nix.Manifest.pursManifestCodec merged
               else do
                 Console.log "No new purs releases."
               if spagoUpdateCount > 0 then do
-                let merged = Map.union manifests.spago updates.spago
+                let merged = Map.union spagoManifest spagoUpdates
                 Utils.writeJsonFile (Path.concat [ tmp, "purescript-nix", "manifests", "spago.json" ]) Nix.Manifest.spagoManifestCodec merged
               else do
                 Console.log "No new spago releases."
@@ -227,8 +232,8 @@ main = Aff.launchAff_ do
               Right _ -> pure unit
 
             let
-              pursVersions = Set.unions $ map Map.keys $ Map.values updates.purs
-              spagoVersions = Map.keys updates.spago
+              pursVersions = Set.unions $ map Map.keys $ Map.values pursUpdates
+              spagoVersions = Map.keys spagoUpdates
               title = "Update " <> String.joinWith " "
                 [ guard (Set.size pursVersions > 0) $ "purs (" <> String.joinWith ", " (Set.toUnfoldable (Set.map Nix.Version.print pursVersions)) <> ")"
                 , guard (Set.size spagoVersions > 0) $ "spago (" <> String.joinWith ", " (Set.toUnfoldable (Set.map Nix.Version.print spagoVersions)) <> ")"
@@ -272,21 +277,6 @@ main = Aff.launchAff_ do
               Right { url } -> do
                 Console.log "Successfully created pull request!"
                 Console.log url
-
-readManifests :: AppM Manifests
-readManifests = do
-  purs <- readPursManifest
-  spago <- readSpagoManifest
-  pure { purs, spago }
-
--- | Retrieve all relevant releases for the various supported tools from GitHub.
-fetchUpdates :: Manifests -> AppM Manifests
-fetchUpdates existing = do
-  Console.log "Fetching releases..."
-  purs <- fetchPursReleases (Set.unions $ map Map.keys $ Map.values existing.purs)
-  Console.log $ "Fetched purs releases: " <> Utils.printJson Nix.Manifest.pursManifestCodec purs
-  spago <- fetchSpagoReleases
-  pure { purs, spago }
 
 -- | Fetch all releases from the PureScript compiler repository and format them
 -- | as Nix-compatible manifests.
@@ -365,7 +355,7 @@ pursReleaseToManifest existing release = do
             Console.log "PureScript releases always have at least 2 supported release assets, but this release has fewer."
             Console.log $ Utils.printJson Octokit.releaseCodec release
             liftEffect (Process.exit 1)
-          entries :: Array (Maybe (Tuple NixSystem PursManifestEntry)) <- for supportedAssets \tarball -> do
+          entries :: Array (Maybe (Tuple NixSystem FetchUrl)) <- for supportedAssets \tarball -> do
             system <- case Nix.System.fromPursReleaseTarball tarball.name of
               Left error -> do
                 Console.log $ "Failed to parse tarball in release " <> release.tag <> " named " <> tarball.name

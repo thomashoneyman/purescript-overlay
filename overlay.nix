@@ -7,10 +7,11 @@ final: prev: let
   # All of the library functions supported by this repo
   buildPackageLock = prev.callPackage ./nix/package-lock.nix {};
   buildSpagoLock = prev.callPackage ./nix/spago-lock.nix {inherit fromYAML;};
+
   purix = {
     lib = buildPackageLock // buildSpagoLock;
     buildPackageLock = buildPackageLock.buildPackageLock;
     buildSpagoLock = buildSpagoLock.workspaces;
   };
 in
-  {inherit purix;} // tooling
+  {purix = purix;} // tooling
