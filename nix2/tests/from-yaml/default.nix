@@ -15,24 +15,23 @@
   };
 in
   utils.runTests {
-    testEmpty = shouldNotParse " ";
+    testEmpty = shouldNotParse "\n";
 
-    testLock = shouldParse {
+    testEmptyList = shouldParse {
       input = ''
-        exists:
-          type: registry
-          version: 6.0.0
-          integrity: sha256-A0JQHpTfo1dNOj9U5/Fd3xndlRSE0g2IQWOGor2yXn8=
-          dependencies:
-            - unsafe-coerce
+        dependencies: []
       '';
       output = {
-        exists = {
-          type = "registry";
-          version = "6.0.0";
-          integrity = "sha256-A0JQHpTfo1dNOj9U5/Fd3xndlRSE0g2IQWOGor2yXn8=";
-          dependencies = ["unsafe-coerce"];
-        };
+        dependencies = [];
+      };
+    };
+
+    testEmptyObject = shouldParse {
+      input = ''
+        extra_packages: {}
+      '';
+      output = {
+        extra_packages = {};
       };
     };
   }
