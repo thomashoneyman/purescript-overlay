@@ -1,0 +1,7 @@
+{
+  "name": "simple",
+  "version": "1.0.0",
+  "dependencies": {
+    "leftpad": "0.0.1"
+  }
+}

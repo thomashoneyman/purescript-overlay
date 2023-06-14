@@ -2,7 +2,8 @@
   stdenv,
   purix,
 }: let
-  lock = purix.buildSpagoLock {
+  packageLock = purix.buildPackageLock {src = ./.;};
+  spagoLock = purix.buildSpagoLock {
     src = ./.;
     lockfile = ./spago.lock;
   };
@@ -11,7 +12,8 @@ in
     name = "bin";
     src = ./.;
     buildPhase = ''
-      echo ${lock.simple.dependencies.globs}
+      ln -s ${packageLock}/js/node_modules .
+      echo ${spagoLock.simple.dependencies.globs}
       touch $out
     '';
     installPhase = ''

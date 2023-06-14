@@ -2,14 +2,13 @@
   stdenv,
   writeText,
   nodejs,
-  # from purescript-nix
-  buildPackageLock,
-  buildSpagoLock,
-  purs,
   esbuild,
+  # from purix
+  purix,
+  purs-unstable,
 }: let
-  npmDependencies = buildPackageLock.buildPackageLock {src = ./.;};
-  workspaces = buildSpagoLock.workspaces {
+  npmDependencies = purix.lib.buildPackageLock {src = ./.;};
+  workspaces = purix.lib.workspaces {
     src = ./.;
     lockfile = ./. + "/spago.lock";
   };
@@ -21,7 +20,7 @@ in
   stdenv.mkDerivation rec {
     name = "bin";
     src = ./.;
-    nativeBuildInputs = [purs esbuild];
+    nativeBuildInputs = [purs-unstable esbuild];
     buildPhase = ''
       ln -s ${npmDependencies}/js/node_modules .
       set -f
