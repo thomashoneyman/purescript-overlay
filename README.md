@@ -1,4 +1,4 @@
-# PureScript Nix
+# Purix
 
 [![daily-update](https://github.com/thomashoneyman/purescript-nix/actions/workflows/daily-update.yaml/badge.svg)](https://github.com/thomashoneyman/purescript-nix/actions/workflows/daily-update.yaml)
 [![darwin-support](https://github.com/thomashoneyman/purescript-nix/actions/workflows/darwin-support.yaml/badge.svg)](https://github.com/thomashoneyman/purescript-nix/actions/workflows/darwin-support.yaml)
