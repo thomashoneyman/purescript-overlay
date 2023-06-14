@@ -160,6 +160,7 @@ main = Aff.launchAff_ do
           Console.log $ "New spago releases: " <> Utils.printJson Nix.Manifest.spagoManifestCodec spagoUpdates
         else Console.log "No new spago releases."
 
+    -- TODO: Also update the named manifest file.
     Update dir commit -> do
       let envFile = Path.concat [ dir, "..", "generate", ".env" ]
       Console.log $ "Loading .env file from " <> envFile
@@ -172,6 +173,7 @@ main = Aff.launchAff_ do
           Env.lookupOptional Env.githubToken >>= case _ of
             Nothing -> Octokit.newOctokit
             Just tok -> Octokit.newAuthOctokit tok
+
       AppM.runAppM { octokit, manifestDir: dir, gitBranch: branch, tmpDir: tmp } do
         pursManifest <- readPursManifest
         pursUpdates <- fetchPursReleases (Set.unions $ map Map.keys $ Map.values pursManifest)

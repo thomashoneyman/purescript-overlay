@@ -9,11 +9,11 @@ import Data.Codec.Argonaut.Record as CA.Record
 import Data.Either (Either(..))
 import Data.Either as Either
 import Data.Map (Map)
+import Data.Maybe (Maybe(..))
 import Data.String as String
 import Lib.Nix.System (NixSystem)
 import Lib.Nix.System as NixSystem
 import Lib.Nix.Version (NixVersion)
-import Lib.Nix.Version as Nix.Version
 import Lib.Nix.Version as NixVersion
 import Lib.Tool (Tool)
 import Lib.Tool as Tool
@@ -21,13 +21,13 @@ import Registry.Internal.Codec as Registry.Codec
 import Registry.Sha256 (Sha256)
 import Registry.Sha256 as Sha256
 
-type NamedManifest = Map ToolName NixVersion
+type NamedManifest = Map ToolName String
 
 namedManifestCodec :: JsonCodec NamedManifest
 namedManifestCodec = do
   let encodeKey = printToolName
   let decodeKey = Either.hush <<< parseToolName
-  Registry.Codec.strMap "NamedManifest" decodeKey encodeKey Nix.Version.codec
+  Registry.Codec.strMap "NamedManifest" decodeKey encodeKey CA.string
 
 data ToolName = ToolName Tool Channel
 
@@ -38,12 +38,14 @@ printToolName :: ToolName -> String
 printToolName (ToolName tool channel) = Tool.print tool <> "-" <> printChannel channel
 
 parseToolName :: String -> Either String ToolName
-parseToolName str = case String.split (String.Pattern "-") str of
-  [ toolStr, channelStr ] -> do
+parseToolName str = case String.lastIndexOf (String.Pattern "-") str of
+  Nothing -> Left $ "Expected a tool name in the form 'tool-channel' but got: " <> str
+  Just index -> do
+    let toolStr = String.take index str
+    let channelStr = String.drop (index + 1) str
     tool <- Tool.parse toolStr
     channel <- parseChannel channelStr
     pure $ ToolName tool channel
-  _ -> Left "Expected a tool name in the form 'tool-channel'"
 
 data Channel = Stable | Unstable
 
