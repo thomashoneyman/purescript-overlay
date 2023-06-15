@@ -9,7 +9,7 @@ import Data.Bounded.Generic (genericBottom, genericTop)
 import Data.Codec.Argonaut (JsonCodec)
 import Data.Codec.Argonaut as CA
 import Data.Either (Either(..))
-import Data.Enum (class BoundedEnum, class Enum, enumFromTo)
+import Data.Enum (class BoundedEnum, class Enum, upFromIncluding)
 import Data.Enum.Generic (genericCardinality, genericFromEnum, genericPred, genericSucc, genericToEnum)
 import Data.Generic.Rep (class Generic)
 import Data.Int as Int
@@ -46,7 +46,7 @@ instance BoundedEnum Tool where
 
 -- | All tools supported by the library.
 all :: Array Tool
-all = enumFromTo bottom top
+all = upFromIncluding bottom
 
 -- | How to format a tool when printing or parsing
 data Format

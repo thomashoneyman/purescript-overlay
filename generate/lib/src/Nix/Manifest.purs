@@ -13,13 +13,25 @@ import Lib.Nix.System (NixSystem)
 import Lib.Nix.System as NixSystem
 import Lib.SemVer (SemVer)
 import Lib.SemVer as SemVer
-import Lib.Tool (ToolChannel, ToolPackage)
+import Lib.Tool (Tool(..), ToolChannel, ToolPackage)
 import Lib.Tool as Tool
+import Node.Path (FilePath)
 import Registry.Internal.Codec as Registry.Codec
 import Registry.Sha256 (Sha256)
 import Registry.Sha256 as Sha256
 
+-- | The file name of the manifest for a given tool
+filename :: Tool -> FilePath
+filename = case _ of
+  Purs -> "purs.json"
+  Spago -> "spago.json"
+  PursTidy -> "purs-tidy.json"
+  PursBackendEs -> "purs-backend-es.json"
+
 type NamedManifest = Map ToolChannel ToolPackage
+
+namedPath :: FilePath
+namedPath = "named.json"
 
 namedManifestCodec :: JsonCodec NamedManifest
 namedManifestCodec = do

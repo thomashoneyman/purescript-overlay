@@ -5,10 +5,14 @@ import Prelude
 import Data.Argonaut.Core as Argonaut
 import Data.Array as Array
 import Data.Bifunctor (lmap)
+import Data.Bounded.Generic (genericBottom, genericTop)
 import Data.Codec.Argonaut (JsonCodec)
 import Data.Codec.Argonaut as CA
 import Data.Either (Either(..))
 import Data.Either as Either
+import Data.Enum (class BoundedEnum, class Enum, upFromIncluding)
+import Data.Enum.Generic (genericCardinality, genericFromEnum, genericPred, genericSucc, genericToEnum)
+import Data.Generic.Rep (class Generic)
 import Data.Map (Map)
 import Data.String as String
 import Registry.Internal.Codec as Registry.Codec
@@ -21,6 +25,23 @@ data NixSystem
 
 derive instance Eq NixSystem
 derive instance Ord NixSystem
+derive instance Generic NixSystem _
+
+instance Enum NixSystem where
+  pred = genericPred
+  succ = genericSucc
+
+instance Bounded NixSystem where
+  bottom = genericBottom
+  top = genericTop
+
+instance BoundedEnum NixSystem where
+  cardinality = genericCardinality
+  toEnum = genericToEnum
+  fromEnum = genericFromEnum
+
+all :: Array NixSystem
+all = upFromIncluding bottom
 
 parse :: String -> Either String NixSystem
 parse input = case input of

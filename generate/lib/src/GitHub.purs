@@ -17,6 +17,7 @@ import Effect.Class.Console as Console
 import Lib.Foreign.Octokit (GitHubError(..), Octokit, Release, Request, PullRequest)
 import Lib.Foreign.Octokit as Octokit
 import Lib.Git (CommitSha(..), Tag(..))
+import Lib.Tool (Tool(..))
 import Lib.Utils as Utils
 
 -- | A monad for executing requests to GitHub
@@ -35,45 +36,49 @@ derive newtype instance MonadThrow GitHubError GitHubM
 
 newtype GitHubToken = GitHubToken String
 
-data Repo
-  = PursRepo
-  | SpagoRepo
+toolRepo :: Tool -> Octokit.Address
+toolRepo = case _ of
+  Purs -> { owner: "purescript", repo: "purescript" }
+  Spago -> { owner: "purescript", repo: "spago" }
+  PursTidy -> { owner: "natefaubion", repo: "purescript-tidy" }
+  PursBackendEs -> { owner: "aristanetworks", repo: "purescript-backend-optimizer" }
 
-derive instance Eq Repo
-
-repoAddress :: Repo -> Octokit.Address
-repoAddress = case _ of
-  PursRepo -> { owner: "purescript", repo: "purescript" }
-  SpagoRepo -> { owner: "purescript", repo: "spago" }
-
-listReleases :: Repo -> GitHubM (Array Release)
-listReleases repo = do
+listReleases :: Tool -> GitHubM (Array Release)
+listReleases tool = do
   octokit <- ask
-  let address = repoAddress repo
+  let address = toolRepo tool
   Console.log $ "Listing releases for repo " <> address.owner <> "/" <> address.repo
   let req = requestWithBackoff octokit (Octokit.requestListReleases address)
   GitHubM $ ExceptT req
 
-getReleaseByTagName :: Repo -> Tag -> GitHubM Release
-getReleaseByTagName repo tag = do
+getLatestRelease :: Tool -> GitHubM Release
+getLatestRelease tool = do
   octokit <- ask
-  let address = repoAddress repo
+  let address = toolRepo tool
+  Console.log $ "Getting latest release for repo " <> address.owner <> "/" <> address.repo
+  let req = requestWithBackoff octokit (Octokit.requestGetLatestRelease address)
+  GitHubM $ ExceptT req
+
+getReleaseByTagName :: Tool -> Tag -> GitHubM Release
+getReleaseByTagName tool tag = do
+  octokit <- ask
+  let address = toolRepo tool
   Console.log $ "Getting release identified by tag " <> un Tag tag <> " in repo " <> address.owner <> "/" <> address.repo
   let req = requestWithBackoff octokit (Octokit.requestGetReleaseByTagName address (un Tag tag))
   GitHubM $ ExceptT req
 
-getTagCommitSha :: Repo -> Tag -> GitHubM CommitSha
-getTagCommitSha repo tag = do
+getTagCommitSha :: Tool -> Tag -> GitHubM CommitSha
+getTagCommitSha tool tag = do
   octokit <- ask
-  let address = repoAddress repo
+  let address = toolRepo tool
   Console.log $ "Getting commit SHA for tag " <> un Tag tag <> " in repo " <> address.owner <> "/" <> address.repo
   let req = requestWithBackoff octokit (Octokit.requestGetRefCommitSha { address, ref: un Tag tag })
   GitHubM $ ExceptT $ map CommitSha <$> req
 
-getCommitDate :: Repo -> CommitSha -> GitHubM DateTime
-getCommitDate repo sha = do
+getCommitDate :: Tool -> CommitSha -> GitHubM DateTime
+getCommitDate tool sha = do
   octokit <- ask
-  let address = repoAddress repo
+  let address = toolRepo tool
   Console.log $ "Getting commit date for commit SHA " <> un CommitSha sha <> " in repo " <> address.owner <> "/" <> address.repo
   let req = requestWithBackoff octokit (Octokit.requestGetCommitDate { address, commitSha: un CommitSha sha })
   GitHubM $ ExceptT req
