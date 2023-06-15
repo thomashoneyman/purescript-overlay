@@ -13,7 +13,7 @@ import Effect.Class (class MonadEffect)
 import Lib.Foreign.Octokit (GitHubError, Octokit)
 import Lib.Git (GitM(..))
 import Lib.GitHub (GitHubM(..))
-import Lib.Nix.Manifest (SpagoManifest, PursManifest)
+import Lib.Nix.Manifest (PursManifest, SpagoManifest, NamedManifest)
 import Lib.Nix.Manifest as Nix.Manifest
 import Lib.Nix.Manifest as Tool
 import Lib.Tool (Tool(..))
@@ -57,27 +57,42 @@ instance MonadApp AppM where
 runAppM :: forall a. Env -> AppM a -> Aff a
 runAppM env (AppM run) = runReaderT run env
 
-getManifestPath :: Tool -> AppM FilePath
-getManifestPath tool = do
+getNamedManifestPath :: AppM FilePath
+getNamedManifestPath = do
+  { manifestDir } <- ask
+  pure $ Path.concat [ manifestDir, Nix.Manifest.namedPath ]
+
+readNamedManifest :: AppM NamedManifest
+readNamedManifest = do
+  path <- getNamedManifestPath
+  Utils.readJsonFile path Nix.Manifest.namedManifestCodec
+
+writeNamedManifest :: NamedManifest -> AppM Unit
+writeNamedManifest manifest = do
+  path <- getNamedManifestPath
+  Utils.writeJsonFile path Nix.Manifest.namedManifestCodec manifest
+
+getToolManifestPath :: Tool -> AppM FilePath
+getToolManifestPath tool = do
   { manifestDir } <- ask
   pure $ Path.concat [ manifestDir, Tool.filename tool ]
 
 readPursManifest :: AppM PursManifest
 readPursManifest = do
-  path <- getManifestPath Purs
+  path <- getToolManifestPath Purs
   Utils.readJsonFile path Nix.Manifest.pursManifestCodec
 
 writePursManifest :: PursManifest -> AppM Unit
 writePursManifest manifest = do
-  path <- getManifestPath Purs
+  path <- getToolManifestPath Purs
   Utils.writeJsonFile path Nix.Manifest.pursManifestCodec manifest
 
 readSpagoManifest :: AppM SpagoManifest
 readSpagoManifest = do
-  path <- getManifestPath Spago
+  path <- getToolManifestPath Spago
   Utils.readJsonFile path Nix.Manifest.spagoManifestCodec
 
 writeSpagoManifest :: SpagoManifest -> AppM Unit
 writeSpagoManifest manifest = do
-  path <- getManifestPath Spago
+  path <- getToolManifestPath Spago
   Utils.writeJsonFile path Nix.Manifest.spagoManifestCodec manifest

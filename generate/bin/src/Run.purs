@@ -5,7 +5,6 @@ import Prelude
 import Bin.AppM (AppM)
 import Bin.AppM as AppM
 import Control.Alternative (guard)
-import Control.Monad.Reader (asks)
 import Data.Array as Array
 import Data.Either (Either(..))
 import Data.Either as Either
@@ -23,7 +22,6 @@ import Lib.Foreign.Octokit (Release, ReleaseAsset)
 import Lib.Foreign.Octokit as Octokit
 import Lib.GitHub as GitHub
 import Lib.Nix.Manifest (FetchUrl, NamedManifest, PursManifest)
-import Lib.Nix.Manifest as Nix.Manifest
 import Lib.Nix.Prefetch as Nix.Prefetch
 import Lib.Nix.System (NixSystem(..))
 import Lib.Nix.System as NixSystem
@@ -31,18 +29,13 @@ import Lib.SemVer (SemVer(..))
 import Lib.SemVer as SemVer
 import Lib.Tool (Channel(..), Tool(..), ToolChannel(..), ToolPackage(..))
 import Lib.Tool as Tool
-import Lib.Utils as Utils
-import Node.Path as Path
 import Node.Process as Process
 import Partial.Unsafe (unsafeCrashWith)
 import Registry.Version as Version
 
 updatePurs :: AppM Unit
 updatePurs = do
-  manifestDir <- asks _.manifestDir
-  let namedPath = Path.concat [ manifestDir, Nix.Manifest.namedPath ]
-  let manifestPath = Path.concat [ manifestDir, Nix.Manifest.filename Purs ]
-  manifest <- Utils.readJsonFile manifestPath Nix.Manifest.pursManifestCodec
+  manifest <- AppM.readPursManifest
 
   let
     existing :: Set SemVer
@@ -133,10 +126,10 @@ updatePurs = do
 
   -- Write the new release manifest to disk
   when (newReleaseManifest /= manifest) do
-    Utils.writeJsonFile manifestPath Nix.Manifest.pursManifestCodec newReleaseManifest
+    AppM.writePursManifest newReleaseManifest
 
   -- Update the named manifests, if necessary.
-  named <- Utils.readJsonFile namedPath Nix.Manifest.namedManifestCodec
+  named <- AppM.readNamedManifest
 
   let
     named' :: NamedManifest
@@ -160,6 +153,6 @@ updatePurs = do
       pure (updateStable (updateUnstable named))
 
   when (named /= named') do
-    Utils.writeJsonFile namedPath Nix.Manifest.namedManifestCodec named
+    AppM.writeNamedManifest named'
 
   pure unit
