@@ -1,4 +1,4 @@
-module Bin.Update where
+module Bin.Run where
 
 import Prelude
 
