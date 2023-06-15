@@ -1,4 +1,4 @@
-module Lib.Nix.Version where
+module Lib.SemVer where
 
 import Prelude
 
@@ -17,12 +17,12 @@ import Registry.Version (Version)
 import Registry.Version as Version
 import Safe.Coerce (coerce)
 
-newtype NixVersion = NixVersion { version :: Version, pre :: Maybe Int }
+newtype SemVer = SemVer { version :: Version, pre :: Maybe Int }
 
-derive instance Eq NixVersion
+derive instance Eq SemVer
 
-instance Ord NixVersion where
-  compare (NixVersion l) (NixVersion r) =
+instance Ord SemVer where
+  compare (SemVer l) (SemVer r) =
     case l.version `compare` r.version of
       -- We want to invert the normal Nothing < Just ordering of Maybe because
       -- the Just case represents a prerelease.
@@ -33,7 +33,7 @@ instance Ord NixVersion where
         Just x, Just y -> x `compare` y
       x -> x
 
-parse :: String -> Either String NixVersion
+parse :: String -> Either String SemVer
 parse input = coerce $ case String.split (String.Pattern "-") input of
   [ raw ] -> do
     version <- Version.parse raw
@@ -45,16 +45,16 @@ parse input = coerce $ case String.split (String.Pattern "-") input of
   other -> do
     Left $ "Expected version string split on '-' to have at maximum two components, but found more: " <> String.joinWith ", " other
 
-print :: NixVersion -> String
-print (NixVersion { pre, version }) = do
+print :: SemVer -> String
+print (SemVer { pre, version }) = do
   let prerelease = maybe "" (\int -> "-" <> Int.toStringAs Int.decimal int) pre
   Version.print version <> prerelease
 
-codec :: JsonCodec NixVersion
+codec :: JsonCodec SemVer
 codec = CA.codec' decode encode
   where
   encode = Argonaut.fromString <<< print <<< coerce
   decode = lmap CA.TypeMismatch <<< parse <=< CA.decode CA.string
 
-nixVersionMapCodec :: forall a. JsonCodec a -> JsonCodec (Map NixVersion a)
-nixVersionMapCodec = Registry.Codec.strMap "NixVersionMap" (Either.hush <<< parse) print
+semverMapCodec :: forall a. JsonCodec a -> JsonCodec (Map SemVer a)
+semverMapCodec = Registry.Codec.strMap "SemVerMap" (Either.hush <<< parse) print

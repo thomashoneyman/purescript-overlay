@@ -43,8 +43,8 @@ import Lib.Nix.Manifest as Nix.Manifest
 import Lib.Nix.Prefetch as Nix.Prefetch
 import Lib.Nix.System (NixSystem(..))
 import Lib.Nix.System as Nix.System
-import Lib.Nix.Version (NixVersion(..))
-import Lib.Nix.Version as Nix.Version
+import Lib.SemVer (SemVer(..))
+import Lib.SemVer as SemVer
 import Lib.Utils as Utils
 import Node.Path (FilePath)
 import Node.Path as Path
@@ -242,8 +242,8 @@ main = Aff.launchAff_ do
               pursVersions = Set.unions $ map Map.keys $ Map.values pursUpdates
               spagoVersions = Map.keys spagoUpdates
               title = "Update " <> String.joinWith " "
-                [ guard (Set.size pursVersions > 0) $ "purs (" <> String.joinWith ", " (Set.toUnfoldable (Set.map Nix.Version.print pursVersions)) <> ")"
-                , guard (Set.size spagoVersions > 0) $ "spago (" <> String.joinWith ", " (Set.toUnfoldable (Set.map Nix.Version.print spagoVersions)) <> ")"
+                [ guard (Set.size pursVersions > 0) $ "purs (" <> String.joinWith ", " (Set.toUnfoldable (Set.map SemVer.print pursVersions)) <> ")"
+                , guard (Set.size spagoVersions > 0) $ "spago (" <> String.joinWith ", " (Set.toUnfoldable (Set.map SemVer.print spagoVersions)) <> ")"
                 ]
               -- TODO: What would be the most informative thing to do here?
               body = "Update manifest files to new tooling versions."
@@ -287,7 +287,7 @@ main = Aff.launchAff_ do
 
 -- | Fetch all releases from the PureScript compiler repository and format them
 -- | as Nix-compatible manifests.
-fetchPursReleases :: Set NixVersion -> AppM PursManifest
+fetchPursReleases :: Set SemVer -> AppM PursManifest
 fetchPursReleases existing = do
   Console.log "Fetching purs releases..."
   eitherReleases <- AppM.runGitHubM $ GitHub.listReleases PursRepo
@@ -320,8 +320,8 @@ isPre0_13 input = do
 
 -- | Prerelease versions for x86_64-darwin were incorrect for the 0.15 series
 -- | of the compiler up to 0.15.10.
-isInvalidDarwinPrerelease :: NixSystem -> NixVersion -> Boolean
-isInvalidDarwinPrerelease system (NixVersion { version, pre }) = do
+isInvalidDarwinPrerelease :: NixSystem -> SemVer -> Boolean
+isInvalidDarwinPrerelease system (SemVer { version, pre }) = do
   if system == X86_64_darwin then case pre of
     Nothing -> false
     Just _ -> Version.patch version < 10
@@ -335,7 +335,7 @@ isSupportedAsset asset = do
 
 -- | Convert a release to a manifest, returning Nothing if the release ought to
 -- | be skipped.
-pursReleaseToManifest :: Set NixVersion -> Release -> AppM (Maybe PursManifest)
+pursReleaseToManifest :: Set SemVer -> Release -> AppM (Maybe PursManifest)
 pursReleaseToManifest existing release = do
   Console.log $ "\nProcessing release " <> release.tag
   if isPre0_13 release.tag then do
@@ -347,7 +347,7 @@ pursReleaseToManifest existing release = do
   else if release.draft then do
     Console.log $ "Omitting release " <> release.tag <> " because it is a draft."
     pure Nothing
-  else case Nix.Version.parse $ fromMaybe release.tag $ String.stripPrefix (String.Pattern "v") release.tag of
+  else case SemVer.parse $ fromMaybe release.tag $ String.stripPrefix (String.Pattern "v") release.tag of
     Left error -> do
       Console.log $ "Skipping release because it could not be parsed as a Nix version (X.Y.Z or X.Y.Z-N)."
       Console.log error
