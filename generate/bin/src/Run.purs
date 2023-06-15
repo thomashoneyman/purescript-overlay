@@ -33,6 +33,8 @@ import Node.Process as Process
 import Partial.Unsafe (unsafeCrashWith)
 import Registry.Version as Version
 
+-- TODO: Write in terms of commands — "verify purs", "update purs", etc.
+
 updatePurs :: AppM Unit
 updatePurs = do
   manifest <- AppM.readPursManifest
