@@ -22,26 +22,28 @@
     '';
 in
   stdenv.mkDerivation rec {
-    pname = "purs";
+    pname = "spago";
     inherit version;
 
     src = fetchurl {inherit url hash;};
 
-    buildInputs = [zlib gmp ncurses5];
+    buildInputs = [zlib gmp ncurses5 stdenv.cc.cc.lib];
     libPath = lib.makeLibraryPath buildInputs;
     dontStrip = true;
 
     installPhase = ''
       mkdir -p $out/bin
-      PURS="$out/bin/purs"
-      install -D -m555 -T purs $PURS
+      tar xf $src -C $out/bin
+
+      SPAGO="$out/bin/spago"
       ${patchelf libPath}
+
       mkdir -p $out/etc/bash_completion.d/
-      $PURS --bash-completion-script $PURS > $out/etc/bash_completion.d/purs-completion.bash
+      $SPAGO --bash-completion-script $SPAGO > $out/etc/spago-completion.d/purs-completion.bash
     '';
 
     meta = with lib; {
-      description = "Compiler for a strongly-typed language that compiles to JavaScript";
-      homepage = "https://github.com/purescript/purescript";
+      description = "Package manager for PureScript";
+      homepage = "https://github.com/purescript/spago";
     };
   }

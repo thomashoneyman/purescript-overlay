@@ -2,33 +2,70 @@
 # directory.
 {
   lib,
+  system,
   callPackage,
-  callPackages,
 }: let
-  fromYAML = callPackage ../nix/from-yaml.nix {};
-  mkManifestDerivations = bin: callPackages ./build-support/mkManifestDerivations.nix {inherit bin;};
+  mkPursDerivation = callPackage ./build-support/mkPursDerivation.nix {};
+  mkSpagoDerivation = callPackage ./build-support/mkSpagoDerivation.nix {};
+  mkLegacySpagoDerivation = callPackage ./build-support/mkLegacySpagoDerivation.nix {};
 
-  packages = {
-    purs-bin = mkManifestDerivations "purs";
-    spago-bin = mkManifestDerivations "spago";
+  # The purs manifest uses fetchurl to fetch tarballs. We have to accommodate
+  # missing systems.
+  purs-bin = let
+    entries = builtins.fromJSON (builtins.readFile ./purs.json);
+  in
+    builtins.foldl'
+    (
+      acc: version: let
+        name = "purs-${builtins.replaceStrings ["."] ["_"] version}";
+        entry = entries.${version}.${system} or {};
+      in
+        if entry != {}
+        then acc // {${name} = mkPursDerivation ({inherit version;} // entry);}
+        else acc
+    ) {}
+    (builtins.attrNames entries);
+
+  # Spago versions prior to 0.90.0 use fetchurl for Haskell tarballs, but after
+  # that we build with PureScript and Node.
+  spago-bin = let
+    entries = builtins.fromJSON (builtins.readFile ./spago.json);
+  in
+    builtins.foldl'
+    (
+      acc: version: let
+        name = "spago-${builtins.replaceStrings ["."] ["_"] version}";
+        entry = entries.${version}.${system} or entries.${version}.rev or {};
+      in
+        if builtins.typeOf entry == "string"
+        then acc // {${name} = mkSpagoDerivation ({inherit version;} // {rev = entry;});}
+        else if entry != {}
+        then acc // {${name} = mkLegacySpagoDerivation ({inherit version;} // entry);}
+        else acc
+    ) {}
+    (builtins.attrNames entries);
+
+  all = {
+    inherit purs-bin spago-bin;
   };
 
   # The 'named.json' file records what packages should be mapped to the default
   # package names. This is the latest stable or unstable version for each package.
-  namedPackages =
-    lib.mapAttrs'
+  named = let
+    entries = builtins.fromJSON (builtins.readFile ./named.json);
+  in
+    builtins.foldl'
     (
-      name: value: let
-        # We strip the 'stable' suffix from package names to get the default
-        # package name.
-        pkg-name = builtins.replaceStrings ["-stable"] [""] name;
-        # The bin name is the default package name with '-bin' appended.
-        bin-name = "${builtins.replaceStrings ["-stable" "-unstable"] ["" ""] name}-bin";
-      in {
-        name = pkg-name;
-        value = packages.${bin-name}.${value};
-      }
-    )
-    (builtins.fromJSON (builtins.readFile ./named.json));
+      acc: key: let
+        name = builtins.replaceStrings ["-stable"] [""] key;
+        value = entries.${key};
+        group = "${builtins.replaceStrings ["-stable" "-unstable"] ["" ""] key}-bin";
+        available = builtins.attrNames all.${group};
+      in
+        if builtins.hasAttr available value
+        then acc
+        else acc // {${name} = all.${group}.${value};}
+    ) {}
+    (builtins.attrNames entries);
 in
-  namedPackages // packages
+  all // named

@@ -10,13 +10,13 @@
   purs-bin,
 }: {
   version,
-  manifest,
+  rev,
 }: let
-  purs = purs-bin.purs-0_15_8; # TODO: Discover this from the lockfile or manifest?
+  purs = purs-bin.purs-0_15_9; # TODO: Discover this from the lockfile or manifest?
 
   repo = builtins.fetchGit {
+    inherit rev;
     url = "https://github.com/purescript/spago.git";
-    rev = manifest.rev;
     allRefs = true;
   };
 
