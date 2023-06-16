@@ -10,7 +10,7 @@ import Data.Either (Either(..))
 import Data.Either as Either
 import Data.Map (Map)
 import Lib.Nix.System (NixSystem)
-import Lib.Nix.System as NixSystem
+import Lib.Nix.System as Nix.System
 import Lib.SemVer (SemVer)
 import Lib.SemVer as SemVer
 import Lib.Tool (Tool(..), ToolChannel, ToolPackage)
@@ -39,26 +39,26 @@ namedManifestCodec = do
   let decodeKey = Either.hush <<< Tool.parseToolChannel
   Registry.Codec.strMap "NamedManifest" decodeKey encodeKey Tool.toolPackageCodec
 
-type SpagoManifest = Map SemVer (Either GitRev FetchUrl)
+type SpagoManifest = Map SemVer (Either GitRev (Map NixSystem FetchUrl))
 
 spagoManifestCodec :: JsonCodec SpagoManifest
 spagoManifestCodec = SemVer.semverMapCodec (CA.codec' decode encode)
   where
   decode json =
     map Left (CA.decode gitRevCodec json)
-      <|> map Right (CA.decode fetchUrlCodec json)
+      <|> map Right (CA.decode (Nix.System.systemMapCodec fetchUrlCodec) json)
 
   encode = case _ of
     Left gitRev -> CA.encode gitRevCodec gitRev
-    Right fetchUrl -> CA.encode fetchUrlCodec fetchUrl
+    Right fetchUrl -> CA.encode (Nix.System.systemMapCodec fetchUrlCodec) fetchUrl
 
-type PursManifest = Map NixSystem (Map SemVer FetchUrl)
+type PursManifest = Map SemVer (Map NixSystem FetchUrl)
 
 pursManifestCodec :: JsonCodec PursManifest
 pursManifestCodec = do
-  let encodeKey = NixSystem.print
-  let decodeKey = Either.hush <<< NixSystem.parse
-  Registry.Codec.strMap "PursManifest" decodeKey encodeKey (SemVer.semverMapCodec fetchUrlCodec)
+  let encodeKey = SemVer.print
+  let decodeKey = Either.hush <<< SemVer.parse
+  Registry.Codec.strMap "PursManifest" decodeKey encodeKey (Nix.System.systemMapCodec fetchUrlCodec)
 
 -- | A manifest entry for a package that can be fetched from git
 type GitRev = { rev :: String }

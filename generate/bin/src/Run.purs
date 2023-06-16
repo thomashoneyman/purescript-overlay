@@ -24,7 +24,7 @@ import Effect.Class.Console as Console
 import Lib.Foreign.Octokit (Release, ReleaseAsset)
 import Lib.Foreign.Octokit as Octokit
 import Lib.GitHub as GitHub
-import Lib.Nix.Manifest (FetchUrl, NamedManifest, PursManifest, SpagoManifest)
+import Lib.Nix.Manifest (NamedManifest, PursManifest, SpagoManifest)
 import Lib.Nix.Prefetch as Nix.Prefetch
 import Lib.Nix.System (NixSystem(..))
 import Lib.Nix.System as NixSystem
@@ -54,7 +54,7 @@ prefetchPurs = do
 
   let
     existing :: Set SemVer
-    existing = Set.unions $ map Map.keys $ Map.values manifest
+    existing = Map.keys manifest
 
   rawReleases <- AppM.runGitHubM (GitHub.listReleases Purs) >>= case _ of
     Left error -> do
@@ -115,7 +115,7 @@ prefetchPurs = do
     newReleases :: Map SemVer (Map NixSystem String)
     newReleases = Map.filterKeys (not <<< flip Set.member existing) supportedReleases
 
-  hashedReleases :: Map SemVer (Map NixSystem FetchUrl) <-
+  hashedReleases :: PursManifest <-
     for newReleases \assets ->
       for assets \asset ->
         Nix.Prefetch.nixPrefetchTarball asset >>= case _ of
@@ -124,14 +124,7 @@ prefetchPurs = do
             liftEffect $ Process.exit 1
           Right hash -> pure { url: asset, hash }
 
-  let
-    flatReleases :: Array { version :: SemVer, system :: NixSystem, fetch :: FetchUrl }
-    flatReleases =
-      Array.concatMap
-        (\(Tuple version inner) -> map (\(Tuple system fetch) -> { version, system, fetch }) (Map.toUnfoldable inner))
-        (Map.toUnfoldable hashedReleases)
-
-  pure $ Array.foldl (\acc val -> Map.insertWith Map.union val.system (Map.singleton val.version val.fetch) acc) Map.empty flatReleases
+  pure hashedReleases
 
 writePursUpdates :: PursManifest -> AppM Unit
 writePursUpdates updates = do
@@ -149,7 +142,7 @@ writePursUpdates updates = do
       ToolPackage { version: stable } <- Map.lookup stableChannel named
 
       let
-        allVersions = Set.unions $ map Map.keys $ Map.values updates
+        allVersions = Map.keys updates
         allStableVersions = Set.filter (\(SemVer { pre }) -> isNothing pre) allVersions
         maxUnstable = Set.findMax allVersions
         maxStable = Set.findMax allStableVersions

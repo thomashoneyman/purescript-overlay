@@ -12,27 +12,18 @@
 
   entries = builtins.fromJSON (builtins.readFile (../. + "/${bin}.json"));
 
-  # The PureScript file is broken down by system, as PureScript offers
-  # different binaries for different platforms and not all versions have
-  # support for all platforms.
-  versionNames = builtins.attrNames (
-    if bin == "purs"
-    then entries.${system}
-    else entries
-  );
-
   versions =
     builtins.foldl' (
       acc: version: let
         manifest =
           if bin == "purs"
-          then entries.${system}.${version}
+          then entries.${version}.${system}
           else entries.${version};
         args = {inherit version manifest;};
         name = "${bin}-${builtins.replaceStrings ["."] ["_"] version}";
       in
         acc // {${name} = builder args;}
     ) {}
-    versionNames;
+    (builtins.attrNames entries);
 in
   versions

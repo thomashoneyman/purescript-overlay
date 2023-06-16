@@ -132,7 +132,7 @@ main = Aff.launchAff_ do
                   Right _ -> pure unit
 
                 let
-                  versions = Set.unions $ map Map.keys $ Map.values pursUpdates
+                  versions = Map.keys pursUpdates
                   title = "Update " <> String.joinWith " "
                     [ guard (Set.size versions > 0) $ "purs (" <> String.joinWith ", " (Set.toUnfoldable (Set.map SemVer.print versions)) <> ")"
                     ]

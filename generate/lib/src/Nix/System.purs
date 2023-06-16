@@ -66,8 +66,8 @@ codec = CA.codec' decode encode
   encode = Argonaut.fromString <<< print
   decode = lmap CA.TypeMismatch <<< parse <=< CA.decode CA.string
 
-nixSystemMapCodec :: forall a. JsonCodec a -> JsonCodec (Map NixSystem a)
-nixSystemMapCodec = Registry.Codec.strMap "NixSystemMap" (Either.hush <<< parse) print
+systemMapCodec :: forall a. JsonCodec a -> JsonCodec (Map NixSystem a)
+systemMapCodec = Registry.Codec.strMap "NixSystemMap" (Either.hush <<< parse) print
 
 -- | Parse the name of a PureScript release tarball into a Nix system
 fromPursReleaseTarball :: String -> Either String NixSystem
