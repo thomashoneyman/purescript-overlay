@@ -10,15 +10,13 @@
   url,
   hash,
 }: let
-  dynamic-linker = stdenv.cc.bintools.dynamicLinker;
-
   patchelf = libPath:
     if stdenv.isDarwin
     then ""
     else ''
-      chmod u+w $PURS
-      patchelf --interpreter ${dynamic-linker} --set-rpath ${libPath} $PURS
-      chmod u-w $PURS
+      chmod u+w $SPAGO
+      patchelf --interpreter "$(cat $NIX_CC/nix-support/dynamic-linker)" --set-rpath ${libPath} $SPAGO
+      chmod u-w $SPAGO
     '';
 in
   stdenv.mkDerivation rec {
@@ -31,16 +29,22 @@ in
     libPath = lib.makeLibraryPath buildInputs;
     dontStrip = true;
 
-    installPhase = ''
+    unpackPhase = ''
       mkdir -p $out/bin
+      export XDG_CACHE_HOME=$(mktemp -d)
+
       tar xf $src -C $out/bin
 
-      SPAGO="$out/bin/spago"
+      SPAGO=$out/bin/spago
       ${patchelf libPath}
 
       mkdir -p $out/etc/bash_completion.d/
-      $SPAGO --bash-completion-script $SPAGO > $out/etc/spago-completion.d/purs-completion.bash
+      $SPAGO --bash-completion-script $SPAGO > $out/etc/bash_completion.d/spago-completion.bash
+
+      rm -rf $XDG_CACHE_HOME
     '';
+
+    dontInstall = true;
 
     meta = with lib; {
       description = "Package manager for PureScript";

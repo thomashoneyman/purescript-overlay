@@ -1,6 +1,7 @@
 # This derivation exposes all the tools described by the manifests in this
 # directory.
 {
+  stdenv,
   lib,
   system,
   callPackage,
@@ -62,7 +63,20 @@
         group = "${builtins.replaceStrings ["-stable" "-unstable"] ["" ""] key}-bin";
         available = builtins.attrNames all.${group};
       in
-        acc // {${name} = all.${group}.${value};}
+        acc
+        // {
+          ${name} =
+            all.${group}.${value}
+            or (stdenv.mkDerivation rec {
+              name = builtins.replaceStrings ["-stable" "-unstable"] ["" ""] key;
+              unsupported = true;
+              buildCommand = ''
+                echo "No binary available for ${key} ${value} on system ${system}"
+                echo "Available versions: ${builtins.concatStringsSep " " available}"
+                echo "Please specify a version from the list above."
+              '';
+            });
+        }
     ) {}
     (builtins.attrNames entries);
 in

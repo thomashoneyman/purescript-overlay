@@ -32,9 +32,10 @@
       purs-unstable = pkgs.purs-unstable;
       purs-bin = pkgs.purs-bin;
       spago = pkgs.spago;
+      spago-unstable = pkgs.spago-unstable;
       spago-bin = pkgs.spago-bin;
     in
-      {inherit purs purs-unstable spago;} // purs-bin // spago-bin);
+      {inherit purs purs-unstable spago spago-unstable;} // purs-bin // spago-bin);
 
     apps = forAllSystems (system: let
       pkgs = nixpkgsFor.${system};
@@ -52,14 +53,32 @@
     checks = forAllSystems (system: let
       pkgs = nixpkgsFor.${system};
 
-      package-checks = pkgs.lib.mapAttrs (name: bin:
-        pkgs.runCommand "test-${name}" {} ''
+      package-checks = pkgs.lib.mapAttrs (key: bin: let
+        name = bin.pname or bin.name;
+        version = bin.version or "0.0.0";
+      in
+        pkgs.runCommand "test-${name}-${version}" {} ''
           touch $out
           set -e
-          # Spago writes --version to stderr, oddly enough, so we need to
-          # capture both in the VERSION var.
-          VERSION="$(${bin}/bin/${bin.pname} --version 2>&1)"
-          EXPECTED_VERSION="${bin.version}"
+
+          # Some package versions are not supported on some systems, ie. the
+          # "stable" version of Spago is not supported on aarch64.
+          if [ ${builtins.toString (builtins.hasAttr "unsupported" bin)} ]; then
+            echo "Skipping ${bin.name} because it is not supported on ${system}"
+            exit 0
+          fi
+
+          # Different packages at different versions use different 'version'
+          # flags to print their version
+          if [ ${builtins.toString (name == "spago" && pkgs.lib.versionOlder version "0.90.0")} ]; then
+            VERSION="$(${bin}/bin/${name} version --global-cache skip)"
+          else
+            # spago-next writes --version to stderr, oddly enough, so we need to
+            # capture both in the VERSION var.
+            VERSION="$(${bin}/bin/${name} --version 2>&1)"
+          fi
+
+          EXPECTED_VERSION="${version}"
           echo "$VERSION should match expected output $EXPECTED_VERSION"
           test "$VERSION" = "$EXPECTED_VERSION"
         '')

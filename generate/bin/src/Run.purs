@@ -217,14 +217,24 @@ prefetchSpago = do
 
         pure $ Tuple version $ Right supportedAssets
 
-    -- We only accept Spago releases back to 0.13
+    -- We only accept Spago releases back to 0.18, which is the first one with
+    -- a configurable cache (so we don't get Nix errors trying to run Spago)
     isBeforeCutoff :: SemVer -> Boolean
     isBeforeCutoff (SemVer { version }) =
-      Version.major version == 0 && Version.minor version < 13
+      Version.major version == 0 && Version.minor version < 18
+
+    -- Some versions are broken and we don't want to include them
+    isBrokenVersion :: SemVer -> Boolean
+    isBrokenVersion (SemVer { version }) = Array.elem version
+      [ unsafeVersion "0.19.2" -- wrong version number
+      ]
+      where
+      unsafeVersion = Either.fromRight' (\_ -> unsafeCrashWith "Unexpected Left in isBroken") <<< Version.parse
 
     supportedReleases :: Map SemVer (Either Git.Tag (Map NixSystem String))
     supportedReleases = parseSpagoReleases rawReleases # Map.mapMaybeWithKey \version entry -> do
       guard $ not $ isBeforeCutoff version
+      guard $ not $ isBrokenVersion version
       pure entry
 
     -- We only want to include releases that aren't already present in the
