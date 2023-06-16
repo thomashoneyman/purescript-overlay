@@ -2,7 +2,7 @@ module Bin.Main where
 
 import Prelude
 
-import App.Env as Env
+import Bin.Env as Env
 import Bin.AppM as AppM
 import Bin.CLI (Command(..), Commit(..))
 import Bin.CLI as CLI
@@ -54,9 +54,11 @@ main = Aff.launchAff_ do
       octokit <- case token of
         Nothing -> Octokit.newOctokit
         Just tok -> Octokit.newAuthOctokit tok
+
       AppM.runAppM { octokit, manifestDir: dir, gitBranch: branch, tmpDir: tmp } do
         Console.log "Verifying manifests..."
         Run.verifyPurs
+        Run.verifySpago
 
     Prefetch dir -> do
       let envFile = Path.concat [ dir, "..", "generate", ".env" ]

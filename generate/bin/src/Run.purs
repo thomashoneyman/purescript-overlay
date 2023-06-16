@@ -6,7 +6,7 @@ import Bin.AppM (AppM)
 import Bin.AppM as AppM
 import Control.Alternative (guard)
 import Data.Array as Array
-import Data.Either (Either(..))
+import Data.Either (Either(..), fromRight')
 import Data.Either as Either
 import Data.Int as Int
 import Data.Map (Map)
@@ -24,7 +24,7 @@ import Effect.Class.Console as Console
 import Lib.Foreign.Octokit (Release, ReleaseAsset)
 import Lib.Foreign.Octokit as Octokit
 import Lib.GitHub as GitHub
-import Lib.Nix.Manifest (FetchUrl, NamedManifest, PursManifest)
+import Lib.Nix.Manifest (FetchUrl, NamedManifest, PursManifest, SpagoManifest)
 import Lib.Nix.Prefetch as Nix.Prefetch
 import Lib.Nix.System (NixSystem(..))
 import Lib.Nix.System as NixSystem
@@ -40,6 +40,12 @@ verifyPurs :: AppM Unit
 verifyPurs = do
   manifest <- AppM.readPursManifest
   let entries = alaF Additive foldMap Map.size (Map.values manifest)
+  Console.log $ "Successfully parsed purs.json with " <> Int.toStringAs Int.decimal entries <> " entries."
+
+verifySpago :: AppM Unit
+verifySpago = do
+  manifest <- AppM.readSpagoManifest
+  let entries = Map.size manifest
   Console.log $ "Successfully parsed purs.json with " <> Int.toStringAs Int.decimal entries <> " entries."
 
 prefetchPurs :: AppM PursManifest
@@ -59,10 +65,7 @@ prefetchPurs = do
 
   let
     parsePursReleases :: Array Release -> Map SemVer (Map NixSystem String)
-    parsePursReleases = Map.fromFoldable <<< Array.mapMaybe parsePursRelease
-
-    parsePursRelease :: Release -> Maybe (Tuple SemVer (Map NixSystem String))
-    parsePursRelease release = Either.hush do
+    parsePursReleases = Map.fromFoldable <<< Array.mapMaybe \release -> Either.hush do
       version <- SemVer.parse (fromMaybe release.tag (String.stripPrefix (String.Pattern "v") release.tag))
 
       let
@@ -169,3 +172,44 @@ writePursUpdates updates = do
   case named' of
     Nothing -> Console.log "Failed to update named manifest" *> liftEffect (Process.exit 1)
     Just result -> AppM.writeNamedManifest result
+
+prefetchSpago :: AppM SpagoManifest
+prefetchSpago = do
+  manifest <- AppM.readSpagoManifest
+
+  let
+    existing :: Set SemVer
+    existing = Map.keys manifest
+
+  rawReleases <- AppM.runGitHubM (GitHub.listReleases Spago) >>= case _ of
+    Left error -> do
+      Console.log $ "Failed to fetch releases for " <> Tool.print Spago Tool.Executable
+      Console.log $ Octokit.printGitHubError error
+      liftEffect $ Process.exit 1
+    Right releases -> pure releases
+
+  let
+    parseSpagoReleases :: Array Release -> Array (Tuple SemVer (Either String (Map NixSystem String)))
+    parseSpagoReleases = Array.mapMaybe \release -> Either.hush do
+      version <- SemVer.parse (fromMaybe release.tag (String.stripPrefix (String.Pattern "v") release.tag))
+
+      -- Spaghetto versions begin at 0.90.0
+      let minGitRef = fromRight' (\_ -> unsafeCrashWith "bad version") (Version.parse "0.90.0")
+      let minSpaghetto = SemVer { version: minGitRef, pre: Nothing }
+      if version >= minSpaghetto then
+        pure $ Tuple version $ Left release.tag
+      else do
+        let
+          parseAsset :: ReleaseAsset -> Maybe (Tuple NixSystem String)
+          parseAsset asset = do
+            trimmed <- String.stripSuffix (String.Pattern ".tar.gz") asset.name
+            guard $ not $ Array.elem trimmed [ "Windows", "windows" ]
+            system <- Either.hush $ NixSystem.fromSpagoReleaseTarball asset.name
+            pure $ Tuple system asset.downloadUrl
+
+          supportedAssets :: Map NixSystem String
+          supportedAssets = Map.fromFoldable $ Array.mapMaybe parseAsset release.assets
+
+        pure $ Tuple version $ Right supportedAssets
+
+  pure manifest

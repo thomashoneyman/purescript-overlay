@@ -90,3 +90,18 @@ fromPursReleaseTarball assetName = do
     Right X86_64_darwin
   else
     Left $ "Could not determine which Nix system should be assigned to: " <> name
+
+fromSpagoReleaseTarball :: String -> Either String NixSystem
+fromSpagoReleaseTarball assetName = do
+  name <- Either.note ("Expected .tar.gz suffix: " <> assetName) (String.stripSuffix (String.Pattern ".tar.gz") assetName)
+
+  let
+    x86_64_linux = [ "Linux", "linux", "linux-latest" ]
+    x86_64_darwin = [ "macOS", "osx", "macOS-latest" ]
+
+  if Array.elem name x86_64_linux then
+    Right X86_64_linux
+  else if Array.elem name x86_64_darwin then
+    Right X86_64_darwin
+  else
+    Left $ "Could not determine which Nix system should be assigned to: " <> name

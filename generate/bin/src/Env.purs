@@ -1,4 +1,4 @@
-module App.Env where
+module Bin.Env where
 
 import Prelude
 
