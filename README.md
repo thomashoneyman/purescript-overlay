@@ -4,22 +4,24 @@
 [![darwin-support](https://github.com/thomashoneyman/purescript-nix/actions/workflows/darwin-support.yaml/badge.svg)](https://github.com/thomashoneyman/purescript-nix/actions/workflows/darwin-support.yaml)
 [![nix-unit-tests](https://github.com/thomashoneyman/purescript-nix/actions/workflows/nix-unit-tests.yaml/badge.svg)](https://github.com/thomashoneyman/purescript-nix/actions/workflows/nix-unit-tests.yaml)
 
-An overlay and flake exposing PureScript tools maintained by the core team (ie. the compiler, `purs`, and package manager, `spago`). Auto-updates every day to check for new tool versions. Tested on the following architectures:
+Purix is two things:
+
+1. An overlay and flake exposing the core PureScript toolchain — `purs`, `spago`, `purs-tidy`, and `purs-backend-es` — at both stable and pre-release versions, with daily auto-updates for new releases.
+2. A library suitable for building PureScript projects with Nix, called `purix`.
+
+Purix is tested on the following architectures:
 
 - x86_64-linux
 - x86_64-darwin (Intel Mac)
 - aarch64-darwin (M1 Mac)
 - aarch64-linux
 
-Via the overlay you can access tooling versions in one of two ways:
+The included overlay inserts the latest stable and unstable executables into your packages (ie. `purs`, `purs-unstable`, and so on). You can see all specific versions in the [named.json](./manifests/named.json) file. It also provides many versions of each executable under a `-bin` namespace (ie. `purs-bin`, `spago-bin`, and so on) so you can access specific versions of a tool. For example, you can use `purs-bin.purs-0_15_8` to get the 0.15.8 PureScript compiler. These are tracked in the [manifests](./manifests/) directory.
 
-- Named executables: The overlay inserts `purs`, `spago`, and `purs-unstable` into your packages. These are tracked in the [named.json](./manifests/named.json) file.
-- Versioned executables: The overlay inserts `purs-bin` and `spago-bin` attrsets into your packages, which you can then use to access a specific version of a tool. For example, you can use `purs-bin.purs-0_15_8` to get the `v0.15.8` compiler. These are tracked in the [manifests](./manifests/) directory.
+The included library provides helper functions for building PureScript packages, namely:
 
-This Nix library also includes helper functions for building PureScript packages, namely:
-
-- `buildSpagoLock`: Discover and build all workspaces and dependencies from a spago.lock file
-- `buildPackageLock`: Discover and download dependencies listed in a package-lock.json (:warning: only suitable for simple projects like typical PureScript FFI; for significant applications there are better solutions like npmlock2nix)
+- `buildSpagoLock`: Build `output` directories for any package or workspace listed in a spago.lock file
+- `buildPackageLock`: Install all dependencies in a package-lock.json file into a node_modules directory.
 
 ## Usage
 
@@ -62,17 +64,6 @@ nix run github:thomashoneyman/purescript-nix#purs-unstable
 ## Examples
 
 The [`generate`](./generate/) directory contains a PureScript script implemented using this library. It has two Spago workspaces and foreign Node dependencies which are packaged into an runnable script via the utilities in this library. Specifically, see the included [`default.nix`](./generate/default.nix).
-
-## Development
-
-This repository exports functions from [nix/lib](./nix/lib/) and packages listed in the [manifests](./manifests/) directory.
-
-The [overlay.nix](./overlay.nix) file auto-discovers what tools to build and export via the manifests directory. Each manifest contains the arguments necessary to build a derivation for the relevant tool and is produced by the `generate` script (see below).
-
-- `purs.json`: Contains a mapping of systems to the tarball name and hash as can be found in the PureScript GitHub releases
-- `spago.json`: Contains the commit hash for the commit to build Spago with.
-
-There is a generation script stored in the [generate](./generate/) directory which will search for new versions of the tools included in this repository and attempt to produce new derivations for them. This script is run in CI nightly, but can also be run manually:
 
 ```console
 nix run .#generate
