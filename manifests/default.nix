@@ -62,9 +62,7 @@
         group = "${builtins.replaceStrings ["-stable" "-unstable"] ["" ""] key}-bin";
         available = builtins.attrNames all.${group};
       in
-        if builtins.hasAttr available value
-        then acc
-        else acc // {${name} = all.${group}.${value};}
+        acc // {${name} = all.${group}.${value};}
     ) {}
     (builtins.attrNames entries);
 in
