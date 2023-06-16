@@ -42,7 +42,7 @@ verifyPurs = do
   let entries = alaF Additive foldMap Map.size (Map.values manifest)
   Console.log $ "Successfully parsed purs.json with " <> Int.toStringAs Int.decimal entries <> " entries."
 
-prefetchPurs :: AppM (Maybe PursManifest)
+prefetchPurs :: AppM PursManifest
 prefetchPurs = do
   manifest <- AppM.readPursManifest
 
@@ -103,8 +103,9 @@ prefetchPurs = do
     -- All releases that ought to be included in the resulting manifest
     supportedReleases :: Map SemVer (Map NixSystem String)
     supportedReleases = parsePursReleases rawReleases # Map.mapMaybeWithKey \version assets -> do
-      guard $ not $ isBrokenVersion version || isBeforeCutoff version
-      pure $ Map.filterKeys (isBrokenDarwinPreRelease version) assets
+      guard $ not $ isBrokenVersion version
+      guard $ not $ isBeforeCutoff version
+      pure $ Map.filterKeys (not <<< isBrokenDarwinPreRelease version) assets
 
     -- We only want to include releases that aren't already present in the
     -- manifest file.
@@ -121,23 +122,18 @@ prefetchPurs = do
           Right hash -> pure { url: asset, hash }
 
   let
-    -- Create a new release manifest containing the new updates
-    newReleaseManifest :: PursManifest
-    newReleaseManifest = do
-      let
-        flatReleases :: Array { version :: SemVer, system :: NixSystem, fetch :: FetchUrl }
-        flatReleases =
-          Array.concatMap
-            (\(Tuple version inner) -> map (\(Tuple system fetch) -> { version, system, fetch }) (Map.toUnfoldable inner))
-            (Map.toUnfoldable hashedReleases)
+    flatReleases :: Array { version :: SemVer, system :: NixSystem, fetch :: FetchUrl }
+    flatReleases =
+      Array.concatMap
+        (\(Tuple version inner) -> map (\(Tuple system fetch) -> { version, system, fetch }) (Map.toUnfoldable inner))
+        (Map.toUnfoldable hashedReleases)
 
-      Array.foldl (\acc val -> Map.insertWith Map.union val.system (Map.singleton val.version val.fetch) acc) manifest flatReleases
-
-  pure $ if manifest == newReleaseManifest then Nothing else Just newReleaseManifest
+  pure $ Array.foldl (\acc val -> Map.insertWith Map.union val.system (Map.singleton val.version val.fetch) acc) Map.empty flatReleases
 
 writePursUpdates :: PursManifest -> AppM Unit
 writePursUpdates updates = do
-  AppM.writePursManifest updates
+  manifest <- AppM.readPursManifest
+  AppM.writePursManifest $ Map.unionWith Map.union manifest updates
   named <- AppM.readNamedManifest
 
   let

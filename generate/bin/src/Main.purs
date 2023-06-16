@@ -69,9 +69,11 @@ main = Aff.launchAff_ do
 
       AppM.runAppM { octokit, manifestDir: dir, gitBranch: branch, tmpDir: tmp } do
         Console.log "Prefetching new releases..."
-        Run.prefetchPurs >>= case _ of
-          Nothing -> Console.log "No new purs releases."
-          Just updates -> Console.log $ "New purs releases: " <> Utils.printJson Nix.Manifest.pursManifestCodec updates
+        Run.prefetchPurs >>= \updates ->
+          if Map.isEmpty updates then
+            Console.log "No new purs releases."
+          else
+            Console.log $ "New purs releases: " <> Utils.printJson Nix.Manifest.pursManifestCodec updates
 
     -- TODO: Also update the named manifest file.
     Update dir commit -> do
@@ -93,11 +95,11 @@ main = Aff.launchAff_ do
         case commit of
           NoCommit -> do
             Console.log "Updating locally only (not committing results)"
-            case pursUpdates of
-              Nothing -> Console.log "No new purs releases."
-              Just updates -> do
-                Console.log $ "New purs releases, writing to disk..."
-                Run.writePursUpdates updates
+            if Map.isEmpty pursUpdates then
+              Console.log "No new purs releases."
+            else do
+              Console.log $ "New purs releases, writing to disk..."
+              Run.writePursUpdates pursUpdates
 
           DoCommit -> do
             Console.log "Cloning purescript-nix, opening a branch, committing, and opening a pull request..."
@@ -106,69 +108,69 @@ main = Aff.launchAff_ do
             -- We switch the manifest dir from the user-provided input to the
             -- cloned repo before we do anything else.
             Reader.local (\env -> env { manifestDir = Path.concat [ env.tmpDir, "purescript-nix", "manifests" ] }) do
-              case pursUpdates of
-                Nothing -> Console.log "No new purs releases."
-                Just updates -> do
-                  Console.log "New purs releases, writing to disk..."
-                  void $ AppM.runGitM Git.gitCloneUpstream
+              if Map.isEmpty pursUpdates then
+                Console.log "No new purs releases."
+              else do
+                Console.log "New purs releases, writing to disk..."
+                void $ AppM.runGitM Git.gitCloneUpstream
 
-                  Run.writePursUpdates updates
+                Run.writePursUpdates pursUpdates
 
-                  -- TODO: Commit message could be a lot more informative.
-                  commitResult <- AppM.runGitM do
-                    Git.gitCommitManifests "Update manifests" >>= case _ of
-                      Git.NothingToCommit -> do
-                        Console.log "No files were changed, not committing."
+                -- TODO: Commit message could be a lot more informative.
+                commitResult <- AppM.runGitM do
+                  Git.gitCommitManifests "Update manifests" >>= case _ of
+                    Git.NothingToCommit -> do
+                      Console.log "No files were changed, not committing."
+                      liftEffect (Process.exit 1)
+                    Git.Committed ->
+                      Console.log "Committed changes!"
+
+                case commitResult of
+                  Left error -> Console.log error *> liftEffect (Process.exit 1)
+                  Right _ -> pure unit
+
+                let
+                  versions = Set.unions $ map Map.keys $ Map.values pursUpdates
+                  title = "Update " <> String.joinWith " "
+                    [ guard (Set.size versions > 0) $ "purs (" <> String.joinWith ", " (Set.toUnfoldable (Set.map SemVer.print versions)) <> ")"
+                    ]
+
+                  -- TODO: What would be the most informative thing to do here?
+                  body = "Update manifest files to new tooling versions."
+
+                existing <- AppM.runGitHubM GitHub.getPullRequests >>= case _ of
+                  Left error -> do
+                    Console.log $ Octokit.printGitHubError error
+                    liftEffect (Process.exit 1)
+                  Right existing -> pure existing
+
+                -- TODO: Title comparison is a bit simplistic. Better to compare
+                -- on like the new hashes or something?
+                createPullResult <- case Array.find (eq title <<< _.title) existing of
+                  Nothing -> do
+                    pushResult <- AppM.runGitM $ Git.gitPushBranch token >>= case _ of
+                      Git.NothingToPush -> do
+                        Console.log "Did not push branch because we're up-to-date (expected to push change)."
                         liftEffect (Process.exit 1)
-                      Git.Committed ->
-                        Console.log "Committed changes!"
+                      Git.Pushed ->
+                        Console.log "Pushed changes!"
+                    case pushResult of
+                      Left error -> do
+                        Console.log error
+                        liftEffect (Process.exit 1)
+                      Right _ ->
+                        AppM.runGitHubM $ GitHub.createPullRequest { title, body, branch }
 
-                  case commitResult of
-                    Left error -> Console.log error *> liftEffect (Process.exit 1)
-                    Right _ -> pure unit
+                  Just pull -> do
+                    Console.log "A pull request with this title is already open: "
+                    Console.log pull.url
+                    liftEffect (Process.exit 1)
 
-                  let
-                    versions = Set.unions $ map Map.keys $ Map.values updates
-                    title = "Update " <> String.joinWith " "
-                      [ guard (Set.size versions > 0) $ "purs (" <> String.joinWith ", " (Set.toUnfoldable (Set.map SemVer.print versions)) <> ")"
-                      ]
-
-                    -- TODO: What would be the most informative thing to do here?
-                    body = "Update manifest files to new tooling versions."
-
-                  existing <- AppM.runGitHubM GitHub.getPullRequests >>= case _ of
-                    Left error -> do
-                      Console.log $ Octokit.printGitHubError error
-                      liftEffect (Process.exit 1)
-                    Right existing -> pure existing
-
-                  -- TODO: Title comparison is a bit simplistic. Better to compare
-                  -- on like the new hashes or something?
-                  createPullResult <- case Array.find (eq title <<< _.title) existing of
-                    Nothing -> do
-                      pushResult <- AppM.runGitM $ Git.gitPushBranch token >>= case _ of
-                        Git.NothingToPush -> do
-                          Console.log "Did not push branch because we're up-to-date (expected to push change)."
-                          liftEffect (Process.exit 1)
-                        Git.Pushed ->
-                          Console.log "Pushed changes!"
-                      case pushResult of
-                        Left error -> do
-                          Console.log error
-                          liftEffect (Process.exit 1)
-                        Right _ ->
-                          AppM.runGitHubM $ GitHub.createPullRequest { title, body, branch }
-
-                    Just pull -> do
-                      Console.log "A pull request with this title is already open: "
-                      Console.log pull.url
-                      liftEffect (Process.exit 1)
-
-                  case createPullResult of
-                    Left error -> do
-                      Console.log "Failed to create pull request:"
-                      Console.log $ Octokit.printGitHubError error
-                      liftEffect (Process.exit 1)
-                    Right { url } -> do
-                      Console.log "Successfully created pull request!"
-                      Console.log url
+                case createPullResult of
+                  Left error -> do
+                    Console.log "Failed to create pull request:"
+                    Console.log $ Octokit.printGitHubError error
+                    liftEffect (Process.exit 1)
+                  Right { url } -> do
+                    Console.log "Successfully created pull request!"
+                    Console.log url
