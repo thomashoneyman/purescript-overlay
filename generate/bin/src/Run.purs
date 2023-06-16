@@ -137,25 +137,35 @@ writePursUpdates updates = do
   named <- AppM.readNamedManifest
 
   let
-    named' :: NamedManifest
-    named' = fromMaybe named do
+    named' :: Maybe NamedManifest
+    named' = do
       let unstableChannel = ToolChannel { tool: Purs, channel: Unstable }
       let stableChannel = ToolChannel { tool: Purs, channel: Stable }
 
       ToolPackage { version: unstable } <- Map.lookup unstableChannel named
       ToolPackage { version: stable } <- Map.lookup stableChannel named
 
-      let allVersions = Set.unions $ map Map.keys $ Map.values updates
-      let allStableVersions = Set.filter (\(SemVer { pre }) -> isNothing pre) allVersions
+      let
+        allVersions = Set.unions $ map Map.keys $ Map.values updates
+        allStableVersions = Set.filter (\(SemVer { pre }) -> isNothing pre) allVersions
+        maxUnstable = Set.findMax allVersions
+        maxStable = Set.findMax allStableVersions
 
-      maxUnstable <- Set.findMax allVersions
-      maxStable <- Set.findMax allStableVersions
+        insertPackage :: ToolChannel -> SemVer -> NamedManifest -> NamedManifest
+        insertPackage channel version = Map.insert channel (ToolPackage { tool: Purs, version })
 
-      let insertPackage channel version = Map.insert channel (ToolPackage { tool: Purs, version })
-      let updateUnstable prev = if maxUnstable > unstable then insertPackage unstableChannel maxUnstable prev else prev
-      let updateStable prev = if maxStable > stable then insertPackage stableChannel maxStable prev else prev
+        updateUnstable :: NamedManifest -> NamedManifest
+        updateUnstable prev = case maxUnstable of
+          Just version | version > unstable -> insertPackage unstableChannel version prev
+          _ -> prev
+
+        updateStable :: NamedManifest -> NamedManifest
+        updateStable prev = case maxStable of
+          Just version | version > stable -> insertPackage stableChannel version prev
+          _ -> prev
 
       pure (updateStable (updateUnstable named))
 
-  when (named /= named') do
-    AppM.writeNamedManifest named'
+  case named' of
+    Nothing -> Console.log "Failed to update named manifest" *> liftEffect (Process.exit 1)
+    Just result -> AppM.writeNamedManifest result
