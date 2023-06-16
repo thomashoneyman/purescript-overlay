@@ -8,13 +8,16 @@ import Control.Alternative (guard)
 import Data.Array as Array
 import Data.Either (Either(..))
 import Data.Either as Either
+import Data.Int as Int
 import Data.Map (Map)
 import Data.Map as Map
 import Data.Maybe (Maybe(..), fromMaybe, isJust, isNothing)
+import Data.Monoid.Additive (Additive(..))
+import Data.Newtype (alaF)
 import Data.Set (Set)
 import Data.Set as Set
 import Data.String as String
-import Data.Traversable (for)
+import Data.Traversable (foldMap, for)
 import Data.Tuple (Tuple(..))
 import Effect.Class (liftEffect)
 import Effect.Class.Console as Console
@@ -33,10 +36,14 @@ import Node.Process as Process
 import Partial.Unsafe (unsafeCrashWith)
 import Registry.Version as Version
 
--- TODO: Write in terms of commands — "verify purs", "update purs", etc.
+verifyPurs :: AppM Unit
+verifyPurs = do
+  manifest <- AppM.readPursManifest
+  let entries = alaF Additive foldMap Map.size (Map.values manifest)
+  Console.log $ "Successfully parsed purs.json with " <> Int.toStringAs Int.decimal entries <> " entries."
 
-updatePurs :: AppM Unit
-updatePurs = do
+prefetchPurs :: AppM (Maybe PursManifest)
+prefetchPurs = do
   manifest <- AppM.readPursManifest
 
   let
@@ -126,11 +133,11 @@ updatePurs = do
 
       Array.foldl (\acc val -> Map.insertWith Map.union val.system (Map.singleton val.version val.fetch) acc) manifest flatReleases
 
-  -- Write the new release manifest to disk
-  when (newReleaseManifest /= manifest) do
-    AppM.writePursManifest newReleaseManifest
+  pure $ if manifest == newReleaseManifest then Nothing else Just newReleaseManifest
 
-  -- Update the named manifests, if necessary.
+writePursUpdates :: PursManifest -> AppM Unit
+writePursUpdates updates = do
+  AppM.writePursManifest updates
   named <- AppM.readNamedManifest
 
   let
@@ -142,7 +149,7 @@ updatePurs = do
       ToolPackage { version: unstable } <- Map.lookup unstableChannel named
       ToolPackage { version: stable } <- Map.lookup stableChannel named
 
-      let allVersions = Set.unions $ map Map.keys $ Map.values newReleaseManifest
+      let allVersions = Set.unions $ map Map.keys $ Map.values updates
       let allStableVersions = Set.filter (\(SemVer { pre }) -> isNothing pre) allVersions
 
       maxUnstable <- Set.findMax allVersions
@@ -156,5 +163,3 @@ updatePurs = do
 
   when (named /= named') do
     AppM.writeNamedManifest named'
-
-  pure unit
