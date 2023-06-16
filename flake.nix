@@ -84,7 +84,7 @@
             test "$VERSION" = "$EXPECTED_VERSION"
           '')
         # TODO: Remove once spago is stable in the PureScript build.
-        (pkgs.lib.filterAttrs (k: v: k != "spago") self.packages.${system});
+        (pkgs.lib.filterAttrs (k: v: !(k == "spago" && system == "aarch64-darwin")) self.packages.${system});
 
       example-checks = pkgs.callPackages ./nix/examples {};
 
