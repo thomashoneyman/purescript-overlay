@@ -7,7 +7,8 @@
   ncurses5,
 }: {
   version,
-  manifest,
+  url,
+  hash,
 }: let
   dynamic-linker = stdenv.cc.bintools.dynamicLinker;
 
@@ -24,7 +25,7 @@ in
     pname = "purs";
     inherit version;
 
-    src = fetchurl {inherit (manifest) url hash;};
+    src = fetchurl {inherit url hash;};
 
     buildInputs = [zlib gmp ncurses5];
     libPath = lib.makeLibraryPath buildInputs;
