@@ -13,17 +13,20 @@ import Data.Map (Map)
 import Data.Map as Map
 import Data.Maybe (Maybe(..), fromMaybe, isJust, isNothing)
 import Data.Monoid.Additive (Additive(..))
-import Data.Newtype (alaF)
+import Data.Newtype (alaF, un)
 import Data.Set (Set)
 import Data.Set as Set
 import Data.String as String
 import Data.Traversable (foldMap, for)
+import Data.TraversableWithIndex (forWithIndex)
 import Data.Tuple (Tuple(..))
 import Effect.Class (liftEffect)
 import Effect.Class.Console as Console
 import Lib.Foreign.Octokit (Release, ReleaseAsset)
 import Lib.Foreign.Octokit as Octokit
+import Lib.Git as Git
 import Lib.GitHub as GitHub
+import Lib.GitHub as GitHubM
 import Lib.Nix.Manifest (NamedManifest, PursManifest, SpagoManifest)
 import Lib.Nix.Prefetch as Nix.Prefetch
 import Lib.Nix.System (NixSystem(..))
@@ -62,6 +65,8 @@ prefetchPurs = do
       Console.log $ Octokit.printGitHubError error
       liftEffect $ Process.exit 1
     Right releases -> pure releases
+
+  Console.log $ "Retrieved " <> show (Array.length rawReleases) <> " releases for " <> Tool.print Purs Tool.Executable
 
   let
     parsePursReleases :: Array Release -> Map SemVer (Map NixSystem String)
@@ -115,21 +120,26 @@ prefetchPurs = do
     newReleases :: Map SemVer (Map NixSystem String)
     newReleases = Map.filterKeys (not <<< flip Set.member existing) supportedReleases
 
-  hashedReleases :: PursManifest <-
-    for newReleases \assets ->
-      for assets \asset ->
-        Nix.Prefetch.nixPrefetchTarball asset >>= case _ of
-          Left error -> do
-            Console.log $ "Failed to hash release asset at url " <> asset <> ": " <> error
-            liftEffect $ Process.exit 1
-          Right hash -> pure { url: asset, hash }
+  Console.log $ "Found " <> show (Map.size newReleases) <> " new releases for " <> Tool.print Purs Tool.Executable
+
+  hashedReleases :: PursManifest <- forWithIndex newReleases \version assets -> do
+    Console.log $ "Processing release " <> SemVer.print version
+    Console.log $ "Fetching hashes for release assets"
+    for assets \asset -> do
+      Console.log $ "  " <> asset
+      Nix.Prefetch.nixPrefetchTarball asset >>= case _ of
+        Left error -> do
+          Console.log $ "Failed to hash release asset at url " <> asset <> ": " <> error
+          liftEffect $ Process.exit 1
+        Right hash -> pure { url: asset, hash }
 
   pure hashedReleases
 
 writePursUpdates :: PursManifest -> AppM Unit
 writePursUpdates updates = do
   manifest <- AppM.readPursManifest
-  AppM.writePursManifest $ Map.unionWith Map.union manifest updates
+  let newManifest = Map.unionWith Map.union manifest updates
+  AppM.writePursManifest newManifest
   named <- AppM.readNamedManifest
 
   let
@@ -142,7 +152,7 @@ writePursUpdates updates = do
       ToolPackage { version: stable } <- Map.lookup stableChannel named
 
       let
-        allVersions = Map.keys updates
+        allVersions = Map.keys newManifest
         allStableVersions = Set.filter (\(SemVer { pre }) -> isNothing pre) allVersions
         maxUnstable = Set.findMax allVersions
         maxStable = Set.findMax allStableVersions
@@ -181,16 +191,18 @@ prefetchSpago = do
       liftEffect $ Process.exit 1
     Right releases -> pure releases
 
+  Console.log $ "Retrieved " <> show (Array.length rawReleases) <> " releases for " <> Tool.print Spago Tool.Executable
+
   let
-    parseSpagoReleases :: Array Release -> Array (Tuple SemVer (Either String (Map NixSystem String)))
-    parseSpagoReleases = Array.mapMaybe \release -> Either.hush do
+    parseSpagoReleases :: Array Release -> Map SemVer (Either Git.Tag (Map NixSystem String))
+    parseSpagoReleases = Map.fromFoldable <<< Array.mapMaybe \release -> Either.hush do
       version <- SemVer.parse (fromMaybe release.tag (String.stripPrefix (String.Pattern "v") release.tag))
 
       -- Spaghetto versions begin at 0.90.0
       let minGitRef = fromRight' (\_ -> unsafeCrashWith "bad version") (Version.parse "0.90.0")
       let minSpaghetto = SemVer { version: minGitRef, pre: Nothing }
       if version >= minSpaghetto then
-        pure $ Tuple version $ Left release.tag
+        pure $ Tuple version $ Left $ Git.Tag release.tag
       else do
         let
           parseAsset :: ReleaseAsset -> Maybe (Tuple NixSystem String)
@@ -205,4 +217,94 @@ prefetchSpago = do
 
         pure $ Tuple version $ Right supportedAssets
 
-  pure manifest
+    -- We only accept Spago releases back to 0.13
+    isBeforeCutoff :: SemVer -> Boolean
+    isBeforeCutoff (SemVer { version }) =
+      Version.major version == 0 && Version.minor version < 13
+
+    supportedReleases :: Map SemVer (Either Git.Tag (Map NixSystem String))
+    supportedReleases = parseSpagoReleases rawReleases # Map.mapMaybeWithKey \version entry -> do
+      guard $ not $ isBeforeCutoff version
+      pure entry
+
+    -- We only want to include releases that aren't already present in the
+    -- manifest file.
+    newReleases :: Map SemVer (Either Git.Tag (Map NixSystem String))
+    newReleases = Map.filterKeys (not <<< flip Set.member existing) supportedReleases
+
+  Console.log $ "Found " <> show (Map.size newReleases) <> " new releases for " <> Tool.print Spago Tool.Executable
+
+  hashedReleases :: SpagoManifest <- forWithIndex newReleases \version entry -> do
+    Console.log $ "Processing release " <> SemVer.print version
+    case entry of
+      Left tag -> do
+        Console.log $ "Fetching commit for tag " <> un Git.Tag tag
+        AppM.runGitHubM (GitHubM.getTagCommitSha Spago tag) >>= case _ of
+          Left error -> do
+            Console.log $ "Failed to fetch commit for tag " <> un Git.Tag tag <> ": " <> Octokit.printGitHubError error
+            liftEffect $ Process.exit 1
+          Right (Git.CommitSha sha) -> pure $ Left { rev: sha }
+      Right assets -> do
+        Console.log $ "Fetching hashes for release assets"
+        hashed <- for assets \asset -> do
+          Console.log $ "  " <> asset
+          Nix.Prefetch.nixPrefetchTarball asset >>= case _ of
+            Left error -> do
+              Console.log $ "Failed to hash release asset at url " <> asset <> ": " <> error
+              liftEffect $ Process.exit 1
+            Right hash -> pure { url: asset, hash }
+        pure $ Right hashed
+
+  pure hashedReleases
+
+writeSpagoUpdates :: SpagoManifest -> AppM Unit
+writeSpagoUpdates updates = do
+  manifest <- AppM.readSpagoManifest
+
+  let
+    newManifest = Map.unionWith unionFn manifest updates
+    unionFn l r = case l, r of
+      Right m1, Right m2 -> Right $ Map.union m1 m2
+      Left x, _ -> Left x
+      Right m1, _ -> Right m1
+
+  AppM.writeSpagoManifest newManifest
+
+  named <- AppM.readNamedManifest
+
+  let
+    named' :: Maybe NamedManifest
+    named' = do
+      let unstableChannel = ToolChannel { tool: Spago, channel: Unstable }
+      let stableChannel = ToolChannel { tool: Spago, channel: Stable }
+
+      ToolPackage { version: unstable } <- Map.lookup unstableChannel named
+      ToolPackage { version: stable } <- Map.lookup stableChannel named
+
+      let
+        minSpaghetto = SemVer { version: fromRight' (\_ -> unsafeCrashWith "bad") (Version.parse "0.90.0"), pre: Nothing }
+
+        allVersions = Map.keys newManifest
+        allStableVersions = Set.filter (_ < minSpaghetto) allVersions
+
+        maxUnstable = Set.findMax allVersions
+        maxStable = Set.findMax allStableVersions
+
+        insertPackage :: ToolChannel -> SemVer -> NamedManifest -> NamedManifest
+        insertPackage channel version = Map.insert channel (ToolPackage { tool: Spago, version })
+
+        updateUnstable :: NamedManifest -> NamedManifest
+        updateUnstable prev = case maxUnstable of
+          Just version | version > unstable -> insertPackage unstableChannel version prev
+          _ -> prev
+
+        updateStable :: NamedManifest -> NamedManifest
+        updateStable prev = case maxStable of
+          Just version | version > stable -> insertPackage stableChannel version prev
+          _ -> prev
+
+      pure (updateStable (updateUnstable named))
+
+  case named' of
+    Nothing -> Console.log "Failed to update named manifest" *> liftEffect (Process.exit 1)
+    Just result -> AppM.writeNamedManifest result

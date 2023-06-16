@@ -2,10 +2,10 @@ module Bin.Main where
 
 import Prelude
 
-import Bin.Env as Env
 import Bin.AppM as AppM
 import Bin.CLI (Command(..), Commit(..))
 import Bin.CLI as CLI
+import Bin.Env as Env
 import Bin.Run as Run
 import Control.Monad.Reader as Reader
 import Data.Array as Array
@@ -71,11 +71,18 @@ main = Aff.launchAff_ do
 
       AppM.runAppM { octokit, manifestDir: dir, gitBranch: branch, tmpDir: tmp } do
         Console.log "Prefetching new releases..."
+
         Run.prefetchPurs >>= \updates ->
           if Map.isEmpty updates then
             Console.log "No new purs releases."
           else
             Console.log $ "New purs releases: " <> Utils.printJson Nix.Manifest.pursManifestCodec updates
+
+        Run.prefetchSpago >>= \updates ->
+          if Map.isEmpty updates then
+            Console.log "No new spago releases."
+          else
+            Console.log $ "New spago releases: " <> Utils.printJson Nix.Manifest.spagoManifestCodec updates
 
     -- TODO: Also update the named manifest file.
     Update dir commit -> do
@@ -93,6 +100,7 @@ main = Aff.launchAff_ do
 
       AppM.runAppM { octokit, manifestDir: dir, gitBranch: branch, tmpDir: tmp } do
         pursUpdates <- Run.prefetchPurs
+        spagoUpdates <- Run.prefetchSpago
 
         case commit of
           NoCommit -> do
@@ -102,6 +110,12 @@ main = Aff.launchAff_ do
             else do
               Console.log $ "New purs releases, writing to disk..."
               Run.writePursUpdates pursUpdates
+
+            if Map.isEmpty spagoUpdates then
+              Console.log "No new spago releases."
+            else do
+              Console.log $ "New spago releases, writing to disk..."
+              Run.writeSpagoUpdates spagoUpdates
 
           DoCommit -> do
             Console.log "Cloning purescript-nix, opening a branch, committing, and opening a pull request..."
@@ -117,6 +131,7 @@ main = Aff.launchAff_ do
                 void $ AppM.runGitM Git.gitCloneUpstream
 
                 Run.writePursUpdates pursUpdates
+                Run.writeSpagoUpdates spagoUpdates
 
                 -- TODO: Commit message could be a lot more informative.
                 commitResult <- AppM.runGitM do
@@ -132,9 +147,11 @@ main = Aff.launchAff_ do
                   Right _ -> pure unit
 
                 let
-                  versions = Map.keys pursUpdates
+                  pursVersions = Map.keys pursUpdates
+                  spagoVersions = Map.keys spagoUpdates
                   title = "Update " <> String.joinWith " "
-                    [ guard (Set.size versions > 0) $ "purs (" <> String.joinWith ", " (Set.toUnfoldable (Set.map SemVer.print versions)) <> ")"
+                    [ guard (Set.size pursVersions > 0) $ "purs (" <> String.joinWith ", " (Set.toUnfoldable (Set.map SemVer.print pursVersions)) <> ")"
+                    , guard (Set.size spagoVersions > 0) $ "spago (" <> String.joinWith ", " (Set.toUnfoldable (Set.map SemVer.print spagoVersions)) <> ")"
                     ]
 
                   -- TODO: What would be the most informative thing to do here?

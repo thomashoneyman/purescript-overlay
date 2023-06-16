@@ -1,4 +1,234 @@
 {
+  "0.13.0": {
+    "x86_64-linux": {
+      "hash": "sha256-N9NTdOLOG5WnGMufMcOvegSgrvSuDdWS26ba1kf2NzQ=",
+      "url": "https://github.com/purescript/spago/releases/download/0.13.0/linux.tar.gz"
+    },
+    "x86_64-darwin": {
+      "hash": "sha256-z451b4pjustd7lpSprjn+AOpY4neKeBPAJxABtJaxKI=",
+      "url": "https://github.com/purescript/spago/releases/download/0.13.0/osx.tar.gz"
+    }
+  },
+  "0.13.1": {
+    "x86_64-linux": {
+      "hash": "sha256-hcJdjFv9bKRSmOpmxQurBQIIhcrwuSCsXJUk0jyYTGg=",
+      "url": "https://github.com/purescript/spago/releases/download/0.13.1/linux.tar.gz"
+    },
+    "x86_64-darwin": {
+      "hash": "sha256-YR9z2QGW4bl84GFmhTiaLUppizQHcvglNjXGBf7GExo=",
+      "url": "https://github.com/purescript/spago/releases/download/0.13.1/osx.tar.gz"
+    }
+  },
+  "0.14.0": {
+    "x86_64-linux": {
+      "hash": "sha256-e42IRdmGkyPVKTgehKFNdQFEvrq5QrXL4qXMCI62Fy8=",
+      "url": "https://github.com/purescript/spago/releases/download/0.14.0/linux.tar.gz"
+    },
+    "x86_64-darwin": {
+      "hash": "sha256-VFEjgx36NKEudOsytbmQBAqch849HqmbjuX0hB1XrZs=",
+      "url": "https://github.com/purescript/spago/releases/download/0.14.0/osx.tar.gz"
+    }
+  },
+  "0.15.2": {
+    "x86_64-linux": {
+      "hash": "sha256-3SSp7Kv0jraWh63lLDP3HDl62NJ1DeLb4GZ4yN5hi00=",
+      "url": "https://github.com/purescript/spago/releases/download/0.15.2/linux.tar.gz"
+    },
+    "x86_64-darwin": {
+      "hash": "sha256-NWexbLpj+jocu3rwY3l1zuykAF1ivHEzpoiiU5ing9c=",
+      "url": "https://github.com/purescript/spago/releases/download/0.15.2/osx.tar.gz"
+    }
+  },
+  "0.15.3": {
+    "x86_64-linux": {
+      "hash": "sha256-00PPIBjE9sqZV4LF0gXT9eRmhlMuDlqcgwjMFIidCyc=",
+      "url": "https://github.com/purescript/spago/releases/download/0.15.3/linux.tar.gz"
+    },
+    "x86_64-darwin": {
+      "hash": "sha256-xZitfPtHmVYxF4/CMlSSCr9kpz8/bV81JmtH7Kty7Wk=",
+      "url": "https://github.com/purescript/spago/releases/download/0.15.3/osx.tar.gz"
+    }
+  },
+  "0.16.0": {
+    "x86_64-linux": {
+      "hash": "sha256-CACKqDVyGSRgsE//+iTyxgwG/ZNpRBePWyzwS/Hje8g=",
+      "url": "https://github.com/purescript/spago/releases/download/0.16.0/linux.tar.gz"
+    },
+    "x86_64-darwin": {
+      "hash": "sha256-51AKgu3amoAWEMj6sUbrRy8cIGfXmgW4UL9p6iqM/kY=",
+      "url": "https://github.com/purescript/spago/releases/download/0.16.0/osx.tar.gz"
+    }
+  },
+  "0.17.0": {
+    "x86_64-linux": {
+      "hash": "sha256-aoLodUmc75ebijiT8T62/jOpOIKmFdffycsb5U9M4PU=",
+      "url": "https://github.com/purescript/spago/releases/download/0.17.0/linux.tar.gz"
+    },
+    "x86_64-darwin": {
+      "hash": "sha256-Z7zQSpMEhaTxpDJcF4gg3nUNsq/xad/gaUcJ+m8hP1Y=",
+      "url": "https://github.com/purescript/spago/releases/download/0.17.0/osx.tar.gz"
+    }
+  },
+  "0.18.0": {
+    "x86_64-linux": {
+      "hash": "sha256-AzrvBu6ItoD47oKQAxHKuwG4Xx5Wv90bbRLvC5lUpQ0=",
+      "url": "https://github.com/purescript/spago/releases/download/0.18.0/linux-latest.tar.gz"
+    },
+    "x86_64-darwin": {
+      "hash": "sha256-yKx5ysFT2LCaaGdLq4aByJK+QuWwIwe9D98L0ZIh3YA=",
+      "url": "https://github.com/purescript/spago/releases/download/0.18.0/macOS-latest.tar.gz"
+    }
+  },
+  "0.18.1": {
+    "x86_64-linux": {
+      "hash": "sha256-hyFk3OcAI9NBWqvKO1u8sWc9pfQXfy+D5GdcOqy0iYE=",
+      "url": "https://github.com/purescript/spago/releases/download/0.18.1/Linux.tar.gz"
+    },
+    "x86_64-darwin": {
+      "hash": "sha256-0Iua12f1vSt8uRvuWAMKj+zpT+YVrCw7VJSYTwHl+i8=",
+      "url": "https://github.com/purescript/spago/releases/download/0.18.1/macOS.tar.gz"
+    }
+  },
+  "0.19.0": {
+    "x86_64-linux": {
+      "hash": "sha256-LpTdb1crnJPG9CAIP0G3I2nJ3r5wU7YZaRm+90ky95Y=",
+      "url": "https://github.com/purescript/spago/releases/download/0.19.0/Linux.tar.gz"
+    },
+    "x86_64-darwin": {
+      "hash": "sha256-kp4IcbrLA9nn9/1rwSzZQfsdJx8lIPtFILsP9YmP8oQ=",
+      "url": "https://github.com/purescript/spago/releases/download/0.19.0/macOS.tar.gz"
+    }
+  },
+  "0.19.1": {
+    "x86_64-linux": {
+      "hash": "sha256-JMjVFsW/6RooQI7DXWaZqdDgJOrdthukMigz4VSdIsQ=",
+      "url": "https://github.com/purescript/spago/releases/download/0.19.1/Linux.tar.gz"
+    },
+    "x86_64-darwin": {
+      "hash": "sha256-GkXsCu6kxiSaGB4iGcE8aK1D9PR78xOGsXX4dRId//E=",
+      "url": "https://github.com/purescript/spago/releases/download/0.19.1/macOS.tar.gz"
+    }
+  },
+  "0.19.2": {
+    "x86_64-linux": {
+      "hash": "sha256-IHJ/HwwuNqvr07nNsyhv5UpO8Qo7Vti4brdhogQDGHE=",
+      "url": "https://github.com/purescript/spago/releases/download/0.19.2/Linux.tar.gz"
+    },
+    "x86_64-darwin": {
+      "hash": "sha256-dznLsESYEDhnxfF/qR0YJ2O1WOZNx8f7TMqjK5fRWF4=",
+      "url": "https://github.com/purescript/spago/releases/download/0.19.2/macOS.tar.gz"
+    }
+  },
+  "0.20.0": {
+    "x86_64-linux": {
+      "hash": "sha256-cwAuNcHB1Geeb8woPpwq1SwCF48oAHyzSBup1m1D+Rw=",
+      "url": "https://github.com/purescript/spago/releases/download/0.20.0/Linux.tar.gz"
+    },
+    "x86_64-darwin": {
+      "hash": "sha256-/HS6U/4X1NSfr3XOXTTidyPquVh+ph2R9W9bXCy2sdM=",
+      "url": "https://github.com/purescript/spago/releases/download/0.20.0/macOS.tar.gz"
+    }
+  },
+  "0.20.1": {
+    "x86_64-linux": {
+      "hash": "sha256-A4onH1hrVxXV4fPCyGp3U2odZd2FyVLhGMNBMxg4IiE=",
+      "url": "https://github.com/purescript/spago/releases/download/0.20.1/Linux.tar.gz"
+    },
+    "x86_64-darwin": {
+      "hash": "sha256-tmTqe5LP8OYCI5PirAmmUZ02+AIUDy9Rn5XDQNL6h2w=",
+      "url": "https://github.com/purescript/spago/releases/download/0.20.1/macOS.tar.gz"
+    }
+  },
+  "0.20.2": {
+    "x86_64-linux": {
+      "hash": "sha256-ybuNcFeaclyRYz5z59qhB5Umz2sLYQduu87E58QLnTQ=",
+      "url": "https://github.com/purescript/spago/releases/download/0.20.2/Linux.tar.gz"
+    },
+    "x86_64-darwin": {
+      "hash": "sha256-ecv2sDLT7tY9itkagvFDQxtv7j7eee4h+HDFzpiCrWo=",
+      "url": "https://github.com/purescript/spago/releases/download/0.20.2/macOS.tar.gz"
+    }
+  },
+  "0.20.3": {
+    "x86_64-linux": {
+      "hash": "sha256-gf28L6AXBYeOyankM9/AJQGwRmr8opG6ycE3zO09Rrw=",
+      "url": "https://github.com/purescript/spago/releases/download/0.20.3/Linux.tar.gz"
+    },
+    "x86_64-darwin": {
+      "hash": "sha256-PvzEBbzo3BvQRHV/4VAX/lIuJFQ/7wz0dobiIjPciH8=",
+      "url": "https://github.com/purescript/spago/releases/download/0.20.3/macOS.tar.gz"
+    }
+  },
+  "0.20.4": {
+    "x86_64-linux": {
+      "hash": "sha256-Aq3bUXomSodKyeag4FgM6HQiEG3qqWR5fWcow6hUU2M=",
+      "url": "https://github.com/purescript/spago/releases/download/0.20.4/Linux.tar.gz"
+    },
+    "x86_64-darwin": {
+      "hash": "sha256-uzoknbKeTnE52Cg9iVX8oxU4ordCpmevWf+JObvO9XA=",
+      "url": "https://github.com/purescript/spago/releases/download/0.20.4/macOS.tar.gz"
+    }
+  },
+  "0.20.5": {
+    "x86_64-linux": {
+      "hash": "sha256-wIuZJIxas5DGlNduVp3WLqoTO4+yvcdVcWC8sbEQLMw=",
+      "url": "https://github.com/purescript/spago/releases/download/0.20.5/Linux.tar.gz"
+    },
+    "x86_64-darwin": {
+      "hash": "sha256-wiq6ljlj3YNl6cAI1Elz/tZP4ma4VIM8jN/JZ+2y5Hk=",
+      "url": "https://github.com/purescript/spago/releases/download/0.20.5/macOS.tar.gz"
+    }
+  },
+  "0.20.6": {
+    "x86_64-linux": {
+      "hash": "sha256-6i8QLfuHbLajikRjlZT2I4OoB8YSL9mVlsXf/2g5xjo=",
+      "url": "https://github.com/purescript/spago/releases/download/0.20.6/Linux.tar.gz"
+    },
+    "x86_64-darwin": {
+      "hash": "sha256-biDh/bKGHunDVZnLOwnwGtt+m3p5DxRgUxFs7bHSp/Q=",
+      "url": "https://github.com/purescript/spago/releases/download/0.20.6/macOS.tar.gz"
+    }
+  },
+  "0.20.7": {
+    "x86_64-linux": {
+      "hash": "sha256-anbUnX7g1X34Ut+x6yQ8S/U89lT2RuziNGA8F3IrAS4=",
+      "url": "https://github.com/purescript/spago/releases/download/0.20.7/Linux.tar.gz"
+    },
+    "x86_64-darwin": {
+      "hash": "sha256-ivZ07sSKf9Dt4IJcqsB4Xm0TbP3gwAP9Vpo+PMl/v2g=",
+      "url": "https://github.com/purescript/spago/releases/download/0.20.7/macOS.tar.gz"
+    }
+  },
+  "0.20.8": {
+    "x86_64-linux": {
+      "hash": "sha256-GW6gT07nzdvRJxRvZpMlT8Szl2JA15BGteP9aDwhH8Y=",
+      "url": "https://github.com/purescript/spago/releases/download/0.20.8/Linux.tar.gz"
+    },
+    "x86_64-darwin": {
+      "hash": "sha256-BzDSxVYWpuDS0xTNzxf1vmReevrVBPEmH2A4dYTrmoE=",
+      "url": "https://github.com/purescript/spago/releases/download/0.20.8/macOS.tar.gz"
+    }
+  },
+  "0.20.9": {
+    "x86_64-linux": {
+      "hash": "sha256-FQBjake5UcediFcg0Anq7tmbGQuXn6NhbeSVTkOmMDU=",
+      "url": "https://github.com/purescript/spago/releases/download/0.20.9/Linux.tar.gz"
+    },
+    "x86_64-darwin": {
+      "hash": "sha256-Cf8mBu4BMhRgHNLU/sOuLPCUHtoPAg7VLcYOkdsl0bA=",
+      "url": "https://github.com/purescript/spago/releases/download/0.20.9/macOS.tar.gz"
+    }
+  },
+  "0.21.0": {
+    "x86_64-linux": {
+      "hash": "sha256-iYAz9Kml9pLiOFw3crWfpYGrPmbUdcvSWMXyTYD/jM4=",
+      "url": "https://github.com/purescript/spago/releases/download/0.21.0/Linux.tar.gz"
+    },
+    "x86_64-darwin": {
+      "hash": "sha256-pX1Io0GReJnfNtQ0UBpBSznXYtdsWgrAPizMd16bgKU=",
+      "url": "https://github.com/purescript/spago/releases/download/0.21.0/macOS.tar.gz"
+    }
+  },
   "0.93.5": {
     "rev": "7721861d059ffc903da686eca99e74e5a268e1b9"
   }
