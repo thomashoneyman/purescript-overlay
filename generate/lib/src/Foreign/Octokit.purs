@@ -1,31 +1,32 @@
 -- | Low-level bindings to Octokit and its request functions.
 module Lib.Foreign.Octokit
   ( Address
-  , GitHubToken(..)
   , GitHubAPIError
   , GitHubError(..)
   , GitHubRoute
+  , GitHubToken(..)
   , JSArgs
   , Octokit
+  , PullRequest
   , RateLimit
   , Release
   , ReleaseAsset
-  , PullRequest
   , Request
-  , newOctokit
-  , newAuthOctokit
-  , requestListReleases
-  , requestGetReleaseByTagName
-  , requestGetRefCommitSha
-  , requestGetCommitDate
-  , requestCreatePullRequest
-  , requestRateLimit
-  , requestGetPullRequests
-  , request
-  , printGitHubError
   , githubErrorCodec
-  , releaseCodec
+  , newAuthOctokit
+  , newOctokit
+  , printGitHubError
   , releaseAssetCodec
+  , releaseCodec
+  , request
+  , requestCreatePullRequest
+  , requestGetCommitDate
+  , requestGetLatestRelease
+  , requestGetPullRequests
+  , requestGetRefCommitSha
+  , requestGetReleaseByTagName
+  , requestListReleases
+  , requestRateLimit
   ) where
 
 import Prelude
@@ -65,6 +66,7 @@ import Effect.Uncurried (EffectFn1, EffectFn6, runEffectFn1, runEffectFn6)
 import Foreign.Object (Object)
 import Foreign.Object as Object
 import Registry.Internal.Codec as Internal.Codec
+import Registry.Internal.Codec as Registry.Codec
 import Type.Proxy (Proxy(..))
 import Unsafe.Coerce (unsafeCoerce)
 
@@ -96,6 +98,16 @@ requestListReleases address =
   , codec: CA.array releaseCodec
   }
 
+-- | Get the latest release for the given repository
+requestGetLatestRelease :: Address -> Request Release
+requestGetLatestRelease address =
+  { route: GitHubRoute GET [ "repos", address.owner, address.repo, "releases", "latest" ] Map.empty
+  , headers: Object.empty
+  , args: noArgs
+  , paginate: false
+  , codec: releaseCodec
+  }
+
 -- | Get a specific release associated with a tag name
 requestGetReleaseByTagName :: Address -> String -> Request Release
 requestGetReleaseByTagName address tag =
@@ -113,28 +125,36 @@ type Release =
   , draft :: Boolean
   , prerelease :: Boolean
   , assets :: Array ReleaseAsset
+  , createdAt :: DateTime
+  , publishedAt :: DateTime
   }
 
 releaseCodec :: JsonCodec Release
 releaseCodec = Profunctor.dimap toJsonRep fromJsonRep $ CA.Record.object "Release"
   { html_url: CA.string
   , tag_name: CA.string
+  , created_at: Registry.Codec.iso8601DateTime
+  , published_at: Registry.Codec.iso8601DateTime
   , draft: CA.boolean
   , prerelease: CA.boolean
   , assets: CA.array releaseAssetCodec
   }
   where
-  toJsonRep { url, tag, draft, prerelease, assets } =
+  toJsonRep { url, tag, draft, prerelease, assets, createdAt, publishedAt } =
     { html_url: url
     , tag_name: tag
+    , created_at: createdAt
+    , published_at: publishedAt
     , draft
     , prerelease
     , assets
     }
 
-  fromJsonRep { html_url, tag_name, draft, prerelease, assets } =
+  fromJsonRep { html_url, tag_name, draft, prerelease, assets, created_at, published_at } =
     { url: html_url
     , tag: tag_name
+    , createdAt: created_at
+    , publishedAt: published_at
     , draft
     , prerelease
     , assets

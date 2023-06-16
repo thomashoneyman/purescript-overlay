@@ -13,3 +13,4 @@ package:
     main: Test.Lib
     dependencies:
       - spec
+      - debug
