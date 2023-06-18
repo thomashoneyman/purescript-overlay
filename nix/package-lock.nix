@@ -37,7 +37,6 @@
   # libraries like npmlock2nix.
   fetchDependencyTarball = name: dependency:
     fetchurl {
-      version = dependency.version or (throw "Dependency ${name} does not have a 'version' key");
       url = dependency.resolved or (throw "Dependency ${name} does not have a 'resolved' key");
       hash = dependency.integrity or (throw "Dependency ${name} does not have an 'integrity' key");
     };
