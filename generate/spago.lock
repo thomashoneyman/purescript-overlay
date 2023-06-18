@@ -6,6 +6,7 @@ workspace:
         - aff
         - argparse-basic
         - console
+        - debug
         - dotenv
         - effect
         - lib

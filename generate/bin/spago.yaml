@@ -8,3 +8,4 @@ package:
     - effect
     - lib
     - node-process
+    - debug

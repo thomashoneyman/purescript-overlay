@@ -149,10 +149,12 @@ main = Aff.launchAff_ do
                 let
                   pursVersions = Map.keys pursUpdates
                   spagoVersions = Map.keys spagoUpdates
-                  title = "Update " <> String.joinWith " "
-                    [ guard (Set.size pursVersions > 0) $ "purs (" <> String.joinWith ", " (Set.toUnfoldable (Set.map SemVer.print pursVersions)) <> ")"
-                    , guard (Set.size spagoVersions > 0) $ "spago (" <> String.joinWith ", " (Set.toUnfoldable (Set.map SemVer.print spagoVersions)) <> ")"
-                    ]
+                  title = "Update " <> String.trim
+                    ( String.joinWith " "
+                        [ guard (Set.size pursVersions > 0) $ "purs (" <> String.joinWith ", " (Set.toUnfoldable (Set.map SemVer.print pursVersions)) <> ")"
+                        , guard (Set.size spagoVersions > 0) $ "spago (" <> String.joinWith ", " (Set.toUnfoldable (Set.map SemVer.print spagoVersions)) <> ")"
+                        ]
+                    )
 
                   -- TODO: What would be the most informative thing to do here?
                   body = "Update manifest files to new tooling versions."

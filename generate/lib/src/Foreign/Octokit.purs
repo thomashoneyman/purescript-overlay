@@ -340,6 +340,7 @@ request octokit { route, headers, args, paginate, codec } = do
     statusCode <- atKey "status" CA.int object
     message <- case statusCode of
       304 -> pure ""
+      500 -> pure "Internal server error"
       _ -> atKey "response" CA.jobject object >>= atKey "data" CA.jobject >>= atKey "message" CA.string
     pure { statusCode, message }
 
