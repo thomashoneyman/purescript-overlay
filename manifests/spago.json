@@ -139,6 +139,16 @@
       "url": "https://github.com/purescript/spago/releases/download/0.20.9/macOS.tar.gz"
     }
   },
+  "0.21.0": {
+    "x86_64-linux": {
+      "hash": "sha256-iYAz9Kml9pLiOFw3crWfpYGrPmbUdcvSWMXyTYD/jM4=",
+      "url": "https://github.com/purescript/spago/releases/download/0.21.0/Linux.tar.gz"
+    },
+    "x86_64-darwin": {
+      "hash": "sha256-pX1Io0GReJnfNtQ0UBpBSznXYtdsWgrAPizMd16bgKU=",
+      "url": "https://github.com/purescript/spago/releases/download/0.21.0/macOS.tar.gz"
+    }
+  },
   "0.93.5": {
     "rev": "7721861d059ffc903da686eca99e74e5a268e1b9"
   }
