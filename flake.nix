@@ -61,6 +61,7 @@
           pkgs.runCommand "test-${name}-${version}" {} ''
             touch $out
             set -e
+            set -x
 
             # Some package versions are not supported on some systems, ie. the
             # "stable" version of Spago is not supported on aarch64.
@@ -96,6 +97,7 @@
           pkgs.runCommand "test-generate" {} ''
             mkdir -p $out/bin
             set -e
+            set -x
             cp ${bin}/bin/${bin.name} $out/bin/test-generate
             ${bin}/bin/${bin.name} verify ${manifests}
           '';

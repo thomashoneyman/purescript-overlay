@@ -2,6 +2,7 @@
   lib,
   stdenv,
   fetchurl,
+  nodejs,
 }: {
   version,
   url,
@@ -12,6 +13,8 @@ stdenv.mkDerivation rec {
   inherit version;
 
   src = fetchurl {inherit url hash;};
+
+  nativeBuildInputs = [nodejs];
 
   buildPhase = ''
     tar xf $src
