@@ -69,6 +69,14 @@ pursTidyManifestCodec = do
   let decodeKey = Either.hush <<< SemVer.parse
   Registry.Codec.strMap "PursManifest" decodeKey encodeKey fetchUrlCodec
 
+type PursBackendEsManifest = Map SemVer FetchUrl
+
+pursBackendEsManifestCodec :: JsonCodec PursBackendEsManifest
+pursBackendEsManifestCodec = do
+  let encodeKey = SemVer.print
+  let decodeKey = Either.hush <<< SemVer.parse
+  Registry.Codec.strMap "PursManifest" decodeKey encodeKey fetchUrlCodec
+
 -- | A manifest entry for a package that can be fetched from git
 type GitRev = { rev :: String }
 

@@ -4,6 +4,7 @@ import Prelude
 
 import Bin.AppM (AppM)
 import Bin.AppM as AppM
+import Control.Alt ((<|>))
 import Control.Alternative (guard)
 import Data.Array as Array
 import Data.Either (Either(..), fromRight')
@@ -20,13 +21,14 @@ import Data.String as String
 import Data.Traversable (foldMap, for)
 import Data.TraversableWithIndex (forWithIndex)
 import Data.Tuple (Tuple(..))
+import Debug (traceM)
 import Effect.Class (liftEffect)
 import Effect.Class.Console as Console
 import Lib.Foreign.Octokit (Release, ReleaseAsset)
 import Lib.Foreign.Octokit as Octokit
 import Lib.Git as Git
 import Lib.GitHub as GitHub
-import Lib.Nix.Manifest (FetchUrl, NamedManifest, PursManifest, SpagoManifest, PursTidyManifest)
+import Lib.Nix.Manifest (FetchUrl, NamedManifest, PursManifest, PursTidyManifest, SpagoManifest, PursBackendEsManifest)
 import Lib.Nix.Prefetch as Nix.Prefetch
 import Lib.Nix.System (NixSystem(..))
 import Lib.Nix.System as NixSystem
@@ -48,7 +50,19 @@ verifySpago :: AppM Unit
 verifySpago = do
   manifest <- AppM.readSpagoManifest
   let entries = Map.size manifest
-  Console.log $ "Successfully parsed purs.json with " <> Int.toStringAs Int.decimal entries <> " entries."
+  Console.log $ "Successfully parsed spago.json with " <> Int.toStringAs Int.decimal entries <> " entries."
+
+verifyPursTidy :: AppM Unit
+verifyPursTidy = do
+  manifest <- AppM.readPursTidyManifest
+  let entries = Map.size manifest
+  Console.log $ "Successfully parsed purs-tidy.json with " <> Int.toStringAs Int.decimal entries <> " entries."
+
+verifyPursBackendEs :: AppM Unit
+verifyPursBackendEs = do
+  manifest <- AppM.readPursBackendEsManifest
+  let entries = Map.size manifest
+  Console.log $ "Successfully parsed purs-backend-es.json with " <> Int.toStringAs Int.decimal entries <> " entries."
 
 prefetchPurs :: AppM PursManifest
 prefetchPurs = do
@@ -396,6 +410,96 @@ writePursTidyUpdates updates = do
 
         insertPackage :: ToolChannel -> SemVer -> NamedManifest -> NamedManifest
         insertPackage channel version = Map.insert channel (ToolPackage { tool: PursTidy, version })
+
+        updateUnstable :: NamedManifest -> NamedManifest
+        updateUnstable prev = case maxUnstable of
+          Just version | version > unstable -> insertPackage unstableChannel version prev
+          _ -> prev
+
+        updateStable :: NamedManifest -> NamedManifest
+        updateStable prev = case maxStable of
+          Just version | version > stable -> insertPackage stableChannel version prev
+          _ -> prev
+
+      pure (updateStable (updateUnstable named))
+
+  case named' of
+    Nothing -> Console.log "Failed to update named manifest" *> liftEffect (Process.exit 1)
+    Just result -> AppM.writeNamedManifest result
+
+prefetchPursBackendEs :: AppM PursBackendEsManifest
+prefetchPursBackendEs = do
+  manifest <- AppM.readPursBackendEsManifest
+
+  let
+    existing :: Set SemVer
+    existing = Map.keys manifest
+
+  rawReleases <- AppM.runGitHubM (GitHub.listReleases PursBackendEs) >>= case _ of
+    Left error -> do
+      Console.log $ "Failed to fetch releases for " <> Tool.print PursBackendEs Tool.Executable
+      Console.log $ Octokit.printGitHubError error
+      liftEffect $ Process.exit 1
+    Right releases -> pure releases
+
+  Console.log $ "Retrieved " <> show (Array.length rawReleases) <> " releases for " <> Tool.print PursBackendEs Tool.Executable
+
+  let
+    parsePursBackendEsReleases :: Array Release -> Set SemVer
+    parsePursBackendEsReleases = Set.fromFoldable <<< Array.mapMaybe \release -> Either.hush do
+      version <- SemVer.parse $ fromMaybe release.tag do
+        String.stripPrefix (String.Pattern "v") release.tag
+          <|> String.stripPrefix (String.Pattern "purs-backend-es-v") release.tag
+      pure version
+
+    supportedReleases :: Set SemVer
+    supportedReleases = parsePursBackendEsReleases rawReleases
+
+    -- We only want to include releases that aren't already present in the
+    -- manifest file.
+    newReleases :: Set SemVer
+    newReleases = Set.filter (not <<< flip Set.member existing) supportedReleases
+
+  Console.log $ "Found " <> show (Set.size newReleases) <> " new releases for " <> Tool.print PursBackendEs Tool.Executable
+
+  hashedReleases :: Array (Tuple SemVer FetchUrl) <- for (Set.toUnfoldable newReleases) \version -> do
+    Console.log $ "Processing release " <> SemVer.print version
+    Console.log $ "Fetching NPM tarball associated with version " <> SemVer.print version
+    let url = "https://registry.npmjs.org/purs-backend-es/-/purs-backend-es-" <> SemVer.print version <> ".tgz"
+    Nix.Prefetch.nixPrefetchTarball url >>= case _ of
+      Left error -> do
+        Console.log $ "Failed to hash NPM tarball at url " <> url <> ": " <> error
+        liftEffect $ Process.exit 1
+      Right hash -> pure $ Tuple version { url, hash }
+
+  pure $ Map.fromFoldable hashedReleases
+
+writePursBackendEsUpdates :: PursBackendEsManifest -> AppM Unit
+writePursBackendEsUpdates updates = do
+  manifest <- AppM.readPursBackendEsManifest
+  let newManifest = Map.union manifest updates
+  AppM.writePursBackendEsManifest newManifest
+
+  named <- AppM.readNamedManifest
+
+  let
+    named' :: Maybe NamedManifest
+    named' = do
+      let unstableChannel = ToolChannel { tool: PursBackendEs, channel: Unstable }
+      let stableChannel = ToolChannel { tool: PursBackendEs, channel: Stable }
+
+      ToolPackage { version: unstable } <- Map.lookup unstableChannel named
+      ToolPackage { version: stable } <- Map.lookup stableChannel named
+
+      let
+        allVersions = Map.keys newManifest
+        allStableVersions = allVersions
+
+        maxUnstable = Set.findMax allVersions
+        maxStable = Set.findMax allStableVersions
+
+        insertPackage :: ToolChannel -> SemVer -> NamedManifest -> NamedManifest
+        insertPackage channel version = Map.insert channel (ToolPackage { tool: PursBackendEs, version })
 
         updateUnstable :: NamedManifest -> NamedManifest
         updateUnstable prev = case maxUnstable of

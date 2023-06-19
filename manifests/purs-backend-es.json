@@ -1,0 +1,10 @@
+{
+  "1.3.0": {
+    "hash": "sha256-qE0LnuNSdJRsF07fhBAMY7OUGBNj6/hSPzDov7Nx4PY=",
+    "url": "https://registry.npmjs.org/purs-backend-es/-/purs-backend-es-1.3.0.tgz"
+  },
+  "1.3.1": {
+    "hash": "sha256-RoNk9/t9gijNGuPlm+9Synkzfw9YV4Fafv/WXhHhW2s=",
+    "url": "https://registry.npmjs.org/purs-backend-es/-/purs-backend-es-1.3.1.tgz"
+  }
+}

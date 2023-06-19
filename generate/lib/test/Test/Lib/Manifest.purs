@@ -9,7 +9,7 @@ import Data.Codec.Argonaut as CA
 import Data.Either (Either(..))
 import Data.String as String
 import Data.Traversable (for)
-import Lib.Nix.Manifest (NamedManifest, PursManifest, PursTidyManifest, SpagoManifest, namedManifestCodec, pursManifestCodec, pursTidyManifestCodec, spagoManifestCodec)
+import Lib.Nix.Manifest (NamedManifest, PursManifest, PursTidyManifest, SpagoManifest, PursBackendEsManifest, namedManifestCodec, pursBackendEsManifestCodec, pursManifestCodec, pursTidyManifestCodec, spagoManifestCodec)
 import Node.Encoding (Encoding(..))
 import Node.FS.Aff as FS.Aff
 import Node.Path as Path
@@ -32,6 +32,7 @@ data NixManifest
   = SpagoManifest SpagoManifest
   | PursManifest PursManifest
   | PursTidyManifest PursTidyManifest
+  | PursBackendEsManifest PursBackendEsManifest
   | NamedManifest NamedManifest
 
 derive instance Eq NixManifest
@@ -43,11 +44,13 @@ nixManifestCodec = CA.codec' decode encode
     SpagoManifest manifest -> CA.encode spagoManifestCodec manifest
     PursManifest manifest -> CA.encode pursManifestCodec manifest
     PursTidyManifest manifest -> CA.encode pursTidyManifestCodec manifest
+    PursBackendEsManifest manifest -> CA.encode pursBackendEsManifestCodec manifest
     NamedManifest manifest -> CA.encode namedManifestCodec manifest
 
   decode json =
     map SpagoManifest (CA.decode spagoManifestCodec json)
       <|> map PursManifest (CA.decode pursManifestCodec json)
       <|> map PursTidyManifest (CA.decode pursTidyManifestCodec json)
+      <|> map PursBackendEsManifest (CA.decode pursBackendEsManifestCodec json)
       <|> map NamedManifest (CA.decode namedManifestCodec json)
-      <|> Left (CA.TypeMismatch "Expected a SpagoManifest, PursManifest, PursTidyManifest, or NamedManifest")
+      <|> Left (CA.TypeMismatch "Expected a SpagoManifest, PursManifest, PursTidyManifest, PursBackendEsManifest, or NamedManifest")

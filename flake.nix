@@ -40,13 +40,18 @@
       purs-tidy = pkgs.purs-tidy;
       purs-tidy-unstable = pkgs.purs-tidy-unstable;
       purs-tidy-bin = pkgs.purs-tidy-bin;
+
+      purs-backend-es = pkgs.purs-backend-es;
+      purs-backend-es-unstable = pkgs.purs-backend-es-unstable;
+      purs-backend-es-bin = pkgs.purs-backend-es-bin;
     in
       {
-        inherit purs purs-unstable spago spago-unstable purs-tidy purs-tidy-unstable;
+        inherit purs purs-unstable spago spago-unstable purs-tidy purs-tidy-unstable purs-backend-es purs-backend-es-unstable;
       }
       // purs-bin
       // spago-bin
-      // purs-tidy-bin);
+      // purs-tidy-bin
+      // purs-backend-es-bin);
 
     apps = forAllSystems (system: let
       pkgs = nixpkgsFor.${system};
@@ -93,6 +98,9 @@
 
             # purs-tidy includes a 'v' prefix in its output beginning with version 0.9.0
             if [ ${builtins.toString (name == "purs-tidy" && !(pkgs.lib.versionOlder version "0.9.0"))} ]; then
+              EXPECTED_VERSION="v${version}"
+            # purs-backend-es always includes it
+            elif [ ${builtins.toString (name == "purs-backend-es")} ]; then
               EXPECTED_VERSION="v${version}"
             else
               EXPECTED_VERSION="${version}"
