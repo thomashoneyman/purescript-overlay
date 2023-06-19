@@ -39,17 +39,18 @@ namedManifestCodec = do
   let decodeKey = Either.hush <<< Tool.parseToolChannel
   Registry.Codec.strMap "NamedManifest" decodeKey encodeKey Tool.toolPackageCodec
 
-type SpagoManifest = Map SemVer (Either GitRev (Map NixSystem FetchUrl))
+type SpagoManifest = Map SemVer (Either FetchUrl (Map NixSystem FetchUrl))
 
 spagoManifestCodec :: JsonCodec SpagoManifest
 spagoManifestCodec = SemVer.semverMapCodec (CA.codec' decode encode)
   where
   decode json =
-    map Left (CA.decode gitRevCodec json)
+    map Left (CA.decode fetchUrlCodec json)
       <|> map Right (CA.decode (Nix.System.systemMapCodec fetchUrlCodec) json)
+      <|> Left (CA.TypeMismatch "Expected a FetchUrl or a SystemMap FetchUrl")
 
   encode = case _ of
-    Left gitRev -> CA.encode gitRevCodec gitRev
+    Left gitRev -> CA.encode fetchUrlCodec gitRev
     Right fetchUrl -> CA.encode (Nix.System.systemMapCodec fetchUrlCodec) fetchUrl
 
 type PursManifest = Map SemVer (Map NixSystem FetchUrl)

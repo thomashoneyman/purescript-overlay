@@ -36,13 +36,11 @@
     (
       acc: version: let
         name = "spago-${builtins.replaceStrings ["."] ["_"] version}";
-        entry = entries.${version}.${system} or entries.${version}.rev or {};
+        legacyEntry = entries.${version}.${system} or {};
       in
-        if builtins.typeOf entry == "string"
-        then acc // {${name} = mkSpagoDerivation ({inherit version;} // {rev = entry;});}
-        else if entry != {}
-        then acc // {${name} = mkLegacySpagoDerivation ({inherit version;} // entry);}
-        else acc
+        if legacyEntry != {}
+        then acc // {${name} = mkLegacySpagoDerivation ({inherit version;} // legacyEntry);}
+        else acc // {${name} = mkSpagoDerivation ({inherit version;} // entries.${version});}
     ) {}
     (builtins.attrNames entries);
 

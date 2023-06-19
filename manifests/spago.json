@@ -150,6 +150,7 @@
     }
   },
   "0.93.5": {
-    "rev": "7721861d059ffc903da686eca99e74e5a268e1b9"
+    "hash": "sha256-Wyma1OzF6I80JPhso581qeNsExxpp7qUO4Mk/nuVJ4Y=",
+    "url": "https://registry.npmjs.org/spago/-/spago-0.93.5.tgz"
   }
 }

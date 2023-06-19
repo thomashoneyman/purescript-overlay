@@ -108,7 +108,12 @@
     in {
       default = pkgs.mkShell {
         name = "purescript-nix";
-        buildInputs = [self.packages.${system}.spago-unstable self.packages.${system}.purs-unstable];
+        buildInputs = [
+          self.packages.${system}.spago-unstable
+          self.packages.${system}.purs-unstable
+          pkgs.prefetch-npm-deps
+          pkgs.nix-prefetch-git
+        ];
       };
     });
   };
