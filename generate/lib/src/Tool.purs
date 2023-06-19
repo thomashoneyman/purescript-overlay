@@ -169,24 +169,40 @@ printToolPackage (ToolPackage { tool, version: SemVer { version, pre } }) = Arra
   , pre # maybe "" \int -> "-" <> show int
   ]
 
+-- | Parse a string beginning with a tool prefix and return the tool and the
+-- | rest of the string.
+parseToolPrefix :: String -> Either String (Tuple Tool String)
+parseToolPrefix str = do
+  case String.stripPrefix (String.Pattern (printExecutable PursTidy)) str of
+    Just rest -> Right $ Tuple PursTidy (String.drop 1 rest)
+    Nothing -> case String.stripPrefix (String.Pattern (printExecutable PursBackendEs)) str of
+      Just rest -> Right $ Tuple PursBackendEs (String.drop 1 rest)
+      Nothing -> case String.stripPrefix (String.Pattern (printExecutable Purs)) str of
+        Just rest -> Right $ Tuple Purs (String.drop 1 rest)
+        Nothing -> case String.stripPrefix (String.Pattern (printExecutable Spago)) str of
+          Just rest -> Right $ Tuple Spago (String.drop 1 rest)
+          Nothing -> Left $ "Expected a tool name but got: " <> str
+
 -- | Parse a tool from its executable name and version as a package, ie.
 -- | 'purs-0_14_4-0'
 parseToolPackage :: String -> Either String ToolPackage
-parseToolPackage str = case String.split (String.Pattern "-") str of
-  [ toolStr, versionStr ] -> do
-    tool <- parseExecutable toolStr
-    version <- Version.parse (unformatVersion versionStr)
-    pure $ ToolPackage { tool, version: SemVer { version, pre: Nothing } }
-  [ toolStr, versionStr, preStr ] -> do
-    tool <- parseExecutable toolStr
-    version <- Version.parse (unformatVersion versionStr)
-    pre <- case preStr of
-      "" -> pure Nothing
-      _ -> case Int.fromString preStr of
-        Nothing -> Left $ "Expected a number for the pre-release part of the version, but got: " <> preStr
-        Just int -> pure $ Just int
-    pure $ ToolPackage { tool, version: SemVer { version, pre } }
-  _ -> Left $ "Expected a tool name in the form 'tool-X_Y_Z' or 'tool-X_Y_Z-pre' but got: " <> str
+parseToolPackage str = do
+  Tuple tool rest <- parseToolPrefix str
+  case String.split (String.Pattern "-") rest of
+    [ versionStr, preStr ] -> do
+      version <- Version.parse (unformatVersion versionStr)
+      pre <- case preStr of
+        "" -> pure Nothing
+        _ -> case Int.fromString preStr of
+          Nothing -> Left $ "Expected a number for the pre-release part of the version, but got: " <> preStr
+          Just int -> pure $ Just int
+      pure $ ToolPackage { tool, version: SemVer { version, pre } }
+
+    [ versionStr ] -> do
+      version <- Version.parse (unformatVersion versionStr)
+      pure $ ToolPackage { tool, version: SemVer { version, pre: Nothing } }
+
+    _ -> Left $ "Expected a tool name in the form 'tool-X_Y_Z' or 'tool-X_Y_Z-pre' but got: " <> str
   where
   unformatVersion = String.replaceAll (String.Pattern "_") (String.Replacement ".")
 

@@ -2,5 +2,7 @@
   "purs-stable": "purs-0_15_9",
   "purs-unstable": "purs-0_15_10-0",
   "spago-stable": "spago-0_21_0",
-  "spago-unstable": "spago-0_93_5"
+  "spago-unstable": "spago-0_93_5",
+  "purs-tidy-stable": "purs-tidy-0_10_0",
+  "purs-tidy-unstable": "purs-tidy-0_10_0"
 }

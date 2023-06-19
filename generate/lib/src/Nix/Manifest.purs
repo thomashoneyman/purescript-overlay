@@ -39,6 +39,14 @@ namedManifestCodec = do
   let decodeKey = Either.hush <<< Tool.parseToolChannel
   Registry.Codec.strMap "NamedManifest" decodeKey encodeKey Tool.toolPackageCodec
 
+type PursManifest = Map SemVer (Map NixSystem FetchUrl)
+
+pursManifestCodec :: JsonCodec PursManifest
+pursManifestCodec = do
+  let encodeKey = SemVer.print
+  let decodeKey = Either.hush <<< SemVer.parse
+  Registry.Codec.strMap "PursManifest" decodeKey encodeKey (Nix.System.systemMapCodec fetchUrlCodec)
+
 type SpagoManifest = Map SemVer (Either FetchUrl (Map NixSystem FetchUrl))
 
 spagoManifestCodec :: JsonCodec SpagoManifest
@@ -53,13 +61,13 @@ spagoManifestCodec = SemVer.semverMapCodec (CA.codec' decode encode)
     Left gitRev -> CA.encode fetchUrlCodec gitRev
     Right fetchUrl -> CA.encode (Nix.System.systemMapCodec fetchUrlCodec) fetchUrl
 
-type PursManifest = Map SemVer (Map NixSystem FetchUrl)
+type PursTidyManifest = Map SemVer FetchUrl
 
-pursManifestCodec :: JsonCodec PursManifest
-pursManifestCodec = do
+pursTidyManifestCodec :: JsonCodec PursTidyManifest
+pursTidyManifestCodec = do
   let encodeKey = SemVer.print
   let decodeKey = Either.hush <<< SemVer.parse
-  Registry.Codec.strMap "PursManifest" decodeKey encodeKey (Nix.System.systemMapCodec fetchUrlCodec)
+  Registry.Codec.strMap "PursManifest" decodeKey encodeKey fetchUrlCodec
 
 -- | A manifest entry for a package that can be fetched from git
 type GitRev = { rev :: String }

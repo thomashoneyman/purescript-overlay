@@ -1,0 +1,54 @@
+{
+  "0.5.0": {
+    "hash": "sha256-Mv1YuiWXYmsfCx464LlFbqT4ek9yCsKNAM2x1YtHAh8=",
+    "url": "https://registry.npmjs.org/purs-tidy/-/purs-tidy-0.5.0.tgz"
+  },
+  "0.5.1": {
+    "hash": "sha256-d2caaPWSv5feuboCzML2sZm6APJwCz2YeyECH4xl8Rc=",
+    "url": "https://registry.npmjs.org/purs-tidy/-/purs-tidy-0.5.1.tgz"
+  },
+  "0.5.2": {
+    "hash": "sha256-Y3x0ePnfs6SXuGOgRzKCWzsKik7fq57/r19mbl1geTM=",
+    "url": "https://registry.npmjs.org/purs-tidy/-/purs-tidy-0.5.2.tgz"
+  },
+  "0.5.3": {
+    "hash": "sha256-Fl11hcu5JuDkOs6fOD7/K9F9q0IagG4Mwc9Cj7UzWI0=",
+    "url": "https://registry.npmjs.org/purs-tidy/-/purs-tidy-0.5.3.tgz"
+  },
+  "0.6.0": {
+    "hash": "sha256-Z/isCJQ3CPsux3b3wfBckU6Y7hcUBsJatSFq+l8QDUA=",
+    "url": "https://registry.npmjs.org/purs-tidy/-/purs-tidy-0.6.0.tgz"
+  },
+  "0.6.3": {
+    "hash": "sha256-jc8FrYam26BD4di02UCqAadpIzEz7aqrPzCJKoJ2Akc=",
+    "url": "https://registry.npmjs.org/purs-tidy/-/purs-tidy-0.6.3.tgz"
+  },
+  "0.6.4": {
+    "hash": "sha256-sFHDFR+LIdM8lkR6/Eq5IsZP2vxFPW07TV8/iKvpA/M=",
+    "url": "https://registry.npmjs.org/purs-tidy/-/purs-tidy-0.6.4.tgz"
+  },
+  "0.7.0": {
+    "hash": "sha256-K6S6JrT3OnKfv5edRzXZjinuXFg453xiDQzt87oTvfk=",
+    "url": "https://registry.npmjs.org/purs-tidy/-/purs-tidy-0.7.0.tgz"
+  },
+  "0.7.1": {
+    "hash": "sha256-ElV3pjeZFBkOtufSRFQTz1613sl3ihGbyppn83/CpMY=",
+    "url": "https://registry.npmjs.org/purs-tidy/-/purs-tidy-0.7.1.tgz"
+  },
+  "0.7.2": {
+    "hash": "sha256-lqHn38U0+c++WxJzIU9HYctsE5L2WWDVsXFmTbc3RR4=",
+    "url": "https://registry.npmjs.org/purs-tidy/-/purs-tidy-0.7.2.tgz"
+  },
+  "0.8.0": {
+    "hash": "sha256-JrQLqLh1MxMi5bbYQ9+zUzRkNwBRoioEyVjqEZ1srts=",
+    "url": "https://registry.npmjs.org/purs-tidy/-/purs-tidy-0.8.0.tgz"
+  },
+  "0.9.0": {
+    "hash": "sha256-k5hCrLOOIkHGtqQ8BOM2vB9auXvdMO4LttE18puLHyk=",
+    "url": "https://registry.npmjs.org/purs-tidy/-/purs-tidy-0.9.0.tgz"
+  },
+  "0.10.0": {
+    "hash": "sha256-yDHOaOXNt+9SXfLUnymBZTSWMU5fkAFBxTTsl8lvzjM=",
+    "url": "https://registry.npmjs.org/purs-tidy/-/purs-tidy-0.10.0.tgz"
+  }
+}

@@ -28,14 +28,25 @@
 
     packages = forAllSystems (system: let
       pkgs = nixpkgsFor.${system};
+
       purs = pkgs.purs;
       purs-unstable = pkgs.purs-unstable;
       purs-bin = pkgs.purs-bin;
+
       spago = pkgs.spago;
       spago-unstable = pkgs.spago-unstable;
       spago-bin = pkgs.spago-bin;
+
+      purs-tidy = pkgs.purs-tidy;
+      purs-tidy-unstable = pkgs.purs-tidy-unstable;
+      purs-tidy-bin = pkgs.purs-tidy-bin;
     in
-      {inherit purs purs-unstable spago spago-unstable;} // purs-bin // spago-bin);
+      {
+        inherit purs purs-unstable spago spago-unstable purs-tidy purs-tidy-unstable;
+      }
+      // purs-bin
+      // spago-bin
+      // purs-tidy-bin);
 
     apps = forAllSystems (system: let
       pkgs = nixpkgsFor.${system};
@@ -80,7 +91,13 @@
               VERSION="$(${bin}/bin/${name} --version 2>&1)"
             fi
 
-            EXPECTED_VERSION="${version}"
+            # purs-tidy includes a 'v' prefix in its output beginning with version 0.9.0
+            if [ ${builtins.toString (name == "purs-tidy" && !(pkgs.lib.versionOlder version "0.9.0"))} ]; then
+              EXPECTED_VERSION="v${version}"
+            else
+              EXPECTED_VERSION="${version}"
+            fi
+
             echo "$VERSION should match expected output $EXPECTED_VERSION"
             test "$VERSION" = "$EXPECTED_VERSION"
           '')

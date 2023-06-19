@@ -84,7 +84,12 @@ main = Aff.launchAff_ do
           else
             Console.log $ "New spago releases: " <> Utils.printJson Nix.Manifest.spagoManifestCodec updates
 
-    -- TODO: Also update the named manifest file.
+        Run.prefetchPursTidy >>= \updates ->
+          if Map.isEmpty updates then
+            Console.log "No new purs-tidy releases."
+          else
+            Console.log $ "New purs-tidy releases: " <> Utils.printJson Nix.Manifest.pursTidyManifestCodec updates
+
     Update dir commit -> do
       let envFile = Path.concat [ dir, "..", "generate", ".env" ]
       Console.log $ "Loading .env file from " <> envFile
@@ -101,6 +106,7 @@ main = Aff.launchAff_ do
       AppM.runAppM { octokit, manifestDir: dir, gitBranch: branch, tmpDir: tmp } do
         pursUpdates <- Run.prefetchPurs
         spagoUpdates <- Run.prefetchSpago
+        pursTidyUpdates <- Run.prefetchPursTidy
 
         case commit of
           NoCommit -> do
@@ -117,6 +123,12 @@ main = Aff.launchAff_ do
               Console.log $ "New spago releases, writing to disk..."
               Run.writeSpagoUpdates spagoUpdates
 
+            if Map.isEmpty pursTidyUpdates then
+              Console.log "No new purs-tidy releases."
+            else do
+              Console.log $ "New purs-tidy releases, writing to disk..."
+              Run.writePursTidyUpdates pursTidyUpdates
+
           DoCommit -> do
             Console.log "Cloning purescript-nix, opening a branch, committing, and opening a pull request..."
             token <- Env.lookupRequired Env.githubToken
@@ -124,14 +136,15 @@ main = Aff.launchAff_ do
             -- We switch the manifest dir from the user-provided input to the
             -- cloned repo before we do anything else.
             Reader.local (\env -> env { manifestDir = Path.concat [ env.tmpDir, "purescript-nix", "manifests" ] }) do
-              if Map.isEmpty pursUpdates && Map.isEmpty spagoUpdates then
+              if Map.isEmpty pursUpdates && Map.isEmpty spagoUpdates && Map.isEmpty pursTidyUpdates then
                 Console.log "No new releases."
               else do
-                Console.log "New purs releases, writing to disk..."
+                Console.log "New releases, writing to disk..."
                 void $ AppM.runGitM Git.gitCloneUpstream
 
                 Run.writePursUpdates pursUpdates
                 Run.writeSpagoUpdates spagoUpdates
+                Run.writePursTidyUpdates pursTidyUpdates
 
                 -- TODO: Commit message could be a lot more informative.
                 commitResult <- AppM.runGitM do
@@ -149,10 +162,12 @@ main = Aff.launchAff_ do
                 let
                   pursVersions = Map.keys pursUpdates
                   spagoVersions = Map.keys spagoUpdates
+                  pursTidyVersions = Map.keys pursTidyUpdates
                   title = "Update " <> String.trim
                     ( String.joinWith " "
                         [ guard (Set.size pursVersions > 0) $ "purs (" <> String.joinWith ", " (Set.toUnfoldable (Set.map SemVer.print pursVersions)) <> ")"
                         , guard (Set.size spagoVersions > 0) $ "spago (" <> String.joinWith ", " (Set.toUnfoldable (Set.map SemVer.print spagoVersions)) <> ")"
+                        , guard (Set.size pursTidyVersions > 0) $ "purs-tidy (" <> String.joinWith ", " (Set.toUnfoldable (Set.map SemVer.print pursTidyVersions)) <> ")"
                         ]
                     )
 

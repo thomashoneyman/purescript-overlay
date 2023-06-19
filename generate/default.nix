@@ -29,7 +29,6 @@ in
       cp ${entrypoint} entrypoint.js
       esbuild entrypoint.js \
         --bundle \
-        --minify \
         --outfile=${name}.js \
         --platform=node
     '';
