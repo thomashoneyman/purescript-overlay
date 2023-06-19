@@ -138,8 +138,8 @@
         buildInputs = [
           self.packages.${system}.spago-unstable
           self.packages.${system}.purs-unstable
-          pkgs.prefetch-npm-deps
-          pkgs.nix-prefetch-git
+          self.packages.${system}.purs-tidy-unstable
+          self.packages.${system}.purs-backend-es-unstable
         ];
       };
     });
