@@ -26,7 +26,6 @@ import Lib.Foreign.Octokit (Release, ReleaseAsset)
 import Lib.Foreign.Octokit as Octokit
 import Lib.Git as Git
 import Lib.GitHub as GitHub
-import Lib.GitHub as GitHubM
 import Lib.Nix.Manifest (NamedManifest, PursManifest, SpagoManifest)
 import Lib.Nix.Prefetch as Nix.Prefetch
 import Lib.Nix.System (NixSystem(..))
@@ -235,6 +234,7 @@ prefetchSpago = do
     supportedReleases = parseSpagoReleases rawReleases # Map.mapMaybeWithKey \version entry -> do
       guard $ not $ isBeforeCutoff version
       guard $ not $ isBrokenVersion version
+      guard $ not $ isJust (un SemVer version).pre
       pure entry
 
     -- We only want to include releases that aren't already present in the
@@ -247,13 +247,14 @@ prefetchSpago = do
   hashedReleases :: SpagoManifest <- forWithIndex newReleases \version entry -> do
     Console.log $ "Processing release " <> SemVer.print version
     case entry of
-      Left tag -> do
-        Console.log $ "Fetching commit for tag " <> un Git.Tag tag
-        AppM.runGitHubM (GitHubM.getTagCommitSha Spago tag) >>= case _ of
+      Left (Git.Tag tag) -> do
+        Console.log $ "Fetching NPM tarball associated with tag " <> tag <> ", ie. version " <> SemVer.print version
+        let url = "https://registry.npmjs.org/spago/-/spago-" <> SemVer.print version <> ".tgz"
+        Nix.Prefetch.nixPrefetchTarball url >>= case _ of
           Left error -> do
-            Console.log $ "Failed to fetch commit for tag " <> un Git.Tag tag <> ": " <> Octokit.printGitHubError error
+            Console.log $ "Failed to hash NPM tarbal at url " <> url <> ": " <> error
             liftEffect $ Process.exit 1
-          Right (Git.CommitSha sha) -> pure $ Left { rev: sha }
+          Right hash -> pure $ Left { url, hash }
       Right assets -> do
         Console.log $ "Fetching hashes for release assets"
         hashed <- for assets \asset -> do

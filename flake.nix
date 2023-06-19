@@ -61,6 +61,7 @@
           pkgs.runCommand "test-${name}-${version}" {} ''
             touch $out
             set -e
+            set -x
 
             # Some package versions are not supported on some systems, ie. the
             # "stable" version of Spago is not supported on aarch64.
@@ -83,7 +84,7 @@
             echo "$VERSION should match expected output $EXPECTED_VERSION"
             test "$VERSION" = "$EXPECTED_VERSION"
           '')
-        # TODO: Remove once spago is stable in the PureScript build.
+        # TODO: Remove once the purescript build of spago is stable
         (pkgs.lib.filterAttrs (k: v: !(k == "spago" && system == "aarch64-darwin")) self.packages.${system});
 
       example-checks = pkgs.callPackages ./nix/examples {};
@@ -96,6 +97,7 @@
           pkgs.runCommand "test-generate" {} ''
             mkdir -p $out/bin
             set -e
+            set -x
             cp ${bin}/bin/${bin.name} $out/bin/test-generate
             ${bin}/bin/${bin.name} verify ${manifests}
           '';
@@ -108,7 +110,12 @@
     in {
       default = pkgs.mkShell {
         name = "purescript-nix";
-        buildInputs = [self.packages.${system}.spago-unstable self.packages.${system}.purs-unstable];
+        buildInputs = [
+          self.packages.${system}.spago-unstable
+          self.packages.${system}.purs-unstable
+          pkgs.prefetch-npm-deps
+          pkgs.nix-prefetch-git
+        ];
       };
     });
   };

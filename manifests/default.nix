@@ -36,13 +36,15 @@
     (
       acc: version: let
         name = "spago-${builtins.replaceStrings ["."] ["_"] version}";
-        entry = entries.${version}.${system} or entries.${version}.rev or {};
+        legacyEntry = entries.${version}.${system} or {};
+        entry = entries.${version};
       in
-        if builtins.typeOf entry == "string"
-        then acc // {${name} = mkSpagoDerivation ({inherit version;} // {rev = entry;});}
-        else if entry != {}
-        then acc // {${name} = mkLegacySpagoDerivation ({inherit version;} // entry);}
-        else acc
+        # To accommodate systems that don't work for legacy spago versions
+        if legacyEntry == {} && !(builtins.hasAttr "url" entry)
+        then acc
+        else if legacyEntry != {}
+        then acc // {${name} = mkLegacySpagoDerivation ({inherit version;} // legacyEntry);}
+        else acc // {${name} = mkSpagoDerivation ({inherit version;} // entry);}
     ) {}
     (builtins.attrNames entries);
 

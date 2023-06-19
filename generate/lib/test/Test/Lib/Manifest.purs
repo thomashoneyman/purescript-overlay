@@ -6,6 +6,7 @@ import Control.Alt ((<|>))
 import Data.Array as Array
 import Data.Codec.Argonaut (JsonCodec)
 import Data.Codec.Argonaut as CA
+import Data.Either (Either(..))
 import Data.String as String
 import Data.Traversable (for)
 import Lib.Nix.Manifest (NamedManifest, PursManifest, SpagoManifest, namedManifestCodec, pursManifestCodec, spagoManifestCodec)
@@ -46,3 +47,4 @@ nixManifestCodec = CA.codec' decode encode
     map SpagoManifest (CA.decode spagoManifestCodec json)
       <|> map PursManifest (CA.decode pursManifestCodec json)
       <|> map NamedManifest (CA.decode namedManifestCodec json)
+      <|> Left (CA.TypeMismatch "Expected a SpagoManifest, PursManifest, or NamedManifest")

@@ -6,19 +6,21 @@ import Data.Argonaut.Core as Argonaut
 import Data.Bifunctor (lmap)
 import Data.Codec.Argonaut (JsonCodec)
 import Data.Codec.Argonaut as CA
-import Registry.Internal.Codec as Registry.Codec
 import Data.Either (Either(..), note)
 import Data.Either as Either
 import Data.Int as Int
 import Data.Map (Map)
 import Data.Maybe (Maybe(..), maybe)
+import Data.Newtype (class Newtype)
 import Data.String as String
+import Registry.Internal.Codec as Registry.Codec
 import Registry.Version (Version)
 import Registry.Version as Version
 import Safe.Coerce (coerce)
 
 newtype SemVer = SemVer { version :: Version, pre :: Maybe Int }
 
+derive instance Newtype SemVer _
 derive instance Eq SemVer
 
 instance Ord SemVer where
