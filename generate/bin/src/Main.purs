@@ -59,6 +59,8 @@ main = Aff.launchAff_ do
         Console.log "Verifying manifests..."
         Run.verifyPurs
         Run.verifySpago
+        Run.verifyPursTidy
+        Run.verifyPursBackendEs
 
     Prefetch dir -> do
       let envFile = Path.concat [ dir, "..", "generate", ".env" ]
@@ -90,6 +92,12 @@ main = Aff.launchAff_ do
           else
             Console.log $ "New purs-tidy releases: " <> Utils.printJson Nix.Manifest.pursTidyManifestCodec updates
 
+        Run.prefetchPursBackendEs >>= \updates ->
+          if Map.isEmpty updates then
+            Console.log "No new purs-backend-es releases."
+          else
+            Console.log $ "New purs-backend-es releases: " <> Utils.printJson Nix.Manifest.pursBackendEsManifestCodec updates
+
     Update dir commit -> do
       let envFile = Path.concat [ dir, "..", "generate", ".env" ]
       Console.log $ "Loading .env file from " <> envFile
@@ -107,6 +115,7 @@ main = Aff.launchAff_ do
         pursUpdates <- Run.prefetchPurs
         spagoUpdates <- Run.prefetchSpago
         pursTidyUpdates <- Run.prefetchPursTidy
+        pursBackendEsUpdates <- Run.prefetchPursBackendEs
 
         case commit of
           NoCommit -> do
@@ -129,6 +138,12 @@ main = Aff.launchAff_ do
               Console.log $ "New purs-tidy releases, writing to disk..."
               Run.writePursTidyUpdates pursTidyUpdates
 
+            if Map.isEmpty pursBackendEsUpdates then
+              Console.log "No new purs-backend-es releases."
+            else do
+              Console.log $ "New purs-backend-es releases, writing to disk..."
+              Run.writePursBackendEsUpdates pursBackendEsUpdates
+
           DoCommit -> do
             Console.log "Cloning purescript-nix, opening a branch, committing, and opening a pull request..."
             token <- Env.lookupRequired Env.githubToken
@@ -145,6 +160,7 @@ main = Aff.launchAff_ do
                 Run.writePursUpdates pursUpdates
                 Run.writeSpagoUpdates spagoUpdates
                 Run.writePursTidyUpdates pursTidyUpdates
+                Run.writePursBackendEsUpdates pursBackendEsUpdates
 
                 -- TODO: Commit message could be a lot more informative.
                 commitResult <- AppM.runGitM do
@@ -163,11 +179,14 @@ main = Aff.launchAff_ do
                   pursVersions = Map.keys pursUpdates
                   spagoVersions = Map.keys spagoUpdates
                   pursTidyVersions = Map.keys pursTidyUpdates
+                  pursBackendEsVersions = Map.keys pursBackendEsUpdates
+
                   title = "Update " <> String.trim
                     ( String.joinWith " "
                         [ guard (Set.size pursVersions > 0) $ "purs (" <> String.joinWith ", " (Set.toUnfoldable (Set.map SemVer.print pursVersions)) <> ")"
                         , guard (Set.size spagoVersions > 0) $ "spago (" <> String.joinWith ", " (Set.toUnfoldable (Set.map SemVer.print spagoVersions)) <> ")"
                         , guard (Set.size pursTidyVersions > 0) $ "purs-tidy (" <> String.joinWith ", " (Set.toUnfoldable (Set.map SemVer.print pursTidyVersions)) <> ")"
+                        , guard (Set.size pursBackendEsVersions > 0) $ "purs-backend-es (" <> String.joinWith ", " (Set.toUnfoldable (Set.map SemVer.print pursBackendEsVersions)) <> ")"
                         ]
                     )
 
