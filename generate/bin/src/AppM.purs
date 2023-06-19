@@ -13,7 +13,7 @@ import Effect.Class (class MonadEffect)
 import Lib.Foreign.Octokit (GitHubError, Octokit)
 import Lib.Git (GitM(..))
 import Lib.GitHub (GitHubM(..))
-import Lib.Nix.Manifest (PursManifest, SpagoManifest, NamedManifest)
+import Lib.Nix.Manifest (NamedManifest, PursManifest, SpagoManifest, PursTidyManifest)
 import Lib.Nix.Manifest as Nix.Manifest
 import Lib.Nix.Manifest as Tool
 import Lib.Tool (Tool(..))
@@ -97,3 +97,13 @@ writeSpagoManifest :: SpagoManifest -> AppM Unit
 writeSpagoManifest manifest = do
   path <- getToolManifestPath Spago
   Utils.writeJsonFile path Nix.Manifest.spagoManifestCodec manifest
+
+readPursTidyManifest :: AppM PursTidyManifest
+readPursTidyManifest = do
+  path <- getToolManifestPath PursTidy
+  Utils.readJsonFile path Nix.Manifest.pursTidyManifestCodec
+
+writePursTidyManifest :: PursTidyManifest -> AppM Unit
+writePursTidyManifest manifest = do
+  path <- getToolManifestPath PursTidy
+  Utils.writeJsonFile path Nix.Manifest.pursTidyManifestCodec manifest

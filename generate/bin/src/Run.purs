@@ -26,7 +26,7 @@ import Lib.Foreign.Octokit (Release, ReleaseAsset)
 import Lib.Foreign.Octokit as Octokit
 import Lib.Git as Git
 import Lib.GitHub as GitHub
-import Lib.Nix.Manifest (NamedManifest, PursManifest, SpagoManifest)
+import Lib.Nix.Manifest (FetchUrl, NamedManifest, PursManifest, SpagoManifest, PursTidyManifest)
 import Lib.Nix.Prefetch as Nix.Prefetch
 import Lib.Nix.System (NixSystem(..))
 import Lib.Nix.System as NixSystem
@@ -303,6 +303,99 @@ writeSpagoUpdates updates = do
 
         insertPackage :: ToolChannel -> SemVer -> NamedManifest -> NamedManifest
         insertPackage channel version = Map.insert channel (ToolPackage { tool: Spago, version })
+
+        updateUnstable :: NamedManifest -> NamedManifest
+        updateUnstable prev = case maxUnstable of
+          Just version | version > unstable -> insertPackage unstableChannel version prev
+          _ -> prev
+
+        updateStable :: NamedManifest -> NamedManifest
+        updateStable prev = case maxStable of
+          Just version | version > stable -> insertPackage stableChannel version prev
+          _ -> prev
+
+      pure (updateStable (updateUnstable named))
+
+  case named' of
+    Nothing -> Console.log "Failed to update named manifest" *> liftEffect (Process.exit 1)
+    Just result -> AppM.writeNamedManifest result
+
+prefetchPursTidy :: AppM PursTidyManifest
+prefetchPursTidy = do
+  manifest <- AppM.readPursTidyManifest
+
+  let
+    existing :: Set SemVer
+    existing = Map.keys manifest
+
+  rawReleases <- AppM.runGitHubM (GitHub.listReleases PursTidy) >>= case _ of
+    Left error -> do
+      Console.log $ "Failed to fetch releases for " <> Tool.print PursTidy Tool.Executable
+      Console.log $ Octokit.printGitHubError error
+      liftEffect $ Process.exit 1
+    Right releases -> pure releases
+
+  Console.log $ "Retrieved " <> show (Array.length rawReleases) <> " releases for " <> Tool.print PursTidy Tool.Executable
+
+  let
+    parsePursTidyReleases :: Array Release -> Set SemVer
+    parsePursTidyReleases = Set.fromFoldable <<< Array.mapMaybe \release -> Either.hush do
+      version <- SemVer.parse (fromMaybe release.tag (String.stripPrefix (String.Pattern "v") release.tag))
+      pure version
+
+    -- We only accept purs-tidy releases back to 0.5.0
+    isBeforeCutoff :: SemVer -> Boolean
+    isBeforeCutoff (SemVer { version }) =
+      Version.major version == 0 && Version.minor version < 5
+
+    supportedReleases :: Set SemVer
+    supportedReleases = parsePursTidyReleases rawReleases # Set.filter (not <<< isBeforeCutoff)
+
+    -- We only want to include releases that aren't already present in the
+    -- manifest file.
+    newReleases :: Set SemVer
+    newReleases = Set.filter (not <<< flip Set.member existing) supportedReleases
+
+  Console.log $ "Found " <> show (Set.size newReleases) <> " new releases for " <> Tool.print PursTidy Tool.Executable
+
+  hashedReleases :: Array (Tuple SemVer FetchUrl) <- for (Set.toUnfoldable newReleases) \version -> do
+    Console.log $ "Processing release " <> SemVer.print version
+    Console.log $ "Fetching NPM tarball associated with version " <> SemVer.print version
+    let url = "https://registry.npmjs.org/purs-tidy/-/purs-tidy-" <> SemVer.print version <> ".tgz"
+    Nix.Prefetch.nixPrefetchTarball url >>= case _ of
+      Left error -> do
+        Console.log $ "Failed to hash NPM tarball at url " <> url <> ": " <> error
+        liftEffect $ Process.exit 1
+      Right hash -> pure $ Tuple version { url, hash }
+
+  pure $ Map.fromFoldable hashedReleases
+
+writePursTidyUpdates :: PursTidyManifest -> AppM Unit
+writePursTidyUpdates updates = do
+  manifest <- AppM.readPursTidyManifest
+  let newManifest = Map.union manifest updates
+  AppM.writePursTidyManifest newManifest
+
+  named <- AppM.readNamedManifest
+
+  let
+    named' :: Maybe NamedManifest
+    named' = do
+      let unstableChannel = ToolChannel { tool: PursTidy, channel: Unstable }
+      let stableChannel = ToolChannel { tool: PursTidy, channel: Stable }
+
+      ToolPackage { version: unstable } <- Map.lookup unstableChannel named
+      ToolPackage { version: stable } <- Map.lookup stableChannel named
+
+      let
+        allVersions = Map.keys newManifest
+        allStableVersions = allVersions
+
+        maxUnstable = Set.findMax allVersions
+        maxStable = Set.findMax allStableVersions
+
+        insertPackage :: ToolChannel -> SemVer -> NamedManifest -> NamedManifest
+        insertPackage channel version = Map.insert channel (ToolPackage { tool: PursTidy, version })
 
         updateUnstable :: NamedManifest -> NamedManifest
         updateUnstable prev = case maxUnstable of

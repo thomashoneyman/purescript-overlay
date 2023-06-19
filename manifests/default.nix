@@ -8,6 +8,7 @@
 }: let
   mkPursDerivation = callPackage ./build-support/mkPursDerivation.nix {};
   mkSpagoDerivation = callPackage ./build-support/mkSpagoDerivation.nix {};
+  mkPursTidyDerivation = callPackage ./build-support/mkPursTidyDerivation.nix {};
   mkLegacySpagoDerivation = callPackage ./build-support/mkLegacySpagoDerivation.nix {};
 
   # The purs manifest uses fetchurl to fetch tarballs. We have to accommodate
@@ -48,8 +49,20 @@
     ) {}
     (builtins.attrNames entries);
 
+  purs-tidy-bin = let
+    entries = builtins.fromJSON (builtins.readFile ./purs-tidy.json);
+  in
+    builtins.foldl'
+    (
+      acc: version: let
+        name = "purs-tidy-${builtins.replaceStrings ["."] ["_"] version}";
+      in
+        acc // {${name} = mkPursTidyDerivation ({inherit version;} // entries.${version});}
+    ) {}
+    (builtins.attrNames entries);
+
   all = {
-    inherit purs-bin spago-bin;
+    inherit purs-bin spago-bin purs-tidy-bin;
   };
 
   # The 'named.json' file records what packages should be mapped to the default
