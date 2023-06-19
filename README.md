@@ -32,22 +32,24 @@ In a Nix flake, use the provided overlay when importing nixpkgs to get access to
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-23.05";
     flake-utils.url  = "github:numtide/flake-utils";
-    purescript-nix.url = "github:thomashoneyman/purescript-nix";
-    purescript-nix.inputs.nixpkgs.follows = "nixpkgs";
+    purix.url = "github:thomashoneyman/purix";
+    purix.inputs.nixpkgs.follows = "nixpkgs";
   };
 
-  outputs = { self, nixpkgs, purescript-nix }:
+  outputs = { self, nixpkgs, purix }:
     flake-utils.lib.eachDefaultSystem (system:
       let
-        overlays = [ purescript-nix.overlays.default ];
+        overlays = [ purix.overlays.default ];
         pkgs = import nixpkgs {
           inherit system overlays;
         };
       in {
         devShells.default = pkgs.mkShell {
           buildInputs = [
-            pkgs.purs-unstable
-            pkgs.spago-bin.spago-0_93_5
+            pkgs.purs
+            pkgs.spago-unstable
+            pkgs.purs-tidy-bin.purs-tidy-0_10_0
+            pkgs.purs-backend-es
           ];
         };
       }
@@ -55,10 +57,10 @@ In a Nix flake, use the provided overlay when importing nixpkgs to get access to
 }
 ```
 
-You can also run individual packages from the flake, e.g.
+You can also run individual packages from the flake, e.g. to format your `src` directory:
 
 ```console
-nix run github:thomashoneyman/purescript-nix#purs-unstable
+nix run github:thomashoneyman/purescript-nix#purs-tidy format-in-place src
 ```
 
 ## Examples
