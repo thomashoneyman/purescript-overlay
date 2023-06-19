@@ -37,10 +37,14 @@
       acc: version: let
         name = "spago-${builtins.replaceStrings ["."] ["_"] version}";
         legacyEntry = entries.${version}.${system} or {};
+        entry = entries.${version};
       in
-        if legacyEntry != {}
+        # To accommodate systems that don't work for legacy spago versions
+        if legacyEntry == {} && !(builtins.hasAttr "url" entry)
+        then acc
+        else if legacyEntry != {}
         then acc // {${name} = mkLegacySpagoDerivation ({inherit version;} // legacyEntry);}
-        else acc // {${name} = mkSpagoDerivation ({inherit version;} // entries.${version});}
+        else acc // {${name} = mkSpagoDerivation ({inherit version;} // entry);}
     ) {}
     (builtins.attrNames entries);
 

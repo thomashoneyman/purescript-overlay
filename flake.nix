@@ -83,7 +83,7 @@
             echo "$VERSION should match expected output $EXPECTED_VERSION"
             test "$VERSION" = "$EXPECTED_VERSION"
           '')
-        # TODO: Remove once spago is stable in the PureScript build.
+        # TODO: Remove once the purescript build of spago is stable
         (pkgs.lib.filterAttrs (k: v: !(k == "spago" && system == "aarch64-darwin")) self.packages.${system});
 
       example-checks = pkgs.callPackages ./nix/examples {};
