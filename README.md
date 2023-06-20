@@ -9,6 +9,8 @@ Purix is two things:
 1. An overlay and flake exposing the core PureScript toolchain — `purs`, `spago`, `purs-tidy`, and `purs-backend-es` — at both stable and pre-release versions, with daily auto-updates for new releases.
 2. A library suitable for building PureScript projects with Nix, called `purix`.
 
+> :warning: This library is unstable and may be reorganized. Use at your own risk!
+
 Purix is tested on the following architectures:
 
 - x86_64-linux
