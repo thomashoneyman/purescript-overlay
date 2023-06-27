@@ -21,7 +21,6 @@ import Data.String as String
 import Data.Traversable (foldMap, for)
 import Data.TraversableWithIndex (forWithIndex)
 import Data.Tuple (Tuple(..))
-import Debug (traceM)
 import Effect.Class (liftEffect)
 import Effect.Class.Console as Console
 import Lib.Foreign.Octokit (Release, ReleaseAsset)

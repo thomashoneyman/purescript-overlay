@@ -6,6 +6,7 @@ workspace:
         - console
         - effect
         - prelude
+        - newtype
       test_dependencies: []
 packages:
   console:
@@ -25,4 +26,22 @@ packages:
     type: registry
     version: 6.0.1
     integrity: sha256-o8p6SLYmVPqzXZhQFd2hGAWEwBoXl1swxLG/scpJ0V0=
+    dependencies: []
+  newtype:
+    type: registry
+    version: 5.0.0
+    integrity: sha256-gdrQu8oGe9eZE6L3wOI8ql/igOg+zEGB5ITh2g+uttw=
+    dependencies:
+      - prelude
+      - safe-coerce
+  safe-coerce:
+    type: registry
+    version: 2.0.0
+    integrity: sha256-a1ibQkiUcbODbLE/WAq7Ttbbh9ex+x33VCQ7GngKudU=
+    dependencies:
+      - unsafe-coerce
+  unsafe-coerce:
+    type: registry
+    version: 6.0.0
+    integrity: sha256-IqIYW4Vkevn8sI+6aUwRGvd87tVL36BBeOr0cGAE7t0=
     dependencies: []

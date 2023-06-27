@@ -9,10 +9,7 @@
   purs-backend-es,
 }: let
   npmDependencies = purix.lib.buildPackageLock {src = ./.;};
-  workspaces = purix.lib.workspaces {
-    src = ./.;
-    lockfile = ./. + "/spago.lock";
-  };
+  packages = purix.lib.buildSpagoLock {src = ./.;};
   entrypoint = writeText "entrypoint.js" ''
     import { main } from "./output-es/Bin.Main";
     main();
@@ -24,9 +21,11 @@ in
     nativeBuildInputs = [purs purs-backend-es esbuild];
     buildPhase = ''
       ln -s ${npmDependencies}/js/node_modules .
+      ln -s ${packages.${name}}/output .
       set -f
-      purs compile $src/${name}/**/*.purs ${workspaces.${name}.dependencies.globs} --codegen corefn
       purs-backend-es build
+      ls output-es
+      ls output-es/Bin.Main
       set +f
       cp ${entrypoint} entrypoint.js
       esbuild entrypoint.js \

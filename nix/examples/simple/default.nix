@@ -11,10 +11,11 @@ in
     name = "bin";
     src = ./.;
     buildPhase = ''
-      echo ${lock.simple.dependencies.globs}
-      touch $out
+      echo "Linking ..."
+      ln -s ${lock.simple}/output .
     '';
     installPhase = ''
-      touch $out
+      mkdir -p $out
+      cp -r output $out
     '';
   }

@@ -4,6 +4,7 @@ package:
     - console
     - effect
     - prelude
+    - newtype
   test:
     dependencies: []
     main: Test.Main
