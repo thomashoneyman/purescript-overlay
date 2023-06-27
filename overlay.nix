@@ -11,7 +11,7 @@ final: prev: let
   purix = {
     lib = buildPackageLock // buildSpagoLock;
     buildPackageLock = buildPackageLock.buildPackageLock;
-    buildSpagoLock = buildSpagoLock.workspaces;
+    buildSpagoLock = buildSpagoLock.buildSpagoLock;
   };
 in
   {purix = purix;} // tooling

@@ -227,5 +227,5 @@ main = Aff.launchAff_ do
                     Console.log $ Octokit.printGitHubError error
                     liftEffect (Process.exit 1)
                   Right { url } -> do
-                    Console.log "Successfully created pull request!"
+                    Console.log "Successfully created pull request."
                     Console.log url
