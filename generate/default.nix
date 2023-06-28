@@ -20,7 +20,7 @@ in
     nativeBuildInputs = [purs-backend-es esbuild];
     buildPhase = ''
       ln -s ${npmDependencies}/js/node_modules .
-      ln -s ${packages.${name}}/output .
+      cp -r ${packages.${name}}/output .
       set -f
       echo "Optimizing..."
       purs-backend-es build

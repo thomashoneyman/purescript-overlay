@@ -1,12 +1,13 @@
 workspace:
   packages:
-    simple:
+    simple-ffi:
       path: ./
       dependencies:
         - console
         - effect
         - prelude
       test_dependencies: []
+  extra_packages: {}
 packages:
   console:
     type: registry

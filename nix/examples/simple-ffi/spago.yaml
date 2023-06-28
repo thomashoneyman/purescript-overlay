@@ -1,5 +1,5 @@
 package:
-  name: simple
+  name: simple-ffi
   dependencies:
     - console
     - effect
@@ -8,6 +8,7 @@ package:
     dependencies: []
     main: Test.Main
 workspace:
+  lock: true
   extra_packages: {}
   package_set:
     registry: 25.2.1

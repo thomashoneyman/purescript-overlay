@@ -1,24 +1,34 @@
 {
   stdenv,
+  writeText,
+  esbuild,
   purix,
   purs-bin,
 }: let
   packageLock = purix.buildPackageLock {src = ./.;};
-  spagoLock = purix.buildSpagoLock {
-    src = ./.;
-    lockfile = ./spago.lock;
-  };
+  packages = purix.buildSpagoLock {src = ./.;};
+  entrypoint = writeText "entrypoint.js" ''
+    import { main } from "./output/Main";
+    main();
+  '';
 in
   stdenv.mkDerivation {
-    name = "bin";
+    name = "simple-ffi";
     src = ./.;
-    nativeBuildInputs = [purs-bin.purs-0_15_9];
+    nativeBuildInputs = [purs-bin.purs-0_15_9 esbuild];
     buildPhase = ''
       echo "Linking ..."
       ln -s ${packageLock}/js/node_modules .
-      ln -s ${spagoLock.simple}/output .
+      cp -r ${packages.simple-ffi}/output .
+      cp ${entrypoint} entrypoint.js
+      cat entrypoint.js
+      esbuild entrypoint.js \
+        --bundle \
+        --outfile=app.js \
+        --platform=node
     '';
     installPhase = ''
-      ls output > $out
+      mkdir $out 
+      cp app.js $out
     '';
   }

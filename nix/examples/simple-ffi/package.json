@@ -1,7 +1,8 @@
 {
-  "name": "simple",
+  "name": "simple-ffi",
   "version": "1.0.0",
   "dependencies": {
-    "leftpad": "0.0.1"
+    "leftpad": "0.0.1",
+    "spdx-expression-parse": "^3.0.1"
   }
 }
