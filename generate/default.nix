@@ -22,6 +22,7 @@ in
       ln -s ${npmDependencies}/js/node_modules .
       ln -s ${packages.${name}}/output .
       set -f
+      echo "Optimizing..."
       purs-backend-es build
       set +f
       cp ${entrypoint} entrypoint.js
