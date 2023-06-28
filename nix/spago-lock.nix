@@ -4,10 +4,10 @@
   fetchurl,
   fetchgit,
   jq,
-  writeShellScript,
+  rsync,
   # The following are present via the overlay
   fromYAML,
-  purs-bin,
+  pkgs,
 }: rec {
   # Helper function for throwing an exception in case a constructed path does
   # not exist.
@@ -127,23 +127,23 @@
   workspacePackages = src: lock:
     lib.mapAttrs (readWorkspacePackage src) lock.workspace.packages;
 
-  # Link the directories within the 'output' directory of a dependency forward
-  # into the output directory of the current package. This supports incremental
-  # compilation.
-  linkOutput = lib.concatMapStringsSep "\n" (dep: ''
-    if [ -d "${dep}/output" ]; then
-      for dir in "${dep}/output"/*; do
-        if [ -d "$dir" ]; then
-          echo "Linking $dir"
-          base_dir=$(basename "$dir")
-          if [ ! -d "output/$base_dir" ]; then
-            ln -s "$dir" "output/$base_dir"
-          fi
-        fi
-      done
-    fi
-  '');
-  
+  # Merges together the dependencies into a local output directory such that
+  # they can be used for incremental compilation.
+  syncOutput = deps:
+    let
+      options = {
+        "recursive" = true;
+        "checksum" = true;
+        "chmod" = "u+w";
+        "no-owner" = true;
+        "no-group" = true;
+        "times" = true;
+        "links" = true;
+        "mkpath" = true;
+      };
+
+    in "${rsync}/bin/rsync ${lib.cli.toGNUCommandLineShell { } options} ${lib.concatMapStringsSep " " (dep: "${dep}/output") deps} .";
+
   # Merge the cache-db.json files of all the dependencies so the compiler knows
   # not to rebuild them.
   mergeCacheDb = deps: ''
@@ -154,9 +154,9 @@
     done
     # Merge cache-db.json files and write them to the output directory
     jq -s 'reduce .[] as $item ({}; reduce ($item|keys_unsorted[]) as $key (.; .[$key] += $item[$key]))' $caches > output/cache-db.json
-    '';
+  '';
 
-  fixDependencies = purs: deps:
+  fixDependencies = { purs, corefn}: deps:
     lib.fix (self:
       lib.mapAttrs (name: drv: let
         get-dep = dep: self.${dep};
@@ -191,7 +191,9 @@
 
           preBuild = ''
             mkdir output
-            ${linkOutput (builtins.attrValues directs)}
+            echo "Fetching dependencies..."
+            ${syncOutput (builtins.attrValues directs)}
+            echo "Merge cache-db.json files..."
             ${mergeCacheDb (builtins.attrValues directs)}
           '';
 
@@ -212,7 +214,7 @@
             # TODO: Ideally we would only compile to corefn if we know it's
             # necessary (for example, a 'backend' command was supplied).
             set -f
-            purs compile ${lib.concatStringsSep " " globs} --codegen corefn,js 2>&1 | tee purs-log.txt
+            purs compile ${lib.concatStringsSep " " globs} --codegen js${if corefn then ",corefn" else ""} 2>&1 | tee purs-log.txt
             set +f
           '';
 
@@ -221,7 +223,8 @@
             mv output $out/output
           '';
 
-          doCheck = true;
+          # We can add tests here, but they're off by default.
+          doCheck = false;
           checkPhase = ''
             FILE_COUNT=$(find ${src}/src -name '*.purs' | wc -l)
             COMPILE_LINE=$(grep -m 1 "^\[[0-9]* of [0-9]*\] Compiling" purs-log.txt)
@@ -236,12 +239,13 @@
         }) deps);
 
   buildSpagoLock = {
-    purs ? purs-bin.purs-0_15_9,
-    lockfile ? src + "/spago.lock",
     src,
+    corefn ? false,
+    purs ? pkgs.purs,
+    lockfile ? src + "/spago.lock",
   }: let
     lock = readSpagoLock lockfile;
   in
-    fixDependencies purs
+    fixDependencies { inherit purs corefn; }
     (lockedPackages src lock // workspacePackages src lock);
 }

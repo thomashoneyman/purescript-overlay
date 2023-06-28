@@ -5,11 +5,10 @@
   esbuild,
   # from purix
   purix,
-  purs,
   purs-backend-es,
 }: let
   npmDependencies = purix.lib.buildPackageLock {src = ./.;};
-  packages = purix.lib.buildSpagoLock {src = ./.;};
+  packages = purix.lib.buildSpagoLock {src = ./.; corefn = true; };
   entrypoint = writeText "entrypoint.js" ''
     import { main } from "./output-es/Bin.Main";
     main();
@@ -18,14 +17,13 @@ in
   stdenv.mkDerivation rec {
     name = "bin";
     src = ./.;
-    nativeBuildInputs = [purs purs-backend-es esbuild];
+    nativeBuildInputs = [purs-backend-es esbuild];
     buildPhase = ''
       ln -s ${npmDependencies}/js/node_modules .
       ln -s ${packages.${name}}/output .
       set -f
+      echo "Optimizing..."
       purs-backend-es build
-      ls output-es
-      ls output-es/Bin.Main
       set +f
       cp ${entrypoint} entrypoint.js
       esbuild entrypoint.js \
