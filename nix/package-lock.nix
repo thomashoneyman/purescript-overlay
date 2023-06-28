@@ -17,8 +17,13 @@
   #   - integrity: The sri hash of the dependency
   #   - resolved: The URL of the tarball for the dependency from the NPM registry
   getDependencies = lock: let
-    # Don't include the current package, as it isn't a dependency.
-    removeCurrent = packages: removeAttrs packages [""];
+    rootWorkspace = "";
+    workspaceDirs = lock.packages.${rootWorkspace}."workspaces" or [];
+    workspaceNodeModuleDirs = builtins.map (dir: "node_modules/" + dir) workspaceDirs;
+    workspaceNames = builtins.map (dir: "node_modules/" + lock.packages.${dir}.name or dir) workspaceDirs;
+    allWorkspaces = lib.unique ([ rootWorkspace ] ++ workspaceDirs ++ workspaceNames ++ workspaceNodeModuleDirs);
+
+    removeWorkspaces = packages: removeAttrs packages allWorkspaces;
 
     verifyPackage = name: value: {
       version = value.version or (throw "Dependency ${name} does not have a 'version' key");
@@ -30,7 +35,7 @@
     # "dependencies" key, while v2 lockfiles use a "packages" key.
     allDependencies = lock.packages or lock.dependencies or {};
   in
-    lib.mapAttrs verifyPackage (removeCurrent allDependencies);
+    lib.mapAttrs verifyPackage (removeWorkspaces allDependencies);
 
   # Turn each dependency into a fetchurl call. At the moment, this code does not
   # support any other type of dependency; for that, see other NPM lockfile
