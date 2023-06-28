@@ -25,6 +25,16 @@ The included library provides helper functions for building PureScript packages,
 - `buildSpagoLock`: Build `output` directories for any package or workspace listed in a spago.lock file
 - `buildPackageLock`: Install all dependencies in a package-lock.json file into a node_modules directory.
 
+## Examples
+
+The [purescript-nix-example](https://github.com/thomashoneyman/purescript-nix-example) repository demonstrates building a PureScript project using Purix. The [PureScript Registry](https://github.com/purescript/registry-dev) also uses Purix to build a monorepo.
+
+The [`generate`](./generate/) directory contains a PureScript script implemented using this library. It has two Spago workspaces and foreign Node dependencies which are packaged into an runnable script via the utilities in this library. Specifically, see the included [`default.nix`](./generate/default.nix).
+
+```console
+nix run .#generate
+```
+
 ## Usage
 
 In a Nix flake, use the provided overlay when importing nixpkgs to get access to tools like `purs` and `spago` and functions like `buildSpagoLock`. For example, the below flake creates a development shell with recent versions of the PureScript compiler and Spago package manager:
@@ -63,14 +73,6 @@ You can also run individual packages from the flake, e.g. to format your `src` d
 
 ```console
 nix run github:thomashoneyman/purescript-nix#purs-tidy format-in-place src
-```
-
-## Examples
-
-The [`generate`](./generate/) directory contains a PureScript script implemented using this library. It has two Spago workspaces and foreign Node dependencies which are packaged into an runnable script via the utilities in this library. Specifically, see the included [`default.nix`](./generate/default.nix).
-
-```console
-nix run .#generate
 ```
 
 ## Tests
