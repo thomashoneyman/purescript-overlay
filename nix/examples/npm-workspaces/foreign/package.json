@@ -1,0 +1,9 @@
+{
+  "name": "workspace-foreign",
+  "private": true,
+  "license": "BSD-3-Clause",
+  "dependencies": {
+    "lib": "file:../lib",
+    "tmp": "^0.2.1"
+  }
+}

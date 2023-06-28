@@ -1,0 +1,9 @@
+{
+  "name": "npm-workspaces",
+  "private": true,
+  "workspaces": [
+    "app",
+    "foreign",
+    "lib"
+  ]
+}
