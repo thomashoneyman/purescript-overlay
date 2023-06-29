@@ -129,20 +129,18 @@
 
   # Merges together the dependencies into a local output directory such that
   # they can be used for incremental compilation.
-  syncOutput = deps:
-    let
-      options = {
-        "recursive" = true;
-        "checksum" = true;
-        "chmod" = "u+w";
-        "no-owner" = true;
-        "no-group" = true;
-        "times" = true;
-        "links" = true;
-        "mkpath" = true;
-      };
-
-    in "${rsync}/bin/rsync ${lib.cli.toGNUCommandLineShell { } options} ${lib.concatMapStringsSep " " (dep: "${dep}/output") deps} .";
+  syncOutput = deps: let
+    options = {
+      "recursive" = true;
+      "checksum" = true;
+      "chmod" = "u+w";
+      "no-owner" = true;
+      "no-group" = true;
+      "times" = true;
+      "links" = true;
+      "mkpath" = true;
+    };
+  in "${rsync}/bin/rsync ${lib.cli.toGNUCommandLineShell {} options} ${lib.concatMapStringsSep " " (dep: "${dep}/output") deps} .";
 
   # Merge the cache-db.json files of all the dependencies so the compiler knows
   # not to rebuild them.
@@ -156,7 +154,10 @@
     jq -s 'reduce .[] as $item ({}; reduce ($item|keys_unsorted[]) as $key (.; .[$key] += $item[$key]))' $caches > output/cache-db.json
   '';
 
-  fixDependencies = { purs, corefn}: deps:
+  fixDependencies = {
+    purs,
+    corefn,
+  }: deps:
     lib.fix (self:
       lib.mapAttrs (name: drv: let
         get-dep = dep: self.${dep};
@@ -188,7 +189,7 @@
           globs =
             ["${src}/src/**/*.purs"]
             ++ map (dep: ''"${dep.src}/src/**/*.purs"'') (builtins.attrValues dependencies);
-          
+
           # This is bad...but without Spago, how else can we get this?
           buildInfo = pkgs.writeText "BuildInfo.purs" ''
             module Spago.Generated.BuildInfo where
@@ -225,7 +226,11 @@
             # TODO: Ideally we would only compile to corefn if we know it's
             # necessary (for example, a 'backend' command was supplied).
             set -f
-            purs compile ${lib.concatStringsSep " " globs} ${buildInfo} --codegen js${if corefn then ",corefn" else ""} 2>&1 | tee purs-log.txt
+            purs compile ${lib.concatStringsSep " " globs} ${buildInfo} --codegen js${
+              if corefn
+              then ",corefn"
+              else ""
+            } 2>&1 | tee purs-log.txt
             set +f
           '';
 
@@ -247,7 +252,8 @@
               exit 1
             fi
           '';
-        }) deps);
+        })
+      deps);
 
   buildSpagoLock = {
     src,
@@ -256,7 +262,13 @@
     lockfile ? src + "/spago.lock",
   }: let
     lock = readSpagoLock lockfile;
+    workspaceDirs = builtins.attrValues (lib.mapAttrs (_: attr: attr.path) lock.workspace.packages);
+    # We only want to include the lockfile and code from any listed workspaces
+    filteredSrc = lib.cleanSourceWith {
+      filter = name: type: name != "spago.lock" && !(builtins.elem name workspaceDirs);
+      src = lib.cleanSource src;
+    };
   in
-    fixDependencies { inherit purs corefn; }
-    (lockedPackages src lock // workspacePackages src lock);
+    fixDependencies {inherit purs corefn;}
+    (lockedPackages filteredSrc lock // workspacePackages filteredSrc lock);
 }

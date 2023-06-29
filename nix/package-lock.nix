@@ -21,7 +21,7 @@
     workspaceDirs = lock.packages.${rootWorkspace}."workspaces" or [];
     workspaceNodeModuleDirs = builtins.map (dir: "node_modules/" + dir) workspaceDirs;
     workspaceNames = builtins.map (dir: "node_modules/" + lock.packages.${dir}.name or dir) workspaceDirs;
-    allWorkspaces = lib.unique ([ rootWorkspace ] ++ workspaceDirs ++ workspaceNames ++ workspaceNodeModuleDirs);
+    allWorkspaces = lib.unique ([rootWorkspace] ++ workspaceDirs ++ workspaceNames ++ workspaceNodeModuleDirs);
 
     removeWorkspaces = packages: removeAttrs packages allWorkspaces;
 
@@ -52,7 +52,8 @@
   # Build a package from a package-lock.json file. This will fetch all the
   # tarballs for the dependencies listed in the lockfile and then run `npm ci`
   buildPackageLock = {src}: let
-    packageLock = readPackageLock (src + "/package-lock.json");
+    lockfile = src + "/package-lock.json";
+    packageLock = readPackageLock lockfile;
 
     # Fetch all the tarballs for the dependencies
     tarballs = builtins.attrValues (builtins.mapAttrs fetchDependencyTarball (getDependencies packageLock));
@@ -67,7 +68,12 @@
       name = packageLock.name;
       version = packageLock.version or "0.0.0";
 
-      inherit src;
+      # We only want to include the package-lock.json to avoid
+      # unnecessary rebuilds.
+      src = lib.cleanSourceWith {
+        filter = name: _: name != "package-lock.json";
+        src = lib.cleanSource src;
+      };
 
       buildInputs = [nodejs];
 
