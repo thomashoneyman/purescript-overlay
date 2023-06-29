@@ -60,9 +60,7 @@
         program = "${bin}/bin/${bin.pname or bin.name}";
       };
       apps = pkgs.lib.mapAttrs (_: mkApp) self.packages.${system};
-      scripts = {
-        generate = mkApp (pkgs.callPackage ./generate {});
-      };
+      scripts = {generate = mkApp (pkgs.callPackage ./generate {});};
     in
       apps // scripts);
 
