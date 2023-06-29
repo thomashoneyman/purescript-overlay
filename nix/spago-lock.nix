@@ -188,6 +188,17 @@
           globs =
             ["${src}/src/**/*.purs"]
             ++ map (dep: ''"${dep.src}/src/**/*.purs"'') (builtins.attrValues dependencies);
+          
+          # This is bad...but without Spago, how else can we get this?
+          buildInfo = pkgs.writeText "BuildInfo.purs" ''
+            module Spago.Generated.BuildInfo where
+
+            buildInfo =
+              { packages: []
+              , pursVersion: "${purs.version}"
+              , spagoVersion: ""
+              }
+          '';
 
           preBuild = ''
             mkdir output
@@ -214,7 +225,7 @@
             # TODO: Ideally we would only compile to corefn if we know it's
             # necessary (for example, a 'backend' command was supplied).
             set -f
-            purs compile ${lib.concatStringsSep " " globs} --codegen js${if corefn then ",corefn" else ""} 2>&1 | tee purs-log.txt
+            purs compile ${lib.concatStringsSep " " globs} ${buildInfo} --codegen js${if corefn then ",corefn" else ""} 2>&1 | tee purs-log.txt
             set +f
           '';
 
