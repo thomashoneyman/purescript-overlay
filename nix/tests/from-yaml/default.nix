@@ -34,4 +34,13 @@ in
         extra_packages = {};
       };
     };
+
+    testBoolean = shouldParse {
+      input = ''
+        lock: true
+      '';
+      output = {
+        lock = true;
+      };
+    };
   }

@@ -17,15 +17,15 @@
       then throw "Empty YAML file"
       else noEmpties;
 
-    # Spago indicates empty lists and objects by including the key along with
-    # an empty list or object as the value. By default we only consider YAML
-    # objects (key: value) and lists (- value) when parsing structured data,
-    # so this gives us a chance to handle these special cases.
-    parseEmptyElem = elem:
+    parsePrimitiveElem = elem:
       if elem == "[]"
       then []
       else if elem == "{}"
       then {}
+      else if elem == "true"
+      then true
+      else if elem == "false"
+      then false
       else elem;
 
     # Match the following structure for each line:
@@ -64,7 +64,7 @@
         isListEntry = false;
         indent = (builtins.stringLength (builtins.elemAt singleLine 0)) / 2;
         key = builtins.elemAt singleLine 1;
-        value = parseEmptyElem (builtins.elemAt singleLine 2);
+        value = parsePrimitiveElem (builtins.elemAt singleLine 2);
       }
       # Handle multi-line key -> object assignment
       else if multiLine != null
