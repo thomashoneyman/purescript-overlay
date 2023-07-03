@@ -13,13 +13,13 @@ export const newOctokitImpl = (authToken) => {
       per_page: 100, // this is the maximum
     },
     throttle: {
-      onRateLimit: (retryAfter, options) => {
+      onRateLimit: (_, options) => {
         // Retry twice after hitting a rate limit error, then give up
         if (options.request.retryCount <= 2) {
           return true;
         }
       },
-      onSecondaryRateLimit: (retryAfter, options) => {},
+      onSecondaryRateLimit: () => {},
     },
   });
   return octokit;

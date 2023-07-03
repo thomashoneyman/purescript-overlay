@@ -16,9 +16,6 @@
     then path
     else throw "Path does not exist: ${path}";
 
-  # Read the Spago config file
-  readSpagoConfig = config: fromYAML (builtins.readFile config);
-
   # Read the Spago lock file
   readSpagoLock = lockfile: fromYAML (builtins.readFile lockfile);
 

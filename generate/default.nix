@@ -6,9 +6,13 @@
   # from purix
   purix,
   purs-backend-es,
+  purs-tidy,
 }: let
   npmDependencies = purix.lib.buildPackageLock {src = ./.;};
-  packages = purix.lib.buildSpagoLock {src = ./.; corefn = true; };
+  packages = purix.lib.buildSpagoLock {
+    src = ./.;
+    corefn = true;
+  };
   entrypoint = writeText "entrypoint.js" ''
     import { main } from "./output-es/Bin.Main";
     main();
@@ -17,7 +21,8 @@ in
   stdenv.mkDerivation rec {
     name = "bin";
     src = ./.;
-    nativeBuildInputs = [purs-backend-es esbuild];
+    nativeBuildInputs = [purs-backend-es purs-tidy esbuild];
+
     buildPhase = ''
       ln -s ${npmDependencies}/js/node_modules .
       cp -r ${packages.${name}}/output .
@@ -31,6 +36,12 @@ in
         --outfile=${name}.js \
         --platform=node
     '';
+
+    checkPhase = ''
+      purs-tidy check bin lib
+      eslint lib
+    '';
+
     installPhase = ''
       mkdir -p $out/bin
       cp ${name}.js $out/${name}.js

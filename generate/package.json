@@ -5,5 +5,8 @@
     "@octokit/plugin-throttling": "^3.7.0",
     "@octokit/rest": "18.12.0",
     "tmp": "^0.2.1"
+  },
+  "devDependencies": {
+    "eslint": "^8.44.0"
   }
 }

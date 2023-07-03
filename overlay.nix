@@ -2,11 +2,13 @@ final: prev: let
   fromYAML = prev.callPackage ./nix/from-yaml.nix {};
 
   # All of the tools supported by this repo
-  tooling = import ./manifests {inherit (prev) system lib callPackage stdenv;};
+  tooling =
+    import ./manifests {inherit (prev) system lib callPackage stdenv;};
 
   # All of the library functions supported by this repo
-  buildPackageLock = prev.callPackage ./nix/package-lock.nix {};
-  buildSpagoLock = prev.callPackage ./nix/spago-lock.nix {inherit fromYAML;};
+  buildPackageLock = prev.callPackage ./nix/build-package-lock.nix {};
+  buildSpagoLock =
+    prev.callPackage ./nix/build-spago-lock.nix {inherit fromYAML;};
 
   purix = {
     lib = buildPackageLock // buildSpagoLock;

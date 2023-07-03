@@ -1,10 +1,10 @@
 {callPackage}: let
   utils = callPackage ../utils.nix {};
-  lock = callPackage ../../package-lock.nix {};
+  buildPackageLock = callPackage ../../build-package-lock.nix {};
 in
   utils.runTests {
     testSimpleDependencies = {
-      expr = lock.getDependencies (lock.readPackageLock ./simple.json);
+      expr = buildPackageLock.getDependencies (buildPackageLock.readPackageLock ./simple.json);
       expected = {
         "node_modules/leftpad" = {
           version = "0.0.1";
