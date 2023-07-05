@@ -1,17 +1,19 @@
-# Purix
+# PureScript Overlay
 
 [![daily-update](https://github.com/thomashoneyman/purescript-nix/actions/workflows/daily-update.yaml/badge.svg)](https://github.com/thomashoneyman/purescript-nix/actions/workflows/daily-update.yaml)
 [![darwin-support](https://github.com/thomashoneyman/purescript-nix/actions/workflows/darwin-support.yaml/badge.svg)](https://github.com/thomashoneyman/purescript-nix/actions/workflows/darwin-support.yaml)
 [![nix-unit-tests](https://github.com/thomashoneyman/purescript-nix/actions/workflows/nix-unit-tests.yaml/badge.svg)](https://github.com/thomashoneyman/purescript-nix/actions/workflows/nix-unit-tests.yaml)
 
-Purix is two things:
+Pure and reproducible overlay for the standard PureScript toolchain, including support for Nix flakes. The toolchain is auto-updated every day. Currently supported tools:
 
-1. An overlay and flake exposing the core PureScript toolchain — `purs`, `spago`, `purs-tidy`, and `purs-backend-es` — at both stable and pre-release versions, with daily auto-updates for new releases.
-2. A library suitable for building PureScript projects with Nix, called `purix`.
+- `purs`, the compiler
+- `spago`, the package manager
+- `purs-tidy`, the code formatter
+- `purs-backend-es`, the optimizer
 
 > :warning: This library is unstable and may be reorganized. Use at your own risk!
 
-Purix is tested on the following architectures:
+The overlay is tested on the following architectures:
 
 - x86_64-linux
 - x86_64-darwin (Intel Mac)
@@ -20,20 +22,10 @@ Purix is tested on the following architectures:
 
 The included overlay inserts the latest stable and unstable executables into your packages (ie. `purs`, `purs-unstable`, and so on). You can see all specific versions in the [named.json](./manifests/named.json) file. It also provides many versions of each executable under a `-bin` namespace (ie. `purs-bin`, `spago-bin`, and so on) so you can access specific versions of a tool. For example, you can use `purs-bin.purs-0_15_8` to get the 0.15.8 PureScript compiler. These are tracked in the [manifests](./manifests/) directory.
 
-The included library provides helper functions for building PureScript packages, namely:
+There is also an included library named `purix` which provides helper functions for building PureScript packages, namely:
 
 - `buildSpagoLock`: Build `output` directories for any package or workspace listed in a spago.lock file
 - `buildPackageLock`: Install all dependencies in a package-lock.json file into a node_modules directory.
-
-## Examples
-
-The [purescript-nix-example](https://github.com/thomashoneyman/purescript-nix-example) repository demonstrates building a PureScript project using Purix. The [PureScript Registry](https://github.com/purescript/registry-dev) also uses Purix to build a monorepo.
-
-The [`generate`](./generate/) directory contains a PureScript script implemented using this library. It has two Spago workspaces and foreign Node dependencies which are packaged into an runnable script via the utilities in this library. Specifically, see the included [`default.nix`](./generate/default.nix).
-
-```console
-nix run .#generate
-```
 
 ## Usage
 
