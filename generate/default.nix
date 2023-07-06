@@ -3,13 +3,14 @@
   writeText,
   nodejs,
   esbuild,
+  slimlock,
   # from purix
   purix,
   purs-backend-es,
   purs-tidy,
 }: let
-  npmDependencies = purix.lib.buildPackageLock {src = ./.;};
-  packages = purix.lib.buildSpagoLock {
+  npmDependencies = slimlock.buildPackageLock {src = ./.;};
+  packages = purix.buildSpagoLock {
     src = ./.;
     corefn = true;
   };

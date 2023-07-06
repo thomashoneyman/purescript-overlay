@@ -40,7 +40,7 @@ nix run .#generate -- update ../manifests --commit
 
 The `purs` compiler is supported at versions going back to 0.13.0. It is built by fetching the tarballs the compiler team uploads to GitHub releases.
 
-The `spago` build tool is supported for all versions implemented in PureScript (as of the time of writing, that's 0.93.4). It is built by associating a GitHub release with a commit SHA, then fetching the repo at that SHA and building its contents using `buildPackageLock` and `buildSpagoLock`.
+The `spago` build tool is supported for all versions implemented in PureScript (as of the time of writing, that's 0.93.4). It is built by associating a GitHub release with a commit SHA, then fetching the repo at that SHA and building its contents using `buildSpagoLock`.
 
 #### Upcoming
 

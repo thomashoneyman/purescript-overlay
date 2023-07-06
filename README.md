@@ -25,7 +25,6 @@ The included overlay inserts the latest stable and unstable executables into you
 There is also an included library named `purix` which provides helper functions for building PureScript packages, namely:
 
 - `buildSpagoLock`: Build `output` directories for any package or workspace listed in a spago.lock file
-- `buildPackageLock`: Install all dependencies in a package-lock.json file into a node_modules directory.
 
 ## Usage
 
