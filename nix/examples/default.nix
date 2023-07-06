@@ -3,5 +3,4 @@
 {callPackage}: {
   simple = callPackage ./simple {};
   simple-ffi = callPackage ./simple-ffi {};
-  npm-workspaces = callPackage ./npm-workspaces {};
 }

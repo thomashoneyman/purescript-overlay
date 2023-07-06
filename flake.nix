@@ -1,22 +1,27 @@
 {
   description = "Nix derivations for PureScript core language tools.";
 
-  inputs = {nixpkgs.url = "github:nixos/nixpkgs/release-23.05";};
+  inputs = {
+    nixpkgs.url = "github:nixos/nixpkgs/release-23.05";
+
+    slimlock.url = "github:thomashoneyman/slimlock";
+    slimlock.inputs.nixpkgs.follows = "nixpkgs";
+  };
 
   outputs = {
     self,
     nixpkgs,
+    slimlock,
   }: let
-    overlay = import ./overlay.nix;
     supportedSystems = ["x86_64-linux" "x86_64-darwin" "aarch64-linux" "aarch64-darwin"];
     forAllSystems = nixpkgs.lib.genAttrs supportedSystems;
     nixpkgsFor = forAllSystems (system:
       import nixpkgs {
         inherit system;
-        overlays = [overlay];
+        overlays = [self.overlays.default slimlock.overlays.default];
       });
   in {
-    overlays.default = overlay;
+    overlays.default = import ./overlay.nix;
 
     # A warning-free top-level flake output suitable for running unit tests via
     # e.g. `nix eval .#lib`.
