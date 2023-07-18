@@ -662,5 +662,11 @@
       "hash": "sha256-V91bzrtmumSRB9M3XKdAWgN9GxS7Jw5JNWqx8Zzlv8A=",
       "url": "https://github.com/purescript/purescript/releases/download/v0.15.10-1/macos-arm64.tar.gz"
     }
+  },
+  "0.15.10": {
+    "aarch64-linux": {
+      "hash": "sha256-juZQgu3Zn3P58s4GpMOqMaE6MTitkrQ5N7oDFZ2bmrM=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.10/linux-arm64.tar.gz"
+    }
   }
 }
