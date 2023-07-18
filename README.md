@@ -39,7 +39,7 @@ In a Nix flake, use the provided overlay when importing nixpkgs to get access to
     purescript-overlay.inputs.nixpkgs.follows = "nixpkgs";
   };
 
-  outputs = { self, nixpkgs, purescript-overlay }:
+  outputs = { self, nixpkgs, flake-utils, purescript-overlay }:
     flake-utils.lib.eachDefaultSystem (system:
       let
         overlays = [ purescript-overlay.overlays.default ];
