@@ -489,6 +489,10 @@
     "x86_64-linux": {
       "hash": "sha256-Hoh/VpCNXsK5+ql1nMqVS3Qw+6PRMKjgVzEoSVTqV6Q=",
       "url": "https://github.com/purescript/purescript/releases/download/v0.15.8/linux64.tar.gz"
+    },
+    "x86_64-darwin": {
+      "hash": "sha256-N+fc/8D8ERwEe290mSGm72Tr+hVXBcHqw4NSwT1aBis=",
+      "url": "https://github.com/purescript/purescript/releases/download/v0.15.8/macos.tar.gz"
     }
   },
   "0.15.9-0": {
