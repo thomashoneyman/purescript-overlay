@@ -149,8 +149,8 @@
       "url": "https://github.com/purescript/spago/releases/download/0.21.0/macOS.tar.gz"
     }
   },
-  "0.93.5": {
-    "hash": "sha256-Wyma1OzF6I80JPhso581qeNsExxpp7qUO4Mk/nuVJ4Y=",
-    "url": "https://registry.npmjs.org/spago/-/spago-0.93.5.tgz"
+  "0.93.8": {
+    "hash": "sha256-yz54k7lLITYqBt7oN+7f+tBTz7f03vGvNiIqfOuEaLk=",
+    "url": "https://registry.npmjs.org/spago/-/spago-0.93.8.tgz"
   }
 }
