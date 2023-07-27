@@ -2,7 +2,7 @@
 import ./mkDerivation.nix {
   pname = "purs-tidy";
   exe = "purs-tidy";
-  js = "index.js";
+  js = "bin/index.js";
   meta = {
     description = "PureScript formatter and tidy-upper";
     homepage = "https://github.com/natefaubion/purescript-tidy";

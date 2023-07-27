@@ -29,15 +29,12 @@ stdenv.mkDerivation rec {
     PACKAGE=$out/node_modules/${pname}
     mkdir -p $PACKAGE
     mv package/* $PACKAGE
-    
-    mkdir -p $out/bin
 
-    BIN=$out/bin/${js}
-    ln -s $PACKAGE/bin/${js} $BIN
-
+    BIN=$PACKAGE/${js}
     chmod +x $BIN
     patchShebangs $BIN
 
+    mkdir -p $out/bin
     ln -s $BIN $out/bin/${exe}
   '';
 
