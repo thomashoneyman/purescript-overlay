@@ -1,7 +1,6 @@
 { lib }:
 import ./mkDerivation.nix {
-  pname = "purs-tidy";
-  exe = "purs-tidy";
+  name = "purs-tidy";
   js = "bin/index.js";
   meta = {
     description = "PureScript formatter and tidy-upper";

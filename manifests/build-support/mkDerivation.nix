@@ -1,6 +1,5 @@
 {
-  pname,
-  exe,
+  name,
   js,
   meta
 }:
@@ -15,7 +14,9 @@
   hash,
 }:
 stdenv.mkDerivation rec {
-  inherit pname version;
+  pname = name;
+
+  inherit version;
 
   src = fetchurl {inherit url hash;};
 
@@ -26,7 +27,7 @@ stdenv.mkDerivation rec {
   '';
 
   installPhase = ''
-    PACKAGE=$out/node_modules/${pname}
+    PACKAGE=$out/node_modules/${name}
     mkdir -p $PACKAGE
     mv package/* $PACKAGE
 
@@ -35,7 +36,7 @@ stdenv.mkDerivation rec {
     patchShebangs $BIN
 
     mkdir -p $out/bin
-    ln -s $BIN $out/bin/${exe}
+    ln -s $BIN $out/bin/${name}
   '';
 
   inherit meta;

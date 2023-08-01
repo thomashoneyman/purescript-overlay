@@ -1,7 +1,6 @@
 { lib }:
 import ./mkDerivation.nix {
-  pname = "purs-backend-es";
-  exe = "purs-backend-es";
+  name = "purs-backend-es";
   js = "index.js";
   meta = {
     description = "An optimizing backend toolkit for PureScript's CoreFn.";

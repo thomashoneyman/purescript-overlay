@@ -1,7 +1,6 @@
 { lib }:
 import ./mkDerivation.nix {
-  pname = "spago";
-  exe = "spago";
+  name = "spago";
   js = "bin/bundle.js";
   meta = {
     description = "PureScript package manager and build tool";
