@@ -4,6 +4,7 @@
   meta
 }:
 {
+  lib,
   stdenv,
   fetchurl,
   nodejs,
@@ -13,7 +14,7 @@
   url,
   hash,
 }:
-stdenv.mkDerivation rec {
+stdenv.mkDerivation {
   pname = name;
 
   inherit version;
@@ -39,5 +40,5 @@ stdenv.mkDerivation rec {
     ln -s $BIN $out/bin/${name}
   '';
 
-  inherit meta;
+  meta = meta lib;
 }

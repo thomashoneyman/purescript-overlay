@@ -7,9 +7,9 @@
   callPackage,
 }: let
   mkPursDerivation = callPackage ./build-support/mkPursDerivation.nix {};
-  mkSpagoDerivation = callPackage (callPackage ./build-support/mkSpagoDerivation.nix {}) {};
-  mkPursTidyDerivation = callPackage (callPackage ./build-support/mkPursTidyDerivation.nix {}) {};
-  mkPursBackendEsDerivation = callPackage (callPackage ./build-support/mkPursBackendEsDerivation.nix {}) {};
+  mkSpagoDerivation = callPackage ./build-support/mkSpagoDerivation.nix {};
+  mkPursTidyDerivation = callPackage ./build-support/mkPursTidyDerivation.nix {};
+  mkPursBackendEsDerivation = callPackage ./build-support/mkPursBackendEsDerivation.nix {};
   mkLegacySpagoDerivation = callPackage ./build-support/mkLegacySpagoDerivation.nix {};
 
   # The purs manifest uses fetchurl to fetch tarballs. We have to accommodate
