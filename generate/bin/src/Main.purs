@@ -151,7 +151,7 @@ main = Aff.launchAff_ do
             -- We switch the manifest dir from the user-provided input to the
             -- cloned repo before we do anything else.
             Reader.local (\env -> env { manifestDir = Path.concat [ env.tmpDir, "purescript-nix", "manifests" ] }) do
-              if Map.isEmpty pursUpdates && Map.isEmpty spagoUpdates && Map.isEmpty pursTidyUpdates then
+              if Map.isEmpty pursUpdates && Map.isEmpty spagoUpdates && Map.isEmpty pursTidyUpdates && Map.isEmpty pursBackendEsUpdates then
                 Console.log "No new releases."
               else do
                 Console.log "New releases, writing to disk..."
