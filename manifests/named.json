@@ -5,6 +5,6 @@
   "spago-unstable": "spago-0_93_9",
   "purs-tidy-stable": "purs-tidy-0_10_0",
   "purs-tidy-unstable": "purs-tidy-0_10_0",
-  "purs-backend-es-stable": "purs-backend-es-1_3_1",
-  "purs-backend-es-unstable": "purs-backend-es-1_3_1"
+  "purs-backend-es-stable": "purs-backend-es-1_4_1",
+  "purs-backend-es-unstable": "purs-backend-es-1_4_1"
 }
