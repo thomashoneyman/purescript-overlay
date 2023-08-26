@@ -181,7 +181,7 @@ main = Aff.launchAff_ do
                   pursTidyVersions = Map.keys pursTidyUpdates
                   pursBackendEsVersions = Map.keys pursBackendEsUpdates
 
-                  title = "Update " <> String.trim
+                  commitMsg = "Update " <> String.trim
                     ( String.joinWith " "
                         [ guard (Set.size pursVersions > 0) $ "purs (" <> String.joinWith ", " (Set.toUnfoldable (Set.map SemVer.print pursVersions)) <> ")"
                         , guard (Set.size spagoVersions > 0) $ "spago (" <> String.joinWith ", " (Set.toUnfoldable (Set.map SemVer.print spagoVersions)) <> ")"
@@ -189,9 +189,6 @@ main = Aff.launchAff_ do
                         , guard (Set.size pursBackendEsVersions > 0) $ "purs-backend-es (" <> String.joinWith ", " (Set.toUnfoldable (Set.map SemVer.print pursBackendEsVersions)) <> ")"
                         ]
                     )
-
-                  -- TODO: What would be the most informative thing to do here?
-                  body = "Update manifest files to new tooling versions."
 
                 existing <- AppM.runGitHubM GitHub.getPullRequests >>= case _ of
                   Left error -> do
@@ -201,7 +198,7 @@ main = Aff.launchAff_ do
 
                 -- TODO: Title comparison is a bit simplistic. Better to compare
                 -- on like the new hashes or something?
-                createPullResult <- case Array.find (eq title <<< _.title) existing of
+                createPullResult <- case Array.find (eq title <<< _.commitMsg) existing of
                   Nothing -> do
                     pushResult <- AppM.runGitM $ Git.gitPushBranch token >>= case _ of
                       Git.NothingToPush -> do
@@ -214,7 +211,7 @@ main = Aff.launchAff_ do
                         Console.log error
                         liftEffect (Process.exit 1)
                       Right _ ->
-                        AppM.runGitHubM $ GitHub.createPullRequest { title, body, branch }
+                        AppM.runGitHubM $ GitHub.createPullRequest { title: commitMsg, body: commitMsg, branch }
 
                   Just pull -> do
                     Console.log "A pull request with this title is already open: "
