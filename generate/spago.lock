@@ -130,6 +130,14 @@ packages:
       - tuples
       - unfoldable
       - unsafe-coerce
+  assert:
+    type: registry
+    version: 6.0.0
+    integrity: sha256-hCSYcCw9kj3qujoDcriWhCdmrpPZoguSPDZhEMnTl3A=
+    dependencies:
+      - console
+      - effect
+      - prelude
   avar:
     type: registry
     version: 5.0.0
@@ -510,6 +518,13 @@ packages:
     integrity: sha256-znHWLSSOYw15P5DTcsAdal2lf7nGA2yayLdOZ2t5r7o=
     dependencies:
       - effect
+  js-uri:
+    type: registry
+    version: 3.1.0
+    integrity: sha256-3p0ynHveCJmC2CXze+eMBdW/2l5e953Q8XMAKz+jxUo=
+    dependencies:
+      - functions
+      - maybe
   language-cst-parser:
     type: registry
     version: 0.13.0
@@ -553,6 +568,17 @@ packages:
       - foldable-traversable
       - invariant
       - prelude
+  lcg:
+    type: registry
+    version: 4.0.0
+    integrity: sha256-h7ME5cthLfbgJOJdsZcSfFpwXsx4rf8YmhebU+3iSYg=
+    dependencies:
+      - effect
+      - integers
+      - maybe
+      - partial
+      - prelude
+      - random
   lists:
     type: registry
     version: 7.0.0
@@ -911,6 +937,45 @@ packages:
       - record
       - transformers
       - tuples
+  quickcheck:
+    type: registry
+    version: 8.0.1
+    integrity: sha256-ZvpccKQCvgslTXZCNmpYW4bUsFzhZd/kQUr2WmxFTGY=
+    dependencies:
+      - arrays
+      - console
+      - control
+      - effect
+      - either
+      - enums
+      - exceptions
+      - foldable-traversable
+      - gen
+      - identity
+      - integers
+      - lazy
+      - lcg
+      - lists
+      - maybe
+      - newtype
+      - nonempty
+      - numbers
+      - partial
+      - prelude
+      - record
+      - st
+      - strings
+      - tailrec
+      - transformers
+      - tuples
+      - unfoldable
+  random:
+    type: registry
+    version: 6.0.0
+    integrity: sha256-CJ611a35MPCE7XQMp0rdC6MCn76znlhisiCRgboAG+Q=
+    dependencies:
+      - effect
+      - integers
   record:
     type: registry
     version: 4.0.0
@@ -929,7 +994,7 @@ packages:
   registry-lib:
     type: git
     url: https://github.com/purescript/registry-dev.git
-    rev: d45cdca59a572889db03cf6ea689c6b41808e855
+    rev: 1b9fc7d58b16ff4996a4a2a389e442dd207c9b27
     subdir: lib
     dependencies:
       - aff
@@ -941,6 +1006,7 @@ packages:
       - datetime
       - effect
       - either
+      - exceptions
       - foldable-traversable
       - foreign-object
       - formatters
@@ -956,14 +1022,39 @@ packages:
       - node-fs
       - node-fs-aff
       - node-path
+      - nullable
       - ordered-collections
       - parsing
       - partial
       - prelude
       - profunctor
+      - profunctor-lenses
+      - routing-duplex
       - safe-coerce
       - strings
       - transformers
+      - tuples
+  routing-duplex:
+    type: registry
+    version: 0.7.0
+    integrity: sha256-hgWzZPft6067zYvoZ1n0y/dSz4H2jBNREwfC3qC/s8Y=
+    dependencies:
+      - arrays
+      - assert
+      - control
+      - effect
+      - either
+      - foldable-traversable
+      - integers
+      - js-uri
+      - lazy
+      - maybe
+      - newtype
+      - prelude
+      - profunctor
+      - quickcheck
+      - record
+      - strings
       - tuples
   run:
     type: registry

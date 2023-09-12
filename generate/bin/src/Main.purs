@@ -198,7 +198,7 @@ main = Aff.launchAff_ do
 
                 -- TODO: Title comparison is a bit simplistic. Better to compare
                 -- on like the new hashes or something?
-                createPullResult <- case Array.find (eq title <<< _.commitMsg) existing of
+                createPullResult <- case Array.find (eq commitMsg <<< _.title) existing of
                   Nothing -> do
                     pushResult <- AppM.runGitM $ Git.gitPushBranch token >>= case _ of
                       Git.NothingToPush -> do
