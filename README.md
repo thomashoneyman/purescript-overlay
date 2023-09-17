@@ -54,6 +54,7 @@ In a Nix flake, use the provided overlay when importing nixpkgs to get access to
             pkgs.spago-unstable
             pkgs.purs-tidy-bin.purs-tidy-0_10_0
             pkgs.purs-backend-es
+            pkgs.nodePackages.purescript-language-server # from NixPkgs
           ];
         };
       }
