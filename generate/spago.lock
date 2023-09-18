@@ -994,7 +994,7 @@ packages:
   registry-lib:
     type: git
     url: https://github.com/purescript/registry-dev.git
-    rev: 1b9fc7d58b16ff4996a4a2a389e442dd207c9b27
+    rev: 6a803c37577af368caa221a2a06d6be2079d32da
     subdir: lib
     dependencies:
       - aff

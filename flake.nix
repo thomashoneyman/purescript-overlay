@@ -49,6 +49,10 @@
       purs-backend-es = pkgs.purs-backend-es;
       purs-backend-es-unstable = pkgs.purs-backend-es-unstable;
       purs-backend-es-bin = pkgs.purs-backend-es-bin;
+
+      purs-language-server = pkgs.purs-language-server;
+      purs-language-server-unstable = pkgs.purs-language-server-unstable;
+      purs-language-server-bin = pkgs.purs-language-server-bin;
     in
       {
         inherit purs purs-unstable spago spago-unstable purs-tidy purs-tidy-unstable purs-backend-es purs-backend-es-unstable;
@@ -56,7 +60,8 @@
       // purs-bin
       // spago-bin
       // purs-tidy-bin
-      // purs-backend-es-bin);
+      // purs-backend-es-bin
+      // purs-language-server-bin);
 
     apps = forAllSystems (system: let
       pkgs = nixpkgsFor.${system};

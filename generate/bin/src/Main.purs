@@ -98,6 +98,12 @@ main = Aff.launchAff_ do
           else
             Console.log $ "New purs-backend-es releases: " <> Utils.printJson Nix.Manifest.pursBackendEsManifestCodec updates
 
+        Run.prefetchPursLanguageServer >>= \updates ->
+          if Map.isEmpty updates then
+            Console.log "No new purescript-language-server releases."
+          else
+            Console.log $ "New purescript-language-server releases: " <> Utils.printJson Nix.Manifest.pursLanguageServerManifestCodec updates
+
     Update dir commit -> do
       let envFile = Path.concat [ dir, "..", "generate", ".env" ]
       Console.log $ "Loading .env file from " <> envFile
@@ -116,6 +122,7 @@ main = Aff.launchAff_ do
         spagoUpdates <- Run.prefetchSpago
         pursTidyUpdates <- Run.prefetchPursTidy
         pursBackendEsUpdates <- Run.prefetchPursBackendEs
+        pursLanguageServerUpdates <- Run.prefetchPursLanguageServer
 
         case commit of
           NoCommit -> do
@@ -144,6 +151,12 @@ main = Aff.launchAff_ do
               Console.log $ "New purs-backend-es releases, writing to disk..."
               Run.writePursBackendEsUpdates pursBackendEsUpdates
 
+            if Map.isEmpty pursLanguageServerUpdates then
+              Console.log "No new purescript-language-server releases."
+            else do
+              Console.log $ "New purescript-language-server releases, writing to disk..."
+              Run.writePursLanguageServerUpdates pursLanguageServerUpdates
+
           DoCommit -> do
             Console.log "Cloning purescript-nix, opening a branch, committing, and opening a pull request..."
             token <- Env.lookupRequired Env.githubToken
@@ -151,7 +164,7 @@ main = Aff.launchAff_ do
             -- We switch the manifest dir from the user-provided input to the
             -- cloned repo before we do anything else.
             Reader.local (\env -> env { manifestDir = Path.concat [ env.tmpDir, "purescript-nix", "manifests" ] }) do
-              if Map.isEmpty pursUpdates && Map.isEmpty spagoUpdates && Map.isEmpty pursTidyUpdates && Map.isEmpty pursBackendEsUpdates then
+              if Map.isEmpty pursUpdates && Map.isEmpty spagoUpdates && Map.isEmpty pursTidyUpdates && Map.isEmpty pursBackendEsUpdates && Map.isEmpty pursLanguageServerUpdates then
                 Console.log "No new releases."
               else do
                 Console.log "New releases, writing to disk..."
@@ -161,6 +174,7 @@ main = Aff.launchAff_ do
                 Run.writeSpagoUpdates spagoUpdates
                 Run.writePursTidyUpdates pursTidyUpdates
                 Run.writePursBackendEsUpdates pursBackendEsUpdates
+                Run.writePursLanguageServerUpdates pursLanguageServerUpdates
 
                 -- TODO: Commit message could be a lot more informative.
                 commitResult <- AppM.runGitM do
@@ -180,6 +194,7 @@ main = Aff.launchAff_ do
                   spagoVersions = Map.keys spagoUpdates
                   pursTidyVersions = Map.keys pursTidyUpdates
                   pursBackendEsVersions = Map.keys pursBackendEsUpdates
+                  pursLanguageServerVersions = Map.keys pursLanguageServerUpdates
 
                   commitMsg = "Update " <> String.trim
                     ( String.joinWith " "
@@ -187,6 +202,7 @@ main = Aff.launchAff_ do
                         , guard (Set.size spagoVersions > 0) $ "spago (" <> String.joinWith ", " (Set.toUnfoldable (Set.map SemVer.print spagoVersions)) <> ")"
                         , guard (Set.size pursTidyVersions > 0) $ "purs-tidy (" <> String.joinWith ", " (Set.toUnfoldable (Set.map SemVer.print pursTidyVersions)) <> ")"
                         , guard (Set.size pursBackendEsVersions > 0) $ "purs-backend-es (" <> String.joinWith ", " (Set.toUnfoldable (Set.map SemVer.print pursBackendEsVersions)) <> ")"
+                        , guard (Set.size pursLanguageServerVersions > 0) $ "purescript-language-server (" <> String.joinWith ", " (Set.toUnfoldable (Set.map SemVer.print pursLanguageServerVersions)) <> ")"
                         ]
                     )
 

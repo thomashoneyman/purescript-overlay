@@ -26,6 +26,7 @@ data Tool
   | Spago
   | PursTidy
   | PursBackendEs
+  | PursLanguageServer
 
 derive instance Eq Tool
 derive instance Ord Tool
@@ -99,6 +100,7 @@ printExecutable = case _ of
   Spago -> "spago"
   PursTidy -> "purs-tidy"
   PursBackendEs -> "purs-backend-es"
+  PursLanguageServer -> "purs-language-server"
 
 -- | Parse a tool from its executable name, ie. 'purs'
 parseExecutable :: String -> Either String Tool

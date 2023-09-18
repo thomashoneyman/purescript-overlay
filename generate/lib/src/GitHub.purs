@@ -42,6 +42,7 @@ toolRepo = case _ of
   Spago -> { owner: "purescript", repo: "spago" }
   PursTidy -> { owner: "natefaubion", repo: "purescript-tidy" }
   PursBackendEs -> { owner: "aristanetworks", repo: "purescript-backend-optimizer" }
+  PursLanguageServer -> { owner: "nwolverson", repo: "purescript-language-server" }
 
 listReleases :: Tool -> GitHubM (Array Release)
 listReleases tool = do
