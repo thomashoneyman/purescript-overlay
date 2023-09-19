@@ -10,7 +10,7 @@ Pure and reproducible overlay for the standard PureScript toolchain, including s
 - `spago`, the package manager
 - `purs-tidy`, the code formatter
 - `purs-backend-es`, the optimizer
-- `purs-language-server`, the language server protocol
+- `purescript-language-server`, the language server protocol
 
 > :warning: This library is unstable and may be reorganized. Use at your own risk!
 

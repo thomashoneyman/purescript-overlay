@@ -67,7 +67,7 @@ verifyPursLanguageServer :: AppM Unit
 verifyPursLanguageServer = do
   manifest <- AppM.readPursLanguageServerManifest
   let entries = Map.size manifest
-  Console.log $ "Successfully parsed purs-language-server.json with " <> Int.toStringAs Int.decimal entries <> " entries."
+  Console.log $ "Successfully parsed purescript-language-server.json with " <> Int.toStringAs Int.decimal entries <> " entries."
 
 prefetchPurs :: AppM PursManifest
 prefetchPurs = do

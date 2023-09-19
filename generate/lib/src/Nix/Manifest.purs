@@ -27,7 +27,7 @@ filename = case _ of
   Spago -> "spago.json"
   PursTidy -> "purs-tidy.json"
   PursBackendEs -> "purs-backend-es.json"
-  PursLanguageServer -> "purs-language-server.json"
+  PursLanguageServer -> "purescript-language-server.json"
 
 type NamedManifest = Map ToolChannel ToolPackage
 

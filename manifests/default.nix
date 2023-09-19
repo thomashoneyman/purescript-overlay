@@ -75,20 +75,20 @@
     ) {}
     (builtins.attrNames entries);
 
-  purs-language-server-bin = let
-    entries = builtins.fromJSON (builtins.readFile ./purs-language-server.json);
+  purescript-language-server-bin = let
+    entries = builtins.fromJSON (builtins.readFile ./purescript-language-server.json);
   in
     builtins.foldl'
     (
       acc: version: let
-        name = "purs-language-server-${builtins.replaceStrings ["."] ["_"] version}";
+        name = "purescript-language-server-${builtins.replaceStrings ["."] ["_"] version}";
       in
         acc // {${name} = mkPursLanguageServerDerivation ({inherit version;} // entries.${version});}
     ) {}
     (builtins.attrNames entries);
 
   all = {
-    inherit purs-bin spago-bin purs-tidy-bin purs-backend-es-bin purs-language-server-bin;
+    inherit purs-bin spago-bin purs-tidy-bin purs-backend-es-bin purescript-language-server-bin;
   };
 
   # The 'named.json' file records what packages should be mapped to the default

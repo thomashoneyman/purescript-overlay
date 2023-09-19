@@ -10,7 +10,7 @@
   hash,
 }:
 stdenv.mkDerivation rec {
-  pname = "purs-language-server";
+  pname = "purescript-language-server";
   inherit version;
 
   src = fetchurl {inherit url hash;};
@@ -31,10 +31,10 @@ stdenv.mkDerivation rec {
   installPhase = ''
     PACKAGE=$out/node_modules/${pname}
     mkdir -p $PACKAGE
-    cp $src $PACKAGE/purs-language-server.js
+    cp $src $PACKAGE/purescript-language-server.js
     cp ${packageJSON} $PACKAGE/package.json
 
-    BIN=$PACKAGE/purs-language-server.js
+    BIN=$PACKAGE/purescript-language-server.js
     chmod +x $BIN
     patchShebangs $BIN
 

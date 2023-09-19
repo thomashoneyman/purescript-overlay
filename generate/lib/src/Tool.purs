@@ -100,7 +100,7 @@ printExecutable = case _ of
   Spago -> "spago"
   PursTidy -> "purs-tidy"
   PursBackendEs -> "purs-backend-es"
-  PursLanguageServer -> "purs-language-server"
+  PursLanguageServer -> "purescript-language-server"
 
 -- | Parse a tool from its executable name, ie. 'purs'
 parseExecutable :: String -> Either String Tool
@@ -109,7 +109,7 @@ parseExecutable = case _ of
   "spago" -> Right Spago
   "purs-tidy" -> Right PursTidy
   "purs-backend-es" -> Right PursBackendEs
-  "purs-language-server" -> Right PursLanguageServer
+  "purescript-language-server" -> Right PursLanguageServer
   other -> Left $ "Unknown tool: " <> other
 
 -- | A tool and its channel, ie. 'purs-stable'
