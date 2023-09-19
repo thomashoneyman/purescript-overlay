@@ -9,7 +9,7 @@ import Data.Codec.Argonaut as CA
 import Data.Either (Either(..))
 import Data.String as String
 import Data.Traversable (for)
-import Lib.Nix.Manifest (NamedManifest, PursManifest, PursTidyManifest, SpagoManifest, PursBackendEsManifest, namedManifestCodec, pursBackendEsManifestCodec, pursManifestCodec, pursTidyManifestCodec, spagoManifestCodec)
+import Lib.Nix.Manifest (NamedManifest, PursBackendEsManifest, PursLanguageServerManifest, PursManifest, PursTidyManifest, SpagoManifest, namedManifestCodec, pursBackendEsManifestCodec, pursLanguageServerManifestCodec, pursManifestCodec, pursTidyManifestCodec, spagoManifestCodec)
 import Node.Encoding (Encoding(..))
 import Node.FS.Aff as FS.Aff
 import Node.Path as Path
@@ -33,6 +33,7 @@ data NixManifest
   | PursManifest PursManifest
   | PursTidyManifest PursTidyManifest
   | PursBackendEsManifest PursBackendEsManifest
+  | PursLanguageServerManifest PursLanguageServerManifest
   | NamedManifest NamedManifest
 
 derive instance Eq NixManifest
@@ -45,6 +46,7 @@ nixManifestCodec = CA.codec' decode encode
     PursManifest manifest -> CA.encode pursManifestCodec manifest
     PursTidyManifest manifest -> CA.encode pursTidyManifestCodec manifest
     PursBackendEsManifest manifest -> CA.encode pursBackendEsManifestCodec manifest
+    PursLanguageServerManifest manifest -> CA.encode pursLanguageServerManifestCodec manifest
     NamedManifest manifest -> CA.encode namedManifestCodec manifest
 
   decode json =
@@ -52,5 +54,6 @@ nixManifestCodec = CA.codec' decode encode
       <|> map PursManifest (CA.decode pursManifestCodec json)
       <|> map PursTidyManifest (CA.decode pursTidyManifestCodec json)
       <|> map PursBackendEsManifest (CA.decode pursBackendEsManifestCodec json)
+      <|> map PursLanguageServerManifest (CA.decode pursLanguageServerManifestCodec json)
       <|> map NamedManifest (CA.decode namedManifestCodec json)
-      <|> Left (CA.TypeMismatch "Expected a SpagoManifest, PursManifest, PursTidyManifest, PursBackendEsManifest, or NamedManifest")
+      <|> Left (CA.TypeMismatch "Expected a SpagoManifest, PursManifest, PursTidyManifest, PursBackendEsManifest, PursLanguageServerManifest, or NamedManifest")

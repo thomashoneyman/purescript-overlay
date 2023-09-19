@@ -540,32 +540,36 @@ prefetchPursLanguageServer = do
   Console.log $ "Retrieved " <> show (Array.length rawReleases) <> " releases for " <> Tool.print PursLanguageServer Tool.Executable
 
   let
-    parsePursLanguageServerReleases :: Array Release -> Set SemVer
-    parsePursLanguageServerReleases = Set.fromFoldable <<< Array.mapMaybe \release -> Either.hush do
+    parsePursLanguageServerReleases :: Array Release -> Map SemVer String
+    parsePursLanguageServerReleases = Map.fromFoldable <<< Array.mapMaybe \release -> Either.hush do
       version <- SemVer.parse $ fromMaybe release.tag $ String.stripPrefix (String.Pattern "v") release.tag
-      pure version
+      asset <- Either.note "No asset named 'purescript-language-server.js' in release." $ Array.find (\asset -> asset.name == "purescript-language-server.js") release.assets
+      pure $ Tuple version asset.downloadUrl
 
-    supportedReleases :: Set SemVer
-    supportedReleases = parsePursLanguageServerReleases rawReleases
+    -- We only accept pre-bundled language server releases, ie. those after 0.15.5
+    isBeforeCutoff :: SemVer -> Boolean
+    isBeforeCutoff (SemVer { version }) = Version.major version == 0 && Version.minor version <= 15 && Version.patch version <= 5
+
+    supportedReleases :: Map SemVer String
+    supportedReleases = Map.filterKeys (not <<< isBeforeCutoff) $ parsePursLanguageServerReleases rawReleases
 
     -- We only want to include releases that aren't already present in the
     -- manifest file.
-    newReleases :: Set SemVer
-    newReleases = Set.filter (not <<< flip Set.member existing) supportedReleases
+    newReleases :: Map SemVer String
+    newReleases = Map.filterKeys (not <<< flip Set.member existing) supportedReleases
 
-  Console.log $ "Found " <> show (Set.size newReleases) <> " new releases for " <> Tool.print PursLanguageServer Tool.Executable
+  Console.log $ "Found " <> show (Map.size newReleases) <> " new releases for " <> Tool.print PursLanguageServer Tool.Executable
 
-  hashedReleases :: Array (Tuple SemVer FetchUrl) <- for (Set.toUnfoldable newReleases) \version -> do
+  hashedReleases :: PursLanguageServerManifest <- forWithIndex newReleases \version downloadUrl -> do
     Console.log $ "Processing release " <> SemVer.print version
-    Console.log $ "Fetching NPM tarball associated with version " <> SemVer.print version
-    let url = "https://registry.npmjs.org/purescript-language-server/-/purescript-language-server-" <> SemVer.print version <> ".tgz"
-    Nix.Prefetch.nixPrefetchTarball url >>= case _ of
+    Console.log $ "Fetching hashes for release asset download url " <> downloadUrl
+    Nix.Prefetch.nixPrefetchTarball downloadUrl >>= case _ of
       Left error -> do
-        Console.log $ "Failed to hash NPM tarball at url " <> url <> ": " <> error
+        Console.log $ "Failed to hash release asset at url " <> downloadUrl <> ": " <> error
         liftEffect $ Process.exit 1
-      Right hash -> pure $ Tuple version { url, hash }
+      Right hash -> pure { url: downloadUrl, hash }
 
-  pure $ Map.fromFoldable hashedReleases
+  pure hashedReleases
 
 writePursLanguageServerUpdates :: PursLanguageServerManifest -> AppM Unit
 writePursLanguageServerUpdates updates = do

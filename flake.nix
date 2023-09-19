@@ -55,7 +55,7 @@
       purs-language-server-bin = pkgs.purs-language-server-bin;
     in
       {
-        inherit purs purs-unstable spago spago-unstable purs-tidy purs-tidy-unstable purs-backend-es purs-backend-es-unstable;
+        inherit purs purs-unstable spago spago-unstable purs-tidy purs-tidy-unstable purs-backend-es purs-backend-es-unstable purs-language-server purs-language-server-unstable;
       }
       // purs-bin
       // spago-bin
@@ -148,6 +148,7 @@
           self.packages.${system}.purs-unstable
           self.packages.${system}.purs-tidy-unstable
           self.packages.${system}.purs-backend-es-unstable
+          self.packages.${system}.purs-language-server-unstable
         ];
       };
     });

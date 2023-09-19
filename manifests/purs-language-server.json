@@ -1,86 +1,54 @@
 {
-  "0.14.0": {
-    "hash": "sha256-OLCeTXrrAERHMccic8358dT/EH0VyoPMMVwISfsnQCY=",
-    "url": "https://registry.npmjs.org/purescript-language-server/-/purescript-language-server-0.14.0.tgz"
-  },
-  "0.14.4": {
-    "hash": "sha256-EF2jW+hJCI2xsnlD4Mr0rx+PIBBIXmH0szeA3CbwnbE=",
-    "url": "https://registry.npmjs.org/purescript-language-server/-/purescript-language-server-0.14.4.tgz"
-  },
-  "0.15.0": {
-    "hash": "sha256-A/HPl+v8Xf5cPeOIfKyD2Z5LczeaqkmVO4uFO1busDM=",
-    "url": "https://registry.npmjs.org/purescript-language-server/-/purescript-language-server-0.15.0.tgz"
-  },
-  "0.15.1": {
-    "hash": "sha256-5CLPfxutNakqhAMD7XIp4MkhFKtfR5N8DciZS8EhG54=",
-    "url": "https://registry.npmjs.org/purescript-language-server/-/purescript-language-server-0.15.1.tgz"
-  },
-  "0.15.2": {
-    "hash": "sha256-h7X22gJfzMXcef6Qd0KcvTKUw3kIwHE9RQL4RQgD43k=",
-    "url": "https://registry.npmjs.org/purescript-language-server/-/purescript-language-server-0.15.2.tgz"
-  },
-  "0.15.3": {
-    "hash": "sha256-lYHSv0D3XCnfcElh4kQRMl3kaw+rwhccRvG/oO4R3fc=",
-    "url": "https://registry.npmjs.org/purescript-language-server/-/purescript-language-server-0.15.3.tgz"
-  },
-  "0.15.4": {
-    "hash": "sha256-uq/Er9inkVYQp1YOaSkimtAQSumKtbLuaHSOnOz4E+8=",
-    "url": "https://registry.npmjs.org/purescript-language-server/-/purescript-language-server-0.15.4.tgz"
-  },
-  "0.15.5": {
-    "hash": "sha256-eEjPp1R7x79qB3h9hqc7kTutXpw+7ULmtvK+3CvkYFE=",
-    "url": "https://registry.npmjs.org/purescript-language-server/-/purescript-language-server-0.15.5.tgz"
-  },
   "0.15.6": {
-    "hash": "sha256-EXKUR6+ueBSgVC/46A/kl/JkwdHA3EfTQAc3x1JOdkk=",
-    "url": "https://registry.npmjs.org/purescript-language-server/-/purescript-language-server-0.15.6.tgz"
+    "hash": "sha256-s7Z3iRoxGK7JtZaZz2GECnO1TqAukdXL4Opj/xgIUWc=",
+    "url": "https://github.com/nwolverson/purescript-language-server/releases/download/v0.15.6/purescript-language-server.js"
   },
   "0.15.7": {
-    "hash": "sha256-6tB1z+gwK+/7QT8M+0ebwvmCYc+rldlofo6ernye4SU=",
-    "url": "https://registry.npmjs.org/purescript-language-server/-/purescript-language-server-0.15.7.tgz"
+    "hash": "sha256-CRrHl1M7uE73FY4i2Zjp+Osug6vv2VPtL//91EHzEr0=",
+    "url": "https://github.com/nwolverson/purescript-language-server/releases/download/v0.15.7/purescript-language-server.js"
   },
   "0.15.8": {
-    "hash": "sha256-FC3cakgr3RtxfHUCyIkQNRfIdCrNc9tYGhMSD+WaYeM=",
-    "url": "https://registry.npmjs.org/purescript-language-server/-/purescript-language-server-0.15.8.tgz"
+    "hash": "sha256-6PEJilgpmbRbTNL+6RtgarRRXlkFqs5Rx43mMRZGu1M=",
+    "url": "https://github.com/nwolverson/purescript-language-server/releases/download/v0.15.8/purescript-language-server.js"
   },
   "0.16.0": {
-    "hash": "sha256-Jfu0TL9nM6tEAv4j5YrzCZV3GxIB4QthF/I2PvzgjpI=",
-    "url": "https://registry.npmjs.org/purescript-language-server/-/purescript-language-server-0.16.0.tgz"
+    "hash": "sha256-slWpfYy9nRP9LovmdUlifBbRrs6NFPM9qKElAvGSx6Y=",
+    "url": "https://github.com/nwolverson/purescript-language-server/releases/download/v0.16.0/purescript-language-server.js"
   },
   "0.16.1": {
-    "hash": "sha256-sz15cZ2g91rlS8nCjPV6nSB20I9eYix5S1gchd69a74=",
-    "url": "https://registry.npmjs.org/purescript-language-server/-/purescript-language-server-0.16.1.tgz"
+    "hash": "sha256-CdJNzLRfYFPLkvbCbIqvnpW/CFt3tkIZvz9QUQn/GQ4=",
+    "url": "https://github.com/nwolverson/purescript-language-server/releases/download/v0.16.1/purescript-language-server.js"
   },
   "0.16.2": {
-    "hash": "sha256-95ZeUi8WkxPlNXacFJGKJRkY0i4qZNfk/gdJ9HfRKmM=",
-    "url": "https://registry.npmjs.org/purescript-language-server/-/purescript-language-server-0.16.2.tgz"
+    "hash": "sha256-UqAqpgK11ykTAHaF9OlhE+iqIarPQNTgHnM3X2QDrp4=",
+    "url": "https://github.com/nwolverson/purescript-language-server/releases/download/v0.16.2/purescript-language-server.js"
   },
   "0.16.3": {
-    "hash": "sha256-LMPQ5OXoGi+46S7D3SQVHyxsZg7lZRzfHGnwVu+o4gc=",
-    "url": "https://registry.npmjs.org/purescript-language-server/-/purescript-language-server-0.16.3.tgz"
+    "hash": "sha256-EonRH2S1eDE0YO88fJdeR90dOw3n9cwzoG/2HwuUJPA=",
+    "url": "https://github.com/nwolverson/purescript-language-server/releases/download/v0.16.3/purescript-language-server.js"
   },
   "0.16.4": {
-    "hash": "sha256-Dz+rcTn+6KAJNQnTn0L7o09BFV0ORCTQI/z7GIBtZkA=",
-    "url": "https://registry.npmjs.org/purescript-language-server/-/purescript-language-server-0.16.4.tgz"
+    "hash": "sha256-BpErsqAu/hyuJuW1MFkBVxpLI9dmORzmC/TTJwHauSE=",
+    "url": "https://github.com/nwolverson/purescript-language-server/releases/download/v0.16.4/purescript-language-server.js"
   },
   "0.16.5": {
-    "hash": "sha256-xm7jUv0LkVQTH71ApDMJkqGaNtMkFqPxayTmMjUoH6g=",
-    "url": "https://registry.npmjs.org/purescript-language-server/-/purescript-language-server-0.16.5.tgz"
+    "hash": "sha256-IG9Zi1PK6U2dpB1Gv73SMmuDf9YSsuFmlPyAOllMqIc=",
+    "url": "https://github.com/nwolverson/purescript-language-server/releases/download/v0.16.5/purescript-language-server.js"
   },
   "0.16.6": {
-    "hash": "sha256-t6cFxRx7rYzBwujZ6CelcUDpDC4pDxOB5k+xZBhFPpk=",
-    "url": "https://registry.npmjs.org/purescript-language-server/-/purescript-language-server-0.16.6.tgz"
+    "hash": "sha256-Zj3drjH62bXNhYFBDnXWJ16QZ5h7dymBGmjySJPZdfc=",
+    "url": "https://github.com/nwolverson/purescript-language-server/releases/download/v0.16.6/purescript-language-server.js"
   },
   "0.17.0": {
-    "hash": "sha256-7sRLbJg4qLBm582y+39td8XvGpLi7/9b1SoF/D71aBU=",
-    "url": "https://registry.npmjs.org/purescript-language-server/-/purescript-language-server-0.17.0.tgz"
+    "hash": "sha256-qCuMmp/QG0XzMX46jTO8DPfL3BFktp9C7MC4LpsVY+8=",
+    "url": "https://github.com/nwolverson/purescript-language-server/releases/download/v0.17.0/purescript-language-server.js"
   },
   "0.17.1": {
-    "hash": "sha256-E5vImCEK53NC+/2dk9474sNjaDGb6IQL6JUhgu1isb8=",
-    "url": "https://registry.npmjs.org/purescript-language-server/-/purescript-language-server-0.17.1.tgz"
+    "hash": "sha256-U6OojvSEK98DDlUATt5fHvzQL9bGLBTGmlRTI4Qc9O0=",
+    "url": "https://github.com/nwolverson/purescript-language-server/releases/download/v0.17.1/purescript-language-server.js"
   },
   "0.17.2": {
-    "hash": "sha256-3oiiIRgaBibbh/3NG379P3hGqjpTs4s+sP07B5lGmxg=",
-    "url": "https://registry.npmjs.org/purescript-language-server/-/purescript-language-server-0.17.2.tgz"
+    "hash": "sha256-hZNYUg9DQinPcY3zg0DeaD1q6SJUQUBt5BTlAKp5iWs=",
+    "url": "https://github.com/nwolverson/purescript-language-server/releases/download/v0.17.2/purescript-language-server.js"
   }
 }

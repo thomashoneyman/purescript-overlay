@@ -61,6 +61,7 @@ main = Aff.launchAff_ do
         Run.verifySpago
         Run.verifyPursTidy
         Run.verifyPursBackendEs
+        Run.verifyPursLanguageServer
 
     Prefetch dir -> do
       let envFile = Path.concat [ dir, "..", "generate", ".env" ]

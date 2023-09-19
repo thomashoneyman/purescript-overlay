@@ -109,6 +109,7 @@ parseExecutable = case _ of
   "spago" -> Right Spago
   "purs-tidy" -> Right PursTidy
   "purs-backend-es" -> Right PursBackendEs
+  "purs-language-server" -> Right PursLanguageServer
   other -> Left $ "Unknown tool: " <> other
 
 -- | A tool and its channel, ie. 'purs-stable'
@@ -179,11 +180,13 @@ parseToolPrefix str = do
     Just rest -> Right $ Tuple PursTidy (String.drop 1 rest)
     Nothing -> case String.stripPrefix (String.Pattern (printExecutable PursBackendEs)) str of
       Just rest -> Right $ Tuple PursBackendEs (String.drop 1 rest)
-      Nothing -> case String.stripPrefix (String.Pattern (printExecutable Purs)) str of
-        Just rest -> Right $ Tuple Purs (String.drop 1 rest)
-        Nothing -> case String.stripPrefix (String.Pattern (printExecutable Spago)) str of
-          Just rest -> Right $ Tuple Spago (String.drop 1 rest)
-          Nothing -> Left $ "Expected a tool name but got: " <> str
+      Nothing -> case String.stripPrefix (String.Pattern (printExecutable PursLanguageServer)) str of
+        Just rest -> Right $ Tuple PursLanguageServer (String.drop 1 rest)
+        Nothing -> case String.stripPrefix (String.Pattern (printExecutable Purs)) str of
+          Just rest -> Right $ Tuple Purs (String.drop 1 rest)
+          Nothing -> case String.stripPrefix (String.Pattern (printExecutable Spago)) str of
+            Just rest -> Right $ Tuple Spago (String.drop 1 rest)
+            Nothing -> Left $ "Expected a tool name but got: " <> str
 
 -- | Parse a tool from its executable name and version as a package, ie.
 -- | 'purs-0_14_4-0'
