@@ -13,7 +13,7 @@ import Effect.Class (class MonadEffect)
 import Lib.Foreign.Octokit (GitHubError, Octokit)
 import Lib.Git (GitM(..))
 import Lib.GitHub (GitHubM(..))
-import Lib.Nix.Manifest (NamedManifest, PursManifest, PursTidyManifest, SpagoManifest, PursBackendEsManifest)
+import Lib.Nix.Manifest (NamedManifest, PursBackendEsManifest, PursManifest, PursTidyManifest, SpagoManifest, PursLanguageServerManifest)
 import Lib.Nix.Manifest as Nix.Manifest
 import Lib.Nix.Manifest as Tool
 import Lib.Tool (Tool(..))
@@ -117,3 +117,13 @@ writePursBackendEsManifest :: PursBackendEsManifest -> AppM Unit
 writePursBackendEsManifest manifest = do
   path <- getToolManifestPath PursBackendEs
   Utils.writeJsonFile path Nix.Manifest.pursTidyManifestCodec manifest
+
+readPursLanguageServerManifest :: AppM PursLanguageServerManifest
+readPursLanguageServerManifest = do
+  path <- getToolManifestPath PursLanguageServer
+  Utils.readJsonFile path Nix.Manifest.pursLanguageServerManifestCodec
+
+writePursLanguageServerManifest :: PursLanguageServerManifest -> AppM Unit
+writePursLanguageServerManifest manifest = do
+  path <- getToolManifestPath PursLanguageServer
+  Utils.writeJsonFile path Nix.Manifest.pursLanguageServerManifestCodec manifest

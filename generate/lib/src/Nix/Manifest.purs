@@ -27,6 +27,7 @@ filename = case _ of
   Spago -> "spago.json"
   PursTidy -> "purs-tidy.json"
   PursBackendEs -> "purs-backend-es.json"
+  PursLanguageServer -> "purescript-language-server.json"
 
 type NamedManifest = Map ToolChannel ToolPackage
 
@@ -67,7 +68,7 @@ pursTidyManifestCodec :: JsonCodec PursTidyManifest
 pursTidyManifestCodec = do
   let encodeKey = SemVer.print
   let decodeKey = Either.hush <<< SemVer.parse
-  Registry.Codec.strMap "PursManifest" decodeKey encodeKey fetchUrlCodec
+  Registry.Codec.strMap "PursTidyManifest" decodeKey encodeKey fetchUrlCodec
 
 type PursBackendEsManifest = Map SemVer FetchUrl
 
@@ -75,7 +76,15 @@ pursBackendEsManifestCodec :: JsonCodec PursBackendEsManifest
 pursBackendEsManifestCodec = do
   let encodeKey = SemVer.print
   let decodeKey = Either.hush <<< SemVer.parse
-  Registry.Codec.strMap "PursManifest" decodeKey encodeKey fetchUrlCodec
+  Registry.Codec.strMap "PursBackendEsManifest" decodeKey encodeKey fetchUrlCodec
+
+type PursLanguageServerManifest = Map SemVer FetchUrl
+
+pursLanguageServerManifestCodec :: JsonCodec PursLanguageServerManifest
+pursLanguageServerManifestCodec = do
+  let encodeKey = SemVer.print
+  let decodeKey = Either.hush <<< SemVer.parse
+  Registry.Codec.strMap "PursLanguageServerManifest" decodeKey encodeKey fetchUrlCodec
 
 -- | A manifest entry for a package that can be fetched from git
 type GitRev = { rev :: String }

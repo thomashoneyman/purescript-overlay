@@ -1,0 +1,54 @@
+{
+  "0.15.6": {
+    "hash": "sha256-s7Z3iRoxGK7JtZaZz2GECnO1TqAukdXL4Opj/xgIUWc=",
+    "url": "https://github.com/nwolverson/purescript-language-server/releases/download/v0.15.6/purescript-language-server.js"
+  },
+  "0.15.7": {
+    "hash": "sha256-CRrHl1M7uE73FY4i2Zjp+Osug6vv2VPtL//91EHzEr0=",
+    "url": "https://github.com/nwolverson/purescript-language-server/releases/download/v0.15.7/purescript-language-server.js"
+  },
+  "0.15.8": {
+    "hash": "sha256-6PEJilgpmbRbTNL+6RtgarRRXlkFqs5Rx43mMRZGu1M=",
+    "url": "https://github.com/nwolverson/purescript-language-server/releases/download/v0.15.8/purescript-language-server.js"
+  },
+  "0.16.0": {
+    "hash": "sha256-slWpfYy9nRP9LovmdUlifBbRrs6NFPM9qKElAvGSx6Y=",
+    "url": "https://github.com/nwolverson/purescript-language-server/releases/download/v0.16.0/purescript-language-server.js"
+  },
+  "0.16.1": {
+    "hash": "sha256-CdJNzLRfYFPLkvbCbIqvnpW/CFt3tkIZvz9QUQn/GQ4=",
+    "url": "https://github.com/nwolverson/purescript-language-server/releases/download/v0.16.1/purescript-language-server.js"
+  },
+  "0.16.2": {
+    "hash": "sha256-UqAqpgK11ykTAHaF9OlhE+iqIarPQNTgHnM3X2QDrp4=",
+    "url": "https://github.com/nwolverson/purescript-language-server/releases/download/v0.16.2/purescript-language-server.js"
+  },
+  "0.16.3": {
+    "hash": "sha256-EonRH2S1eDE0YO88fJdeR90dOw3n9cwzoG/2HwuUJPA=",
+    "url": "https://github.com/nwolverson/purescript-language-server/releases/download/v0.16.3/purescript-language-server.js"
+  },
+  "0.16.4": {
+    "hash": "sha256-BpErsqAu/hyuJuW1MFkBVxpLI9dmORzmC/TTJwHauSE=",
+    "url": "https://github.com/nwolverson/purescript-language-server/releases/download/v0.16.4/purescript-language-server.js"
+  },
+  "0.16.5": {
+    "hash": "sha256-IG9Zi1PK6U2dpB1Gv73SMmuDf9YSsuFmlPyAOllMqIc=",
+    "url": "https://github.com/nwolverson/purescript-language-server/releases/download/v0.16.5/purescript-language-server.js"
+  },
+  "0.16.6": {
+    "hash": "sha256-Zj3drjH62bXNhYFBDnXWJ16QZ5h7dymBGmjySJPZdfc=",
+    "url": "https://github.com/nwolverson/purescript-language-server/releases/download/v0.16.6/purescript-language-server.js"
+  },
+  "0.17.0": {
+    "hash": "sha256-qCuMmp/QG0XzMX46jTO8DPfL3BFktp9C7MC4LpsVY+8=",
+    "url": "https://github.com/nwolverson/purescript-language-server/releases/download/v0.17.0/purescript-language-server.js"
+  },
+  "0.17.1": {
+    "hash": "sha256-U6OojvSEK98DDlUATt5fHvzQL9bGLBTGmlRTI4Qc9O0=",
+    "url": "https://github.com/nwolverson/purescript-language-server/releases/download/v0.17.1/purescript-language-server.js"
+  },
+  "0.17.2": {
+    "hash": "sha256-hZNYUg9DQinPcY3zg0DeaD1q6SJUQUBt5BTlAKp5iWs=",
+    "url": "https://github.com/nwolverson/purescript-language-server/releases/download/v0.17.2/purescript-language-server.js"
+  }
+}

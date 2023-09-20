@@ -10,6 +10,7 @@
   mkSpagoDerivation = callPackage ./build-support/mkSpagoDerivation.nix {};
   mkPursTidyDerivation = callPackage ./build-support/mkPursTidyDerivation.nix {};
   mkPursBackendEsDerivation = callPackage ./build-support/mkPursBackendEsDerivation.nix {};
+  mkPursLanguageServerDerivation = callPackage ./build-support/mkPursLanguageServerDerivation.nix {};
   mkLegacySpagoDerivation = callPackage ./build-support/mkLegacySpagoDerivation.nix {};
 
   # The purs manifest uses fetchurl to fetch tarballs. We have to accommodate
@@ -74,8 +75,20 @@
     ) {}
     (builtins.attrNames entries);
 
+  purescript-language-server-bin = let
+    entries = builtins.fromJSON (builtins.readFile ./purescript-language-server.json);
+  in
+    builtins.foldl'
+    (
+      acc: version: let
+        name = "purescript-language-server-${builtins.replaceStrings ["."] ["_"] version}";
+      in
+        acc // {${name} = mkPursLanguageServerDerivation ({inherit version;} // entries.${version});}
+    ) {}
+    (builtins.attrNames entries);
+
   all = {
-    inherit purs-bin spago-bin purs-tidy-bin purs-backend-es-bin;
+    inherit purs-bin spago-bin purs-tidy-bin purs-backend-es-bin purescript-language-server-bin;
   };
 
   # The 'named.json' file records what packages should be mapped to the default

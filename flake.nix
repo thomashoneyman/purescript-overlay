@@ -49,14 +49,19 @@
       purs-backend-es = pkgs.purs-backend-es;
       purs-backend-es-unstable = pkgs.purs-backend-es-unstable;
       purs-backend-es-bin = pkgs.purs-backend-es-bin;
+
+      purescript-language-server = pkgs.purescript-language-server;
+      purescript-language-server-unstable = pkgs.purescript-language-server-unstable;
+      purescript-language-server-bin = pkgs.purescript-language-server-bin;
     in
       {
-        inherit purs purs-unstable spago spago-unstable purs-tidy purs-tidy-unstable purs-backend-es purs-backend-es-unstable;
+        inherit purs purs-unstable spago spago-unstable purs-tidy purs-tidy-unstable purs-backend-es purs-backend-es-unstable purescript-language-server purescript-language-server-unstable;
       }
       // purs-bin
       // spago-bin
       // purs-tidy-bin
-      // purs-backend-es-bin);
+      // purs-backend-es-bin
+      // purescript-language-server-bin);
 
     apps = forAllSystems (system: let
       pkgs = nixpkgsFor.${system};
@@ -143,6 +148,7 @@
           self.packages.${system}.purs-unstable
           self.packages.${system}.purs-tidy-unstable
           self.packages.${system}.purs-backend-es-unstable
+          self.packages.${system}.purescript-language-server-unstable
         ];
       };
     });

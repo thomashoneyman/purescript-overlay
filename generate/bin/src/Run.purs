@@ -27,7 +27,7 @@ import Lib.Foreign.Octokit (Release, ReleaseAsset)
 import Lib.Foreign.Octokit as Octokit
 import Lib.Git as Git
 import Lib.GitHub as GitHub
-import Lib.Nix.Manifest (FetchUrl, NamedManifest, PursManifest, PursTidyManifest, SpagoManifest, PursBackendEsManifest)
+import Lib.Nix.Manifest (FetchUrl, NamedManifest, PursBackendEsManifest, PursManifest, PursTidyManifest, SpagoManifest, PursLanguageServerManifest)
 import Lib.Nix.Prefetch as Nix.Prefetch
 import Lib.Nix.System (NixSystem(..))
 import Lib.Nix.System as NixSystem
@@ -62,6 +62,12 @@ verifyPursBackendEs = do
   manifest <- AppM.readPursBackendEsManifest
   let entries = Map.size manifest
   Console.log $ "Successfully parsed purs-backend-es.json with " <> Int.toStringAs Int.decimal entries <> " entries."
+
+verifyPursLanguageServer :: AppM Unit
+verifyPursLanguageServer = do
+  manifest <- AppM.readPursLanguageServerManifest
+  let entries = Map.size manifest
+  Console.log $ "Successfully parsed purescript-language-server.json with " <> Int.toStringAs Int.decimal entries <> " entries."
 
 prefetchPurs :: AppM PursManifest
 prefetchPurs = do
@@ -499,6 +505,98 @@ writePursBackendEsUpdates updates = do
 
         insertPackage :: ToolChannel -> SemVer -> NamedManifest -> NamedManifest
         insertPackage channel version = Map.insert channel (ToolPackage { tool: PursBackendEs, version })
+
+        updateUnstable :: NamedManifest -> NamedManifest
+        updateUnstable prev = case maxUnstable of
+          Just version | version > unstable -> insertPackage unstableChannel version prev
+          _ -> prev
+
+        updateStable :: NamedManifest -> NamedManifest
+        updateStable prev = case maxStable of
+          Just version | version > stable -> insertPackage stableChannel version prev
+          _ -> prev
+
+      pure (updateStable (updateUnstable named))
+
+  case named' of
+    Nothing -> Console.log "Failed to update named manifest" *> liftEffect (Process.exit 1)
+    Just result -> AppM.writeNamedManifest result
+
+prefetchPursLanguageServer :: AppM PursLanguageServerManifest
+prefetchPursLanguageServer = do
+  manifest <- AppM.readPursLanguageServerManifest
+
+  let
+    existing :: Set SemVer
+    existing = Map.keys manifest
+
+  rawReleases <- AppM.runGitHubM (GitHub.listReleases PursLanguageServer) >>= case _ of
+    Left error -> do
+      Console.log $ "Failed to fetch releases for " <> Tool.print PursLanguageServer Tool.Executable
+      Console.log $ Octokit.printGitHubError error
+      liftEffect $ Process.exit 1
+    Right releases -> pure releases
+
+  Console.log $ "Retrieved " <> show (Array.length rawReleases) <> " releases for " <> Tool.print PursLanguageServer Tool.Executable
+
+  let
+    parsePursLanguageServerReleases :: Array Release -> Map SemVer String
+    parsePursLanguageServerReleases = Map.fromFoldable <<< Array.mapMaybe \release -> Either.hush do
+      version <- SemVer.parse $ fromMaybe release.tag $ String.stripPrefix (String.Pattern "v") release.tag
+      asset <- Either.note "No asset named 'purescript-language-server.js' in release." $ Array.find (\asset -> asset.name == "purescript-language-server.js") release.assets
+      pure $ Tuple version asset.downloadUrl
+
+    -- We only accept pre-bundled language server releases, ie. those after 0.15.5
+    isBeforeCutoff :: SemVer -> Boolean
+    isBeforeCutoff (SemVer { version }) = Version.major version == 0 && Version.minor version <= 15 && Version.patch version <= 5
+
+    supportedReleases :: Map SemVer String
+    supportedReleases = Map.filterKeys (not <<< isBeforeCutoff) $ parsePursLanguageServerReleases rawReleases
+
+    -- We only want to include releases that aren't already present in the
+    -- manifest file.
+    newReleases :: Map SemVer String
+    newReleases = Map.filterKeys (not <<< flip Set.member existing) supportedReleases
+
+  Console.log $ "Found " <> show (Map.size newReleases) <> " new releases for " <> Tool.print PursLanguageServer Tool.Executable
+
+  hashedReleases :: PursLanguageServerManifest <- forWithIndex newReleases \version downloadUrl -> do
+    Console.log $ "Processing release " <> SemVer.print version
+    Console.log $ "Fetching hashes for release asset download url " <> downloadUrl
+    Nix.Prefetch.nixPrefetchTarball downloadUrl >>= case _ of
+      Left error -> do
+        Console.log $ "Failed to hash release asset at url " <> downloadUrl <> ": " <> error
+        liftEffect $ Process.exit 1
+      Right hash -> pure { url: downloadUrl, hash }
+
+  pure hashedReleases
+
+writePursLanguageServerUpdates :: PursLanguageServerManifest -> AppM Unit
+writePursLanguageServerUpdates updates = do
+  manifest <- AppM.readPursLanguageServerManifest
+  let newManifest = Map.union manifest updates
+  AppM.writePursLanguageServerManifest newManifest
+
+  named <- AppM.readNamedManifest
+
+  let
+    named' :: Maybe NamedManifest
+    named' = do
+      let unstableChannel = ToolChannel { tool: PursLanguageServer, channel: Unstable }
+      let stableChannel = ToolChannel { tool: PursLanguageServer, channel: Stable }
+
+      ToolPackage { version: unstable } <- Map.lookup unstableChannel named
+      ToolPackage { version: stable } <- Map.lookup stableChannel named
+
+      let
+        allVersions = Map.keys newManifest
+        allStableVersions = allVersions
+
+        maxUnstable = Set.findMax allVersions
+        maxStable = Set.findMax allStableVersions
+
+        insertPackage :: ToolChannel -> SemVer -> NamedManifest -> NamedManifest
+        insertPackage channel version = Map.insert channel (ToolPackage { tool: PursLanguageServer, version })
 
         updateUnstable :: NamedManifest -> NamedManifest
         updateUnstable prev = case maxUnstable of
