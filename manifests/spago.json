@@ -152,5 +152,9 @@
   "0.93.9": {
     "hash": "sha256-ewmsPhWlqF7e0mOc70M4+tzH8MvwhqsldTo/AsxHhP4=",
     "url": "https://registry.npmjs.org/spago/-/spago-0.93.9.tgz"
+  },
+  "0.93.13": {
+    "hash": "sha256-A5KMOVlLeETuvzJNLjgDHuvK6pogZmdv4rIfib8zncE=",
+    "url": "https://registry.npmjs.org/spago/-/spago-0.93.13.tgz"
   }
 }
