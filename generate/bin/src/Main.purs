@@ -79,31 +79,31 @@ main = Aff.launchAff_ do
           if Map.isEmpty updates then
             Console.log "No new purs releases."
           else
-            Console.log $ "New purs releases: " <> Utils.printJson Nix.Manifest.pursManifestCodec updates
+            Console.log $ "New purs releases: " <> Utils.printJson Nix.Manifest.githubBinaryManifestCodec updates
 
         Run.prefetchSpago >>= \updates ->
           if Map.isEmpty updates then
             Console.log "No new spago releases."
           else
-            Console.log $ "New spago releases: " <> Utils.printJson Nix.Manifest.spagoManifestCodec updates
+            Console.log $ "New spago releases: " <> Utils.printJson Nix.Manifest.combinedManifestCodec updates
 
         Run.prefetchPursTidy >>= \updates ->
           if Map.isEmpty updates then
             Console.log "No new purs-tidy releases."
           else
-            Console.log $ "New purs-tidy releases: " <> Utils.printJson Nix.Manifest.pursTidyManifestCodec updates
+            Console.log $ "New purs-tidy releases: " <> Utils.printJson Nix.Manifest.npmRegistryManifestCodec updates
 
         Run.prefetchPursBackendEs >>= \updates ->
           if Map.isEmpty updates then
             Console.log "No new purs-backend-es releases."
           else
-            Console.log $ "New purs-backend-es releases: " <> Utils.printJson Nix.Manifest.pursBackendEsManifestCodec updates
+            Console.log $ "New purs-backend-es releases: " <> Utils.printJson Nix.Manifest.npmRegistryManifestCodec updates
 
         Run.prefetchPursLanguageServer >>= \updates ->
           if Map.isEmpty updates then
             Console.log "No new purescript-language-server releases."
           else
-            Console.log $ "New purescript-language-server releases: " <> Utils.printJson Nix.Manifest.pursLanguageServerManifestCodec updates
+            Console.log $ "New purescript-language-server releases: " <> Utils.printJson Nix.Manifest.npmRegistryManifestCodec updates
 
     Update dir commit -> do
       let envFile = Path.concat [ dir, "..", "generate", ".env" ]

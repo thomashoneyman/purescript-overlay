@@ -40,18 +40,26 @@ namedManifestCodec = do
   let decodeKey = Either.hush <<< Tool.parseToolChannel
   Registry.Codec.strMap "NamedManifest" decodeKey encodeKey Tool.toolPackageCodec
 
-type PursManifest = Map SemVer (Map NixSystem FetchUrl)
+type GitHubBinaryManifest = Map SemVer (Map NixSystem FetchUrl)
 
-pursManifestCodec :: JsonCodec PursManifest
-pursManifestCodec = do
+githubBinaryManifestCodec :: JsonCodec GitHubBinaryManifest
+githubBinaryManifestCodec = do
   let encodeKey = SemVer.print
   let decodeKey = Either.hush <<< SemVer.parse
-  Registry.Codec.strMap "PursManifest" decodeKey encodeKey (Nix.System.systemMapCodec fetchUrlCodec)
+  Registry.Codec.strMap "GitHubBinaryManifest" decodeKey encodeKey (Nix.System.systemMapCodec fetchUrlCodec)
 
-type SpagoManifest = Map SemVer (Either FetchUrl (Map NixSystem FetchUrl))
+type NPMRegistryManifest = Map SemVer FetchUrl
 
-spagoManifestCodec :: JsonCodec SpagoManifest
-spagoManifestCodec = SemVer.semverMapCodec (CA.codec' decode encode)
+npmRegistryManifestCodec :: JsonCodec NPMRegistryManifest
+npmRegistryManifestCodec = do
+  let encodeKey = SemVer.print
+  let decodeKey = Either.hush <<< SemVer.parse
+  Registry.Codec.strMap "NPMRegistryManifest" decodeKey encodeKey fetchUrlCodec
+
+type CombinedManifest = Map SemVer (Either FetchUrl (Map NixSystem FetchUrl))
+
+combinedManifestCodec :: JsonCodec CombinedManifest
+combinedManifestCodec = SemVer.semverMapCodec (CA.codec' decode encode)
   where
   decode json =
     map Left (CA.decode fetchUrlCodec json)
@@ -61,38 +69,6 @@ spagoManifestCodec = SemVer.semverMapCodec (CA.codec' decode encode)
   encode = case _ of
     Left gitRev -> CA.encode fetchUrlCodec gitRev
     Right fetchUrl -> CA.encode (Nix.System.systemMapCodec fetchUrlCodec) fetchUrl
-
-type PursTidyManifest = Map SemVer FetchUrl
-
-pursTidyManifestCodec :: JsonCodec PursTidyManifest
-pursTidyManifestCodec = do
-  let encodeKey = SemVer.print
-  let decodeKey = Either.hush <<< SemVer.parse
-  Registry.Codec.strMap "PursTidyManifest" decodeKey encodeKey fetchUrlCodec
-
-type PursBackendEsManifest = Map SemVer FetchUrl
-
-pursBackendEsManifestCodec :: JsonCodec PursBackendEsManifest
-pursBackendEsManifestCodec = do
-  let encodeKey = SemVer.print
-  let decodeKey = Either.hush <<< SemVer.parse
-  Registry.Codec.strMap "PursBackendEsManifest" decodeKey encodeKey fetchUrlCodec
-
-type PursLanguageServerManifest = Map SemVer FetchUrl
-
-pursLanguageServerManifestCodec :: JsonCodec PursLanguageServerManifest
-pursLanguageServerManifestCodec = do
-  let encodeKey = SemVer.print
-  let decodeKey = Either.hush <<< SemVer.parse
-  Registry.Codec.strMap "PursLanguageServerManifest" decodeKey encodeKey fetchUrlCodec
-
--- | A manifest entry for a package that can be fetched from git
-type GitRev = { rev :: String }
-
-gitRevCodec :: JsonCodec GitRev
-gitRevCodec = CA.Record.object "SpagoManifestEntry"
-  { rev: CA.string
-  }
 
 -- | A manifest entry for a package which has a fetchable tarball
 type FetchUrl = { url :: String, hash :: Sha256 }

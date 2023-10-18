@@ -1,4 +1,20 @@
-module Bin.Run where
+module Bin.Run
+  ( prefetchPurs
+  , prefetchPursBackendEs
+  , prefetchPursLanguageServer
+  , prefetchPursTidy
+  , prefetchSpago
+  , verifyPurs
+  , verifyPursBackendEs
+  , verifyPursLanguageServer
+  , verifyPursTidy
+  , verifySpago
+  , writePursBackendEsUpdates
+  , writePursLanguageServerUpdates
+  , writePursTidyUpdates
+  , writePursUpdates
+  , writeSpagoUpdates
+  ) where
 
 import Prelude
 
@@ -14,7 +30,7 @@ import Data.Map (Map)
 import Data.Map as Map
 import Data.Maybe (Maybe(..), fromMaybe, isJust, isNothing)
 import Data.Monoid.Additive (Additive(..))
-import Data.Newtype (alaF, un)
+import Data.Newtype (alaF)
 import Data.Set (Set)
 import Data.Set as Set
 import Data.String as String
@@ -25,9 +41,8 @@ import Effect.Class (liftEffect)
 import Effect.Class.Console as Console
 import Lib.Foreign.Octokit (Release, ReleaseAsset)
 import Lib.Foreign.Octokit as Octokit
-import Lib.Git as Git
 import Lib.GitHub as GitHub
-import Lib.Nix.Manifest (FetchUrl, NamedManifest, PursBackendEsManifest, PursManifest, PursTidyManifest, SpagoManifest, PursLanguageServerManifest)
+import Lib.Nix.Manifest (CombinedManifest, FetchUrl, GitHubBinaryManifest, NamedManifest, NPMRegistryManifest)
 import Lib.Nix.Prefetch as Nix.Prefetch
 import Lib.Nix.System (NixSystem(..))
 import Lib.Nix.System as NixSystem
@@ -37,6 +52,7 @@ import Lib.Tool (Channel(..), Tool(..), ToolChannel(..), ToolPackage(..))
 import Lib.Tool as Tool
 import Node.Process as Process
 import Partial.Unsafe (unsafeCrashWith)
+import Registry.Version (Version)
 import Registry.Version as Version
 
 verifyPurs :: AppM Unit
@@ -69,91 +85,43 @@ verifyPursLanguageServer = do
   let entries = Map.size manifest
   Console.log $ "Successfully parsed purescript-language-server.json with " <> Int.toStringAs Int.decimal entries <> " entries."
 
-prefetchPurs :: AppM PursManifest
-prefetchPurs = do
-  manifest <- AppM.readPursManifest
+prefetchPurs :: AppM GitHubBinaryManifest
+prefetchPurs = fetchGitHub
+  { tool: Purs
+  , readManifest: AppM.readPursManifest
 
-  let
-    existing :: Set SemVer
-    existing = Map.keys manifest
+  , parseAsset: \asset -> do
+      guard $ isJust $ String.stripSuffix (String.Pattern ".tar.gz") asset.name
+      guard $ not $ String.contains (String.Pattern "win64") asset.name
+      system <- Either.hush $ NixSystem.fromPursReleaseTarball asset.name
+      pure $ Tuple system asset.downloadUrl
 
-  rawReleases <- AppM.runGitHubM (GitHub.listReleases Purs) >>= case _ of
-    Left error -> do
-      Console.log $ "Failed to fetch releases for " <> Tool.print Purs Tool.Executable
-      Console.log $ Octokit.printGitHubError error
-      liftEffect $ Process.exit 1
-    Right releases -> pure releases
-
-  Console.log $ "Retrieved " <> show (Array.length rawReleases) <> " releases for " <> Tool.print Purs Tool.Executable
-
-  let
-    parsePursReleases :: Array Release -> Map SemVer (Map NixSystem String)
-    parsePursReleases = Map.fromFoldable <<< Array.mapMaybe \release -> Either.hush do
-      version <- SemVer.parse (fromMaybe release.tag (String.stripPrefix (String.Pattern "v") release.tag))
-
+  , filterVersion: \(SemVer { version }) -> do
       let
-        parseAsset :: ReleaseAsset -> Maybe (Tuple NixSystem String)
-        parseAsset asset = do
-          guard $ isJust $ String.stripSuffix (String.Pattern ".tar.gz") asset.name
-          guard $ not $ String.contains (String.Pattern "win64") asset.name
-          system <- Either.hush $ NixSystem.fromPursReleaseTarball asset.name
-          pure $ Tuple system asset.downloadUrl
+        -- We only accept compiler releases back to 0.13
+        afterCutoff :: Boolean
+        afterCutoff = Version.major version == 0 && Version.minor version >= 13
 
-        supportedAssets :: Map NixSystem String
-        supportedAssets = Map.fromFoldable $ Array.mapMaybe parseAsset release.assets
+        -- Some versions are broken and we don't want to include them
+        notBroken :: Boolean
+        notBroken = Array.notElem version
+          [ unsafeVersion "0.13.1" -- https://github.com/purescript/purescript/releases/tag/v0.13.1 (doesn't work)
+          , unsafeVersion "0.13.7" -- https://github.com/purescript/purescript/releases/tag/v0.13.7 (has no releases)
+          , unsafeVersion "0.15.1" -- https://github.com/purescript/purescript/releases/tag/v0.15.1 (incorrect version number, identical to 0.15.2)
+          ]
 
-      pure $ Tuple version supportedAssets
+      afterCutoff && notBroken
 
-    -- Darwin prereleases from 0.15.0 to 0.15.9 have incorrect version numbers
-    isBrokenDarwinPreRelease :: SemVer -> NixSystem -> Boolean
-    isBrokenDarwinPreRelease (SemVer { version, pre }) system =
+  , filterSystem: \(SemVer { version, pre }) system ->
+      -- Darwin prereleases from 0.15.0 to 0.15.9 have incorrect version numbers
       if system == X86_64_darwin && Version.major version == 0 && Version.minor version == 15 then case pre of
         Nothing -> false
         Just _ -> Version.patch version < 10
-      else false
+      else
+        false
+  }
 
-    -- We only accept compiler releases back to 0.13
-    isBeforeCutoff :: SemVer -> Boolean
-    isBeforeCutoff (SemVer { version }) = Version.major version == 0 && Version.minor version < 13
-
-    -- Some versions are broken and we don't want to include them
-    isBrokenVersion :: SemVer -> Boolean
-    isBrokenVersion (SemVer { version }) = Array.elem version
-      [ unsafeVersion "0.13.1" -- https://github.com/purescript/purescript/releases/tag/v0.13.1 (doesn't work)
-      , unsafeVersion "0.13.7" -- https://github.com/purescript/purescript/releases/tag/v0.13.7 (has no releases)
-      , unsafeVersion "0.15.1" -- https://github.com/purescript/purescript/releases/tag/v0.15.1 (incorrect version number, identical to 0.15.2)
-      ]
-      where
-      unsafeVersion = Either.fromRight' (\_ -> unsafeCrashWith "Unexpected Left in isBroken") <<< Version.parse
-
-    -- All releases that ought to be included in the resulting manifest
-    supportedReleases :: Map SemVer (Map NixSystem String)
-    supportedReleases = parsePursReleases rawReleases # Map.mapMaybeWithKey \version assets -> do
-      guard $ not $ isBrokenVersion version
-      guard $ not $ isBeforeCutoff version
-      pure $ Map.filterKeys (not <<< isBrokenDarwinPreRelease version) assets
-
-    -- We only want to include releases that aren't already present in the
-    -- manifest file.
-    newReleases :: Map SemVer (Map NixSystem String)
-    newReleases = Map.filterKeys (not <<< flip Set.member existing) supportedReleases
-
-  Console.log $ "Found " <> show (Map.size newReleases) <> " new releases for " <> Tool.print Purs Tool.Executable
-
-  hashedReleases :: PursManifest <- forWithIndex newReleases \version assets -> do
-    Console.log $ "Processing release " <> SemVer.print version
-    Console.log $ "Fetching hashes for release assets"
-    for assets \asset -> do
-      Console.log $ "  " <> asset
-      Nix.Prefetch.nixPrefetchTarball asset >>= case _ of
-        Left error -> do
-          Console.log $ "Failed to hash release asset at url " <> asset <> ": " <> error
-          liftEffect $ Process.exit 1
-        Right hash -> pure { url: asset, hash }
-
-  pure hashedReleases
-
-writePursUpdates :: PursManifest -> AppM Unit
+writePursUpdates :: GitHubBinaryManifest -> AppM Unit
 writePursUpdates updates = do
   manifest <- AppM.readPursManifest
   let newManifest = Map.unionWith Map.union manifest updates
@@ -194,100 +162,55 @@ writePursUpdates updates = do
     Nothing -> Console.log "Failed to update named manifest" *> liftEffect (Process.exit 1)
     Just result -> AppM.writeNamedManifest result
 
-prefetchSpago :: AppM SpagoManifest
+-- Spago was rewritten from Haskell to PureScript, so we only get the Haskell
+-- releases from GitHub (pre-0.90).
+prefetchSpagoGitHub :: AppM GitHubBinaryManifest
+prefetchSpagoGitHub = fetchGitHub
+  { tool: Spago
+  , readManifest: map (Map.mapMaybeWithKey (const Either.hush)) AppM.readSpagoManifest
+
+  , parseAsset: \asset -> do
+      trimmed <- String.stripSuffix (String.Pattern ".tar.gz") asset.name
+      guard $ not $ Array.elem trimmed [ "Windows", "windows" ]
+      system <- Either.hush $ NixSystem.fromSpagoReleaseTarball asset.name
+      pure $ Tuple system asset.downloadUrl
+
+  , filterVersion: \(SemVer { version, pre }) -> do
+      let
+        -- We only accept Spago releases back to 0.18, which is the first one with
+        -- a configurable cache (so we don't get Nix errors trying to run Spago)
+        satisfiesLowerLimit :: Boolean
+        satisfiesLowerLimit = Version.major version == 0 && Version.minor version >= 18
+
+        -- We only accept Spago releases up to 0.90, which is the first release
+        -- of spago-next
+        satisfiesUpperLimit :: Boolean
+        satisfiesUpperLimit = Version.major version == 0 && Version.minor version <= 90
+
+        -- Some versions are broken and we don't want to include them
+        notBroken :: Boolean
+        notBroken = Array.notElem version
+          [ unsafeVersion "0.19.2" -- wrong version number
+          ]
+
+        -- No prereleases for legacy spago
+        notPrerelease :: Boolean
+        notPrerelease = isNothing pre
+
+      satisfiesLowerLimit && satisfiesUpperLimit && notBroken && notPrerelease
+
+  , filterSystem: \_ _ -> true
+  }
+
+prefetchSpago :: AppM CombinedManifest
 prefetchSpago = do
-  manifest <- AppM.readSpagoManifest
+  github <- prefetchSpagoGitHub
+  -- FIXME!!!
+  -- npm <- prefetchSpagoNPM
+  -- pure $ Map.union (map Left npm) (map Right github)
+  pure (map Right github)
 
-  let
-    existing :: Set SemVer
-    existing = Map.keys manifest
-
-  rawReleases <- AppM.runGitHubM (GitHub.listReleases Spago) >>= case _ of
-    Left error -> do
-      Console.log $ "Failed to fetch releases for " <> Tool.print Spago Tool.Executable
-      Console.log $ Octokit.printGitHubError error
-      liftEffect $ Process.exit 1
-    Right releases -> pure releases
-
-  Console.log $ "Retrieved " <> show (Array.length rawReleases) <> " releases for " <> Tool.print Spago Tool.Executable
-
-  let
-    parseSpagoReleases :: Array Release -> Map SemVer (Either Git.Tag (Map NixSystem String))
-    parseSpagoReleases = Map.fromFoldable <<< Array.mapMaybe \release -> Either.hush do
-      version <- SemVer.parse (fromMaybe release.tag (String.stripPrefix (String.Pattern "v") release.tag))
-
-      -- Spaghetto versions begin at 0.90.0
-      let minGitRef = fromRight' (\_ -> unsafeCrashWith "bad version") (Version.parse "0.90.0")
-      let minSpaghetto = SemVer { version: minGitRef, pre: Nothing }
-      if version >= minSpaghetto then
-        pure $ Tuple version $ Left $ Git.Tag release.tag
-      else do
-        let
-          parseAsset :: ReleaseAsset -> Maybe (Tuple NixSystem String)
-          parseAsset asset = do
-            trimmed <- String.stripSuffix (String.Pattern ".tar.gz") asset.name
-            guard $ not $ Array.elem trimmed [ "Windows", "windows" ]
-            system <- Either.hush $ NixSystem.fromSpagoReleaseTarball asset.name
-            pure $ Tuple system asset.downloadUrl
-
-          supportedAssets :: Map NixSystem String
-          supportedAssets = Map.fromFoldable $ Array.mapMaybe parseAsset release.assets
-
-        pure $ Tuple version $ Right supportedAssets
-
-    -- We only accept Spago releases back to 0.18, which is the first one with
-    -- a configurable cache (so we don't get Nix errors trying to run Spago)
-    isBeforeCutoff :: SemVer -> Boolean
-    isBeforeCutoff (SemVer { version }) =
-      Version.major version == 0 && Version.minor version < 18
-
-    -- Some versions are broken and we don't want to include them
-    isBrokenVersion :: SemVer -> Boolean
-    isBrokenVersion (SemVer { version }) = Array.elem version
-      [ unsafeVersion "0.19.2" -- wrong version number
-      ]
-      where
-      unsafeVersion = Either.fromRight' (\_ -> unsafeCrashWith "Unexpected Left in isBroken") <<< Version.parse
-
-    supportedReleases :: Map SemVer (Either Git.Tag (Map NixSystem String))
-    supportedReleases = parseSpagoReleases rawReleases # Map.mapMaybeWithKey \version entry -> do
-      guard $ not $ isBeforeCutoff version
-      guard $ not $ isBrokenVersion version
-      guard $ not $ isJust (un SemVer version).pre
-      pure entry
-
-    -- We only want to include releases that aren't already present in the
-    -- manifest file.
-    newReleases :: Map SemVer (Either Git.Tag (Map NixSystem String))
-    newReleases = Map.filterKeys (not <<< flip Set.member existing) supportedReleases
-
-  Console.log $ "Found " <> show (Map.size newReleases) <> " new releases for " <> Tool.print Spago Tool.Executable
-
-  hashedReleases :: SpagoManifest <- forWithIndex newReleases \version entry -> do
-    Console.log $ "Processing release " <> SemVer.print version
-    case entry of
-      Left (Git.Tag tag) -> do
-        Console.log $ "Fetching NPM tarball associated with tag " <> tag <> ", ie. version " <> SemVer.print version
-        let url = "https://registry.npmjs.org/spago/-/spago-" <> SemVer.print version <> ".tgz"
-        Nix.Prefetch.nixPrefetchTarball url >>= case _ of
-          Left error -> do
-            Console.log $ "Failed to hash NPM tarbal at url " <> url <> ": " <> error
-            liftEffect $ Process.exit 1
-          Right hash -> pure $ Left { url, hash }
-      Right assets -> do
-        Console.log $ "Fetching hashes for release assets"
-        hashed <- for assets \asset -> do
-          Console.log $ "  " <> asset
-          Nix.Prefetch.nixPrefetchTarball asset >>= case _ of
-            Left error -> do
-              Console.log $ "Failed to hash release asset at url " <> asset <> ": " <> error
-              liftEffect $ Process.exit 1
-            Right hash -> pure { url: asset, hash }
-        pure $ Right hashed
-
-  pure hashedReleases
-
-writeSpagoUpdates :: SpagoManifest -> AppM Unit
+writeSpagoUpdates :: CombinedManifest -> AppM Unit
 writeSpagoUpdates updates = do
   manifest <- AppM.readSpagoManifest
 
@@ -339,7 +262,7 @@ writeSpagoUpdates updates = do
     Nothing -> Console.log "Failed to update named manifest" *> liftEffect (Process.exit 1)
     Just result -> AppM.writeNamedManifest result
 
-prefetchPursTidy :: AppM PursTidyManifest
+prefetchPursTidy :: AppM NPMRegistryManifest
 prefetchPursTidy = do
   manifest <- AppM.readPursTidyManifest
 
@@ -389,7 +312,7 @@ prefetchPursTidy = do
 
   pure $ Map.fromFoldable hashedReleases
 
-writePursTidyUpdates :: PursTidyManifest -> AppM Unit
+writePursTidyUpdates :: NPMRegistryManifest -> AppM Unit
 writePursTidyUpdates updates = do
   manifest <- AppM.readPursTidyManifest
   let newManifest = Map.union manifest updates
@@ -432,7 +355,7 @@ writePursTidyUpdates updates = do
     Nothing -> Console.log "Failed to update named manifest" *> liftEffect (Process.exit 1)
     Just result -> AppM.writeNamedManifest result
 
-prefetchPursBackendEs :: AppM PursBackendEsManifest
+prefetchPursBackendEs :: AppM NPMRegistryManifest
 prefetchPursBackendEs = do
   manifest <- AppM.readPursBackendEsManifest
 
@@ -479,7 +402,7 @@ prefetchPursBackendEs = do
 
   pure $ Map.fromFoldable hashedReleases
 
-writePursBackendEsUpdates :: PursBackendEsManifest -> AppM Unit
+writePursBackendEsUpdates :: NPMRegistryManifest -> AppM Unit
 writePursBackendEsUpdates updates = do
   manifest <- AppM.readPursBackendEsManifest
   let newManifest = Map.union manifest updates
@@ -522,7 +445,7 @@ writePursBackendEsUpdates updates = do
     Nothing -> Console.log "Failed to update named manifest" *> liftEffect (Process.exit 1)
     Just result -> AppM.writeNamedManifest result
 
-prefetchPursLanguageServer :: AppM PursLanguageServerManifest
+prefetchPursLanguageServer :: AppM NPMRegistryManifest
 prefetchPursLanguageServer = do
   manifest <- AppM.readPursLanguageServerManifest
 
@@ -560,7 +483,7 @@ prefetchPursLanguageServer = do
 
   Console.log $ "Found " <> show (Map.size newReleases) <> " new releases for " <> Tool.print PursLanguageServer Tool.Executable
 
-  hashedReleases :: PursLanguageServerManifest <- forWithIndex newReleases \version downloadUrl -> do
+  hashedReleases <- forWithIndex newReleases \version downloadUrl -> do
     Console.log $ "Processing release " <> SemVer.print version
     Console.log $ "Fetching hashes for release asset download url " <> downloadUrl
     Nix.Prefetch.nixPrefetchTarball downloadUrl >>= case _ of
@@ -571,7 +494,7 @@ prefetchPursLanguageServer = do
 
   pure hashedReleases
 
-writePursLanguageServerUpdates :: PursLanguageServerManifest -> AppM Unit
+writePursLanguageServerUpdates :: NPMRegistryManifest -> AppM Unit
 writePursLanguageServerUpdates updates = do
   manifest <- AppM.readPursLanguageServerManifest
   let newManifest = Map.union manifest updates
@@ -613,3 +536,62 @@ writePursLanguageServerUpdates updates = do
   case named' of
     Nothing -> Console.log "Failed to update named manifest" *> liftEffect (Process.exit 1)
     Just result -> AppM.writeNamedManifest result
+
+unsafeVersion :: String -> Version
+unsafeVersion = Either.fromRight' (\_ -> unsafeCrashWith "Unexpected Left") <<< Version.parse
+
+type GitHubArgs =
+  { tool :: Tool
+  , readManifest :: AppM (Map SemVer (Map NixSystem FetchUrl))
+  , parseAsset :: ReleaseAsset -> Maybe (Tuple NixSystem String)
+  , filterVersion :: SemVer -> Boolean
+  , filterSystem :: SemVer -> NixSystem -> Boolean
+  }
+
+fetchGitHub :: GitHubArgs -> AppM (Map SemVer (Map NixSystem FetchUrl))
+fetchGitHub { tool, readManifest, parseAsset, filterVersion, filterSystem } = do
+  manifest <- readManifest
+
+  let existingReleases = Map.keys manifest
+
+  rawReleases <- AppM.runGitHubM (GitHub.listReleases tool) >>= case _ of
+    Left error -> do
+      Console.log $ "Failed to fetch releases for " <> Tool.print tool Tool.Executable
+      Console.log $ "  due to a GitHub error: "
+      Console.log $ Octokit.printGitHubError error
+      liftEffect $ Process.exit 1
+    Right releases -> pure releases
+
+  Console.log $ "Retrieved " <> show (Array.length rawReleases) <> " releases in total for " <> Tool.print tool Tool.Executable
+
+  let
+    parseReleases :: Array Release -> Map SemVer (Map NixSystem String)
+    parseReleases = Map.fromFoldable <<< Array.mapMaybe \release -> Either.hush do
+      version <- SemVer.parse (fromMaybe release.tag (String.stripPrefix (String.Pattern "v") release.tag))
+      let supportedAssets = Map.fromFoldable $ Array.mapMaybe parseAsset release.assets
+      pure $ Tuple version supportedAssets
+
+    supportedReleases :: Map SemVer (Map NixSystem String)
+    supportedReleases = parseReleases rawReleases # Map.mapMaybeWithKey \version assets -> do
+      guard $ not $ filterVersion version
+      pure $ Map.filterKeys (not <<< filterSystem version) assets
+
+    -- We only want to include releases that aren't already present in the
+    -- manifest file.
+    newReleases :: Map SemVer (Map NixSystem String)
+    newReleases = Map.filterKeys (not <<< flip Set.member existingReleases) supportedReleases
+
+  Console.log $ "Found " <> show (Map.size newReleases) <> " new releases for " <> Tool.print tool Tool.Executable
+
+  hashedReleases <- forWithIndex newReleases \version assets -> do
+    Console.log $ "Processing release " <> SemVer.print version
+    Console.log $ "Fetching hashes for release assets"
+    for assets \asset -> do
+      Console.log $ "  " <> asset
+      Nix.Prefetch.nixPrefetchTarball asset >>= case _ of
+        Left error -> do
+          Console.log $ "Failed to hash release asset at url " <> asset <> ": " <> error
+          liftEffect $ Process.exit 1
+        Right hash -> pure { url: asset, hash }
+
+  pure hashedReleases
