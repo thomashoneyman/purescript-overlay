@@ -20,7 +20,6 @@ import Prelude
 
 import Bin.AppM (AppM)
 import Bin.AppM as AppM
-import Control.Alt ((<|>))
 import Control.Alternative (guard)
 import Data.Array as Array
 import Data.Either (Either(..), fromRight')
@@ -31,7 +30,6 @@ import Data.Map as Map
 import Data.Maybe (Maybe(..), fromMaybe, isJust, isNothing)
 import Data.Monoid.Additive (Additive(..))
 import Data.Newtype (alaF)
-import Data.Set (Set)
 import Data.Set as Set
 import Data.String as String
 import Data.Traversable (foldMap, for)
