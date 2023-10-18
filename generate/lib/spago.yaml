@@ -5,6 +5,7 @@ package:
     - argonaut-core
     - codec-argonaut
     - effect
+    - fetch
     - http-methods
     - node-execa
     - prelude
