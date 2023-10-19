@@ -205,41 +205,22 @@
     "hash": "sha256-fdV25Iuv4fwLSdPaq+/iuThCirl6zeFbkXgg+cMQC6U=",
     "url": "https://registry.npmjs.org/spago/-/spago-0.93.14.tgz"
   },
-  "0.93.15": {
-    "lockfile": {
-      "hash": "sha256-crDdMZm5h2JWvl9PWKY2CkZbLFUizgiG9knSBsA8swY=",
-      "url": "https://raw.githubusercontent.com/purescript/spago/d805ec5b2d361e87013b92202f9e342eaf7c4e85/package-lock.json"
-    },
-    "tarball": {
-      "hash": "sha256-Rk1cNhCmJIdOecjLy8pmbFZWnc62QoNUYsPkZO6VdT8=",
-      "url": "https://registry.npmjs.org/spago/-/spago-0.93.15.tgz"
-    }
-  },
   "0.93.16": {
-    "lockfile": {
-      "hash": "sha256-+Nb4erLd45ANOnIj1CAWlOiQ/sxBz7Vl5CgoIf7+SI4=",
-      "url": "https://raw.githubusercontent.com/purescript/spago/29cd3cad10e0b2dca093ade0a7a2d114186002ba/package-lock.json"
-    },
+    "lockfile": "spago/better-sqlite3-8_6_0.json",
     "tarball": {
       "hash": "sha256-eHh/+iKPSO6WS72meJmpdcwlgvhAyK+/6s+Eay35NOU=",
       "url": "https://registry.npmjs.org/spago/-/spago-0.93.16.tgz"
     }
   },
   "0.93.17": {
-    "lockfile": {
-      "hash": "sha256-+Nb4erLd45ANOnIj1CAWlOiQ/sxBz7Vl5CgoIf7+SI4=",
-      "url": "https://raw.githubusercontent.com/purescript/spago/29cd3cad10e0b2dca093ade0a7a2d114186002ba/package-lock.json"
-    },
+    "lockfile": "spago/better-sqlite3-8_6_0.json",
     "tarball": {
       "hash": "sha256-ZBDPxh3xQXk7BJK+YDWgcTvQWj/4JUPLiHdt3DzU0VU=",
       "url": "https://registry.npmjs.org/spago/-/spago-0.93.17.tgz"
     }
   },
   "0.93.18": {
-    "lockfile": {
-      "hash": "sha256-UgdxJGxNOy35VQ4OghIHcqklCEXtl1wOKjD3MrqFvuY=",
-      "url": "https://raw.githubusercontent.com/purescript/spago/8bc78b4d7ca57c613685635a06ba31249321abeb/package-lock.json"
-    },
+    "lockfile": "spago/better-sqlite3-8_6_0.json",
     "tarball": {
       "hash": "sha256-4njqpauwKFtHqhoRIrS9HWhhWBQCCchXY1Z8jbaO6JE=",
       "url": "https://registry.npmjs.org/spago/-/spago-0.93.18.tgz"

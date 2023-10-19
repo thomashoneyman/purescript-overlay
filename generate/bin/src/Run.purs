@@ -43,7 +43,7 @@ import Lib.Foreign.Octokit as Octokit
 import Lib.GitHub as GitHub
 import Lib.NPMRegistry (NPMVersion)
 import Lib.NPMRegistry as NPMRegistry
-import Lib.Nix.Manifest (CombinedManifest, FetchUrl, GitHubBinaryManifest, NPMFetch(..), NPMRegistryManifest, NamedManifest)
+import Lib.Nix.Manifest (CombinedManifest, FetchUrl, GitHubBinaryManifest, NPMFetch(..), NamedManifest, NPMRegistryManifest)
 import Lib.Nix.Prefetch as Nix.Prefetch
 import Lib.Nix.System (NixSystem(..))
 import Lib.Nix.System as NixSystem
@@ -51,6 +51,7 @@ import Lib.SemVer (SemVer(..))
 import Lib.SemVer as SemVer
 import Lib.Tool (Channel(..), Tool(..), ToolChannel(..), ToolPackage(..))
 import Lib.Tool as Tool
+import Node.Path (FilePath)
 import Node.Process as Process
 import Partial.Unsafe (unsafeCrashWith)
 import Registry.Version (Version)
@@ -135,12 +136,20 @@ prefetchSpago = do
     { tool: Spago
     , readManifest: map (Map.mapMaybeWithKey (const Either.blush)) AppM.readSpagoManifest
 
-    , includePackageLock: \(SemVer { version }) ->
-        -- We only include the package-lock.json hash for Spago releases from
-        -- 0.93.15 onward because that's when it started unbundling better-sqlite
-        Version.major version > 0
-          || (Version.major version == 0 && Version.minor version > 93)
-          || (Version.major version == 0 && Version.minor version == 93 && Version.patch version >= 15)
+    , includePackageLock: \(SemVer { version }) -> do
+        let
+          -- We only include the package-lock.json for Spago releases from
+          -- 0.93.15 onward because that's when it started unbundling better-sqlite
+          unbundled =
+            Version.major version > 0
+              || (Version.major version == 0 && Version.minor version > 93)
+              || (Version.major version == 0 && Version.minor version == 93 && Version.patch version >= 15)
+
+        -- TODO: This is annoying and manual. Hopefully there's some better way.
+        if unbundled then
+          Just "spago/better-sqlite3-8_6_0.json"
+        else
+          Nothing
 
     , filterVersion: \(SemVer { version, pre }) -> do
         let
@@ -153,6 +162,7 @@ prefetchSpago = do
           notBroken :: Boolean
           notBroken = Array.notElem version
             [ unsafeVersion "0.93.7" -- bad bundle, fails with 'ReferenceError: __dirname is not defined in ES module scope'
+            , unsafeVersion "0.93.15" -- incorrect version number
             ]
 
           notPrerelease :: Boolean
@@ -208,7 +218,7 @@ prefetchPursTidy :: AppM NPMRegistryManifest
 prefetchPursTidy = prefetchNPMRegistry
   { tool: PursTidy
   , readManifest: AppM.readPursTidyManifest
-  , includePackageLock: \_ -> false
+  , includePackageLock: \_ -> Nothing
   , filterVersion: \(SemVer { version }) -> do
       let
         -- We only accept purs-tidy releases back to 0.5.0
@@ -224,26 +234,59 @@ prefetchPursBackendEs :: AppM NPMRegistryManifest
 prefetchPursBackendEs = prefetchNPMRegistry
   { tool: PursBackendEs
   , readManifest: AppM.readPursBackendEsManifest
-  , includePackageLock: \_ -> false
+  , includePackageLock: \_ -> Nothing
   , filterVersion: \_ -> true
   }
 
+-- The language server is a bit weird because we fetch pre-bundled results from
+-- GitHub instead of from NPM (where they aren't bundled), so this is a one-off
+-- one instead of using the prefetch helpers.
 prefetchPursLanguageServer :: AppM NPMRegistryManifest
-prefetchPursLanguageServer = prefetchNPMRegistry
-  { tool: PursLanguageServer
-  , readManifest: AppM.readPursLanguageServerManifest
-  , includePackageLock: \_ -> false
-  , filterVersion: \(SemVer { version }) -> do
-      let
-        -- We only accept language server releases back to 0.15.6
-        afterCutoff :: Boolean
-        afterCutoff =
-          Version.major version > 0
-            || (Version.major version == 0 && Version.minor version > 15)
-            || (Version.major version == 0 && Version.minor version == 15 && Version.patch version >= 6)
+prefetchPursLanguageServer = do
+  manifest <- AppM.readPursLanguageServerManifest
 
-      afterCutoff
-  }
+  let existing = Map.keys manifest
+
+  rawReleases <- AppM.runGitHubM (GitHub.listReleases PursLanguageServer) >>= case _ of
+    Left error -> do
+      Console.log $ "Failed to fetch releases for purescript-language-server"
+      Console.log $ Octokit.printGitHubError error
+      liftEffect $ Process.exit 1
+    Right releases -> pure releases
+
+  Console.log $ "Retrieved " <> show (Array.length rawReleases) <> " releases for purescript-language-server"
+
+  let
+    parsePursLanguageServerReleases :: Array Release -> Map SemVer String
+    parsePursLanguageServerReleases = Map.fromFoldable <<< Array.mapMaybe \release -> Either.hush do
+      version <- SemVer.parse $ fromMaybe release.tag $ String.stripPrefix (String.Pattern "v") release.tag
+      asset <- Either.note "No asset named 'purescript-language-server.js' in release." $ Array.find (\asset -> asset.name == "purescript-language-server.js") release.assets
+      pure $ Tuple version asset.downloadUrl
+
+    -- We only accept pre-bundled language server releases, ie. those after 0.15.5
+    isBeforeCutoff :: SemVer -> Boolean
+    isBeforeCutoff (SemVer { version }) = Version.major version == 0 && Version.minor version <= 15 && Version.patch version <= 5
+
+    supportedReleases :: Map SemVer String
+    supportedReleases = Map.filterKeys (not <<< isBeforeCutoff) $ parsePursLanguageServerReleases rawReleases
+
+    -- We only want to include releases that aren't already present in the
+    -- manifest file.
+    newReleases :: Map SemVer String
+    newReleases = Map.filterKeys (not <<< flip Set.member existing) supportedReleases
+
+  Console.log $ "Found " <> show (Map.size newReleases) <> " new releases for purescript-language-server"
+
+  hashedReleases <- forWithIndex newReleases \version downloadUrl -> do
+    Console.log $ "Processing release " <> SemVer.print version
+    Console.log $ "Fetching hashes for release asset download url " <> downloadUrl
+    Nix.Prefetch.nixPrefetch downloadUrl >>= case _ of
+      Left error -> do
+        Console.log $ "Failed to hash release asset at url " <> downloadUrl <> ": " <> error
+        liftEffect $ Process.exit 1
+      Right hash -> pure $ Bundled { url: downloadUrl, hash }
+
+  pure hashedReleases
 
 writePursUpdates :: GitHubBinaryManifest -> AppM Unit
 writePursUpdates updates = do
@@ -473,7 +516,7 @@ unsafeVersion = Either.fromRight' (\_ -> unsafeCrashWith "Unexpected Left") <<< 
 type NPMRegistryArgs =
   { tool :: Tool
   , readManifest :: AppM NPMRegistryManifest
-  , includePackageLock :: SemVer -> Boolean
+  , includePackageLock :: SemVer -> Maybe FilePath
   , filterVersion :: SemVer -> Boolean
   }
 
@@ -501,7 +544,7 @@ prefetchNPMRegistry { tool, readManifest, filterVersion, includePackageLock } = 
 
   Console.log $ "Found " <> show (Map.size newReleases) <> " new releases for " <> Tool.print PursLanguageServer Tool.Executable
 
-  forWithIndex newReleases \version { gitHead: mbGitHead, dist } -> do
+  forWithIndex newReleases \version { dist } -> do
     Console.log $ "Processing release " <> SemVer.print version
 
     Console.log $ "Fetching hash for NPM tarball at url " <> dist.tarball
@@ -511,23 +554,13 @@ prefetchNPMRegistry { tool, readManifest, filterVersion, includePackageLock } = 
         liftEffect $ Process.exit 1
       Right hash -> pure { url: dist.tarball, hash }
 
-    if not (includePackageLock version) then do
-      Console.log $ "Version is bundled, returning tarball hash..."
-      pure $ Bundled tarballHash
-    else case mbGitHead of
+    case includePackageLock version of
       Nothing -> do
-        Console.log "Cannot fetch package-lock because no gitHead was returned by NPM for this version."
-        liftEffect $ Process.exit 1
-      Just gitHead -> do
-        Console.log $ "Version is not bundled, fetching package lock..."
-        let packageLockUrl = GitHub.rawContentUrl tool gitHead "package-lock.json"
-        Console.log $ "Fetching hash for NPM package-lock.json from GitHub at url: " <> packageLockUrl
-        packageLockHash <- Nix.Prefetch.nixPrefetch packageLockUrl >>= case _ of
-          Left error -> do
-            Console.log $ "Failed to hash package-lock at url " <> packageLockUrl <> ": " <> error
-            liftEffect $ Process.exit 1
-          Right hash -> pure { url: packageLockUrl, hash }
-        pure $ Unbundled { tarball: tarballHash, lockfile: packageLockHash }
+        Console.log $ "Version is bundled, returning tarball hash..."
+        pure $ Bundled tarballHash
+      Just path -> do
+        Console.log $ "Version is not bundled, returning tarball hash and lockfile at path: " <> path
+        pure $ Unbundled { tarball: tarballHash, lockfile: path }
 
 type GitHubArgs =
   { tool :: Tool

@@ -7,11 +7,11 @@
   callPackage,
 }: let
   mkPursDerivation = callPackage ./build-support/mkPursDerivation.nix {};
+  mkLegacySpagoDerivation = callPackage ./build-support/mkLegacySpagoDerivation.nix {};
   mkSpagoDerivation = callPackage ./build-support/mkSpagoDerivation.nix {};
   mkPursTidyDerivation = callPackage ./build-support/mkPursTidyDerivation.nix {};
   mkPursBackendEsDerivation = callPackage ./build-support/mkPursBackendEsDerivation.nix {};
   mkPursLanguageServerDerivation = callPackage ./build-support/mkPursLanguageServerDerivation.nix {};
-  mkLegacySpagoDerivation = callPackage ./build-support/mkLegacySpagoDerivation.nix {};
 
   # The purs manifest uses fetchurl to fetch tarballs. We have to accommodate
   # missing systems.
@@ -43,11 +43,11 @@
         entry = entries.${version};
       in
         # To accommodate systems that don't work for legacy spago versions
-        if legacyEntry == {} && !(builtins.hasAttr "url" entry)
+        if legacyEntry == {} && !(builtins.hasAttr "url" entry) && !(builtins.hasAttr "lockfile" entry)
         then acc
         else if legacyEntry != {}
         then acc // {${name} = mkLegacySpagoDerivation ({inherit version;} // legacyEntry);}
-        else acc // {${name} = mkSpagoDerivation ({inherit version;} // entry);}
+        else acc // {${name} = mkSpagoDerivation version entry;}
     ) {}
     (builtins.attrNames entries);
 
@@ -59,7 +59,7 @@
       acc: version: let
         name = "purs-tidy-${builtins.replaceStrings ["."] ["_"] version}";
       in
-        acc // {${name} = mkPursTidyDerivation ({inherit version;} // entries.${version});}
+        acc // {${name} = mkPursTidyDerivation version entries.${version};}
     ) {}
     (builtins.attrNames entries);
 
@@ -71,7 +71,7 @@
       acc: version: let
         name = "purs-backend-es-${builtins.replaceStrings ["."] ["_"] version}";
       in
-        acc // {${name} = mkPursBackendEsDerivation ({inherit version;} // entries.${version});}
+        acc // {${name} = mkPursBackendEsDerivation version entries.${version};}
     ) {}
     (builtins.attrNames entries);
 
@@ -83,7 +83,7 @@
       acc: version: let
         name = "purescript-language-server-${builtins.replaceStrings ["."] ["_"] version}";
       in
-        acc // {${name} = mkPursLanguageServerDerivation ({inherit version;} // entries.${version});}
+        acc // {${name} = mkPursLanguageServerDerivation version entries.${version};}
     ) {}
     (builtins.attrNames entries);
 

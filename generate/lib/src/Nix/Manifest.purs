@@ -92,12 +92,12 @@ npmFetchCodec = CA.codec' decode encode
     Bundled fetchUrl -> CA.encode fetchUrlCodec fetchUrl
     Unbundled fetchUrlAndLock -> CA.encode fetchUrlAndLockCodec fetchUrlAndLock
 
-type FetchUrlAndLock = { tarball :: FetchUrl, lockfile :: FetchUrl }
+type FetchUrlAndLock = { tarball :: FetchUrl, lockfile :: FilePath }
 
 fetchUrlAndLockCodec :: JsonCodec FetchUrlAndLock
 fetchUrlAndLockCodec = CA.Record.object "FetchUrlAndLock"
   { tarball: fetchUrlCodec
-  , lockfile: fetchUrlCodec
+  , lockfile: CA.string
   }
 
 -- | A manifest entry for a package which has a fetchable tarball
