@@ -218,5 +218,12 @@
       "hash": "sha256-ZBDPxh3xQXk7BJK+YDWgcTvQWj/4JUPLiHdt3DzU0VU=",
       "url": "https://registry.npmjs.org/spago/-/spago-0.93.17.tgz"
     }
+  },
+  "0.93.18": {
+    "lockfile": "spago/better-sqlite3-8_6_0.json",
+    "tarball": {
+      "hash": "sha256-4njqpauwKFtHqhoRIrS9HWhhWBQCCchXY1Z8jbaO6JE=",
+      "url": "https://registry.npmjs.org/spago/-/spago-0.93.18.tgz"
+    }
   }
 }
