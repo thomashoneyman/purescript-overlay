@@ -9,7 +9,7 @@
   nodejs,
   runCommand,
   slimlock,
-  python3,
+  pkgs,
 }: version: source: let
   node_modules =
     if source.lockfile or {} != {}
@@ -22,7 +22,14 @@
         omit = ["dev" "peer"];
       })
       .overrideAttrs (final: prev: {
-        nativeBuildInputs = prev.nativeBuildInputs or [] ++ [python3];
+        nativeBuildInputs =
+          (prev.nativeBuildInputs or [])
+          ++ [pkgs.python3]
+          ++ (
+            if stdenv.isDarwin
+            then [pkgs.libtool]
+            else []
+          );
       })
     else {};
 in
