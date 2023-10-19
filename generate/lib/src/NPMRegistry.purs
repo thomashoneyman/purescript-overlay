@@ -2,15 +2,17 @@ module Lib.NPMRegistry where
 
 import Prelude
 
+import Data.Argonaut.Parser as Argonaut
+import Data.Bifunctor (lmap)
 import Data.Codec.Argonaut (JsonCodec)
 import Data.Codec.Argonaut as CA
 import Data.Codec.Argonaut.Common as CA.Common
 import Data.Codec.Argonaut.Record as CA.Record
 import Data.Either (Either(..))
 import Data.Map (Map)
+import Data.Maybe (Maybe)
 import Effect.Aff (Aff)
 import Fetch as Fetch
-import Foreign (unsafeFromForeign)
 import Lib.SemVer (SemVer)
 import Lib.SemVer as SemVer
 import Lib.Tool (Tool(..))
@@ -22,16 +24,14 @@ import Node.Path (FilePath)
 
 listNPMReleases :: Tool -> Aff (Either String (Map SemVer NPMVersion))
 listNPMReleases tool = do
-  { status, json, text } <- Fetch.fetch (printNPMRegistryUrl tool) {}
+  { status, text } <- Fetch.fetch (printNPMRegistryUrl tool) {}
+  response <- text
   if status /= 200 then do
-    response <- text
     pure $ Left $ "Received non-200 status in request to NPM registry: " <> response
   else do
-    response <- unsafeFromForeign <$> json
-    case CA.decode npmPackageCodec response of
+    case (lmap CA.printJsonDecodeError <<< CA.decode npmPackageCodec) =<< Argonaut.jsonParser response of
       Left err -> do
-        responseText <- text
-        pure $ Left $ "Failed to decode NPM response: " <> CA.printJsonDecodeError err <> "\n\n from raw text: " <> responseText
+        pure $ Left $ "Failed to decode NPM response: " <> err <> "\n\n from raw text: " <> response
       Right npmPackage ->
         pure $ Right $ npmPackage.versions
 
@@ -40,7 +40,7 @@ printNPMRegistryUrl = case _ of
   Purs -> "https://registry.npmjs.org/purescript"
   Spago -> "https://registry.npmjs.org/spago"
   PursTidy -> "https://registry.npmjs.org/purs-tidy"
-  PursBackendEs -> "https://registry.npmjs.org/purescript-backend-es"
+  PursBackendEs -> "https://registry.npmjs.org/purs-backend-es"
   PursLanguageServer -> "https://registry.npmjs.org/purescript-language-server"
 
 type NPMPackage =
@@ -57,8 +57,8 @@ npmPackageCodec = CA.Record.object "NPMPackage"
 type NPMVersion =
   { name :: String
   , version :: SemVer
-  , main :: FilePath
-  , dependencies :: Map String String
+  , main :: Maybe FilePath
+  , dependencies :: Maybe (Map String String)
   , dist :: NPMVersionDist
   }
 
@@ -66,8 +66,8 @@ npmVersionCodec :: JsonCodec NPMVersion
 npmVersionCodec = CA.Record.object "NPMVersion"
   { name: CA.string
   , version: SemVer.codec
-  , main: CA.string
-  , dependencies: CA.Common.strMap CA.string
+  , main: CA.Record.optional CA.string
+  , dependencies: CA.Record.optional (CA.Common.strMap CA.string)
   , dist: npmVersionDistCodec
   }
 

@@ -110,6 +110,7 @@ prefetchPurs = fetchGitHub
           , unsafeVersion "0.13.7" -- https://github.com/purescript/purescript/releases/tag/v0.13.7 (has no releases)
           , unsafeVersion "0.15.1" -- https://github.com/purescript/purescript/releases/tag/v0.15.1 (incorrect version number, identical to 0.15.2)
           ]
+
       afterCutoff && notBroken
 
   , filterSystem: \(SemVer { version, pre }) system ->
@@ -124,23 +125,23 @@ prefetchPurs = fetchGitHub
 prefetchSpago :: AppM CombinedManifest
 prefetchSpago = do
   github <- prefetchSpagoGitHub
-  npm <- prefetchSpagoNPM
+  npm <- prefetchSpagoNPMRegistry
   pure $ Map.union (map Left npm) (map Right github)
   where
   -- Spago was rewritten from Haskell to PureScript, so we only get the PureScript
   -- releases from NPM (from 0.90 onward).
-  prefetchSpagoNPM :: AppM NPMRegistryManifest
-  prefetchSpagoNPM = prefetchNPMRegistry
+  prefetchSpagoNPMRegistry :: AppM NPMRegistryManifest
+  prefetchSpagoNPMRegistry = prefetchNPMRegistry
     { tool: Spago
     , readManifest: map (Map.mapMaybeWithKey (const Either.blush)) AppM.readSpagoManifest
+
     , filterVersion: \(SemVer { version, pre }) -> do
         let
-          -- We only accept Spago releases back to 0.90, which is the first release
-          -- of spago-next
+          -- We only accept Spago releases back to 0.93
           satisfiesLowerLimit :: Boolean
           satisfiesLowerLimit =
             Version.major version > 0
-              || (Version.major version == 0 && Version.minor version >= 90)
+              || (Version.major version == 0 && Version.minor version >= 93)
 
           notPrerelease :: Boolean
           notPrerelease = isNothing pre
@@ -528,8 +529,8 @@ fetchGitHub { tool, readManifest, parseAsset, filterVersion, filterSystem } = do
 
     supportedReleases :: Map SemVer (Map NixSystem String)
     supportedReleases = parseReleases rawReleases # Map.mapMaybeWithKey \version assets -> do
-      guard $ not $ filterVersion version
-      pure $ Map.filterKeys (not <<< filterSystem version) assets
+      guard $ filterVersion version
+      pure $ Map.filterKeys (filterSystem version) assets
 
     -- We only want to include releases that aren't already present in the
     -- manifest file.
