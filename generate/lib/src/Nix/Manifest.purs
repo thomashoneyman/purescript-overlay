@@ -48,27 +48,57 @@ githubBinaryManifestCodec = do
   let decodeKey = Either.hush <<< SemVer.parse
   Registry.Codec.strMap "GitHubBinaryManifest" decodeKey encodeKey (Nix.System.systemMapCodec fetchUrlCodec)
 
-type NPMRegistryManifest = Map SemVer FetchUrl
+type NPMRegistryManifest = Map SemVer NPMFetch
 
 npmRegistryManifestCodec :: JsonCodec NPMRegistryManifest
 npmRegistryManifestCodec = do
   let encodeKey = SemVer.print
   let decodeKey = Either.hush <<< SemVer.parse
-  Registry.Codec.strMap "NPMRegistryManifest" decodeKey encodeKey fetchUrlCodec
+  Registry.Codec.strMap "NPMRegistryManifest" decodeKey encodeKey npmFetchCodec
 
-type CombinedManifest = Map SemVer (Either FetchUrl (Map NixSystem FetchUrl))
+type CombinedManifest = Map SemVer (Either NPMFetch (Map NixSystem FetchUrl))
 
 combinedManifestCodec :: JsonCodec CombinedManifest
 combinedManifestCodec = SemVer.semverMapCodec (CA.codec' decode encode)
   where
   decode json =
-    map Left (CA.decode fetchUrlCodec json)
+    map Left (CA.decode npmFetchCodec json)
       <|> map Right (CA.decode (Nix.System.systemMapCodec fetchUrlCodec) json)
       <|> Left (CA.TypeMismatch "Expected a FetchUrl or a SystemMap FetchUrl")
 
   encode = case _ of
-    Left gitRev -> CA.encode fetchUrlCodec gitRev
+    Left npmFetch -> CA.encode npmFetchCodec npmFetch
     Right fetchUrl -> CA.encode (Nix.System.systemMapCodec fetchUrlCodec) fetchUrl
+
+-- | A manifest entry for a package which has a fetchable tarball, where the
+-- | tarball contains either the entire bundled script, or contains a script
+-- | that still requires dependencies. Since the package-lock.json is not
+-- | included in the NPM tarball we fetch it separately from GitHub.
+data NPMFetch
+  = Bundled FetchUrl
+  | Unbundled FetchUrlAndLock
+
+derive instance Eq NPMFetch
+
+npmFetchCodec :: JsonCodec NPMFetch
+npmFetchCodec = CA.codec' decode encode
+  where
+  decode json =
+    map Bundled (CA.decode fetchUrlCodec json)
+      <|> map Unbundled (CA.decode fetchUrlAndLockCodec json)
+      <|> Left (CA.TypeMismatch "Expected a FetchUrl or a FetchUrlAndLock")
+
+  encode = case _ of
+    Bundled fetchUrl -> CA.encode fetchUrlCodec fetchUrl
+    Unbundled fetchUrlAndLock -> CA.encode fetchUrlAndLockCodec fetchUrlAndLock
+
+type FetchUrlAndLock = { tarball :: FetchUrl, lockfile :: FetchUrl }
+
+fetchUrlAndLockCodec :: JsonCodec FetchUrlAndLock
+fetchUrlAndLockCodec = CA.Record.object "FetchUrlAndLock"
+  { tarball: fetchUrlCodec
+  , lockfile: fetchUrlCodec
+  }
 
 -- | A manifest entry for a package which has a fetchable tarball
 type FetchUrl = { url :: String, hash :: Sha256 }

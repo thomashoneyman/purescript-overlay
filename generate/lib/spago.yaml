@@ -3,6 +3,7 @@ package:
   dependencies:
     - aff-promise
     - argonaut-core
+    - b64
     - codec-argonaut
     - effect
     - fetch
