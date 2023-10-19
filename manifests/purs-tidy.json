@@ -15,9 +15,21 @@
     "hash": "sha256-Fl11hcu5JuDkOs6fOD7/K9F9q0IagG4Mwc9Cj7UzWI0=",
     "url": "https://registry.npmjs.org/purs-tidy/-/purs-tidy-0.5.3.tgz"
   },
+  "0.5.4": {
+    "hash": "sha256-mUI8olgLw4ixAA2uKYB8yxkVmegYsSxOll+yDfMXeYE=",
+    "url": "https://registry.npmjs.org/purs-tidy/-/purs-tidy-0.5.4.tgz"
+  },
   "0.6.0": {
     "hash": "sha256-Z/isCJQ3CPsux3b3wfBckU6Y7hcUBsJatSFq+l8QDUA=",
     "url": "https://registry.npmjs.org/purs-tidy/-/purs-tidy-0.6.0.tgz"
+  },
+  "0.6.1": {
+    "hash": "sha256-tEcwlisKcxTitwznHiFhZIs2Igilx+rjeBVDCBBfhDw=",
+    "url": "https://registry.npmjs.org/purs-tidy/-/purs-tidy-0.6.1.tgz"
+  },
+  "0.6.2": {
+    "hash": "sha256-lm5+Bnbm8Udbu6N2atuijgdu+C/TuJtArT9tCSVgYeQ=",
+    "url": "https://registry.npmjs.org/purs-tidy/-/purs-tidy-0.6.2.tgz"
   },
   "0.6.3": {
     "hash": "sha256-jc8FrYam26BD4di02UCqAadpIzEz7aqrPzCJKoJ2Akc=",
@@ -46,6 +58,18 @@
   "0.9.0": {
     "hash": "sha256-k5hCrLOOIkHGtqQ8BOM2vB9auXvdMO4LttE18puLHyk=",
     "url": "https://registry.npmjs.org/purs-tidy/-/purs-tidy-0.9.0.tgz"
+  },
+  "0.9.1": {
+    "hash": "sha256-GJviOnfPngig4QqDD0+KCAv377MeHy9AvNyikmG0GkA=",
+    "url": "https://registry.npmjs.org/purs-tidy/-/purs-tidy-0.9.1.tgz"
+  },
+  "0.9.2": {
+    "hash": "sha256-qpvrP1xBV5Kd3rG0lHJC+2C1+/PV8d9G3pynsG2jeX8=",
+    "url": "https://registry.npmjs.org/purs-tidy/-/purs-tidy-0.9.2.tgz"
+  },
+  "0.9.3": {
+    "hash": "sha256-gDevu+fPGSe7bwz58twqN9YMpjOKxf0bdLqDCuxmqig=",
+    "url": "https://registry.npmjs.org/purs-tidy/-/purs-tidy-0.9.3.tgz"
   },
   "0.10.0": {
     "hash": "sha256-yDHOaOXNt+9SXfLUnymBZTSWMU5fkAFBxTTsl8lvzjM=",
