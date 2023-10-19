@@ -143,10 +143,15 @@ prefetchSpago = do
             Version.major version > 0
               || (Version.major version == 0 && Version.minor version >= 93)
 
+          notBroken :: Boolean
+          notBroken = Array.notElem version
+            [ unsafeVersion "0.93.7" -- bad bundle, fails with 'ReferenceError: __dirname is not defined in ES module scope'
+            ]
+
           notPrerelease :: Boolean
           notPrerelease = isNothing pre
 
-        satisfiesLowerLimit && notPrerelease
+        satisfiesLowerLimit && notBroken && notPrerelease
     }
 
   -- Spago was rewritten from Haskell to PureScript, so we only get the Haskell

@@ -177,10 +177,6 @@
     "hash": "sha256-3nQrvQzI8Z1yWpICMHz6rFqlnHQis0iX5rqAa3mQ90o=",
     "url": "https://registry.npmjs.org/spago/-/spago-0.93.6.tgz"
   },
-  "0.93.7": {
-    "hash": "sha256-GBgHCRv91bxeiw84Dyy6WV8+Nuni4s+iEdefXaUH52c=",
-    "url": "https://registry.npmjs.org/spago/-/spago-0.93.7.tgz"
-  },
   "0.93.8": {
     "hash": "sha256-yz54k7lLITYqBt7oN+7f+tBTz7f03vGvNiIqfOuEaLk=",
     "url": "https://registry.npmjs.org/spago/-/spago-0.93.8.tgz"
