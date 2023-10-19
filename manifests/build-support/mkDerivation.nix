@@ -24,12 +24,8 @@
       .overrideAttrs (final: prev: {
         nativeBuildInputs =
           (prev.nativeBuildInputs or [])
-          ++ [pkgs.python3]
-          ++ (
-            if stdenv.isDarwin
-            then [pkgs.libtool]
-            else []
-          );
+          ++ [pkgs.python3] # bump
+          ++ lib.optionals stdenv.isDarwin [pkgs.darwin.cctools];
       })
     else {};
 in
