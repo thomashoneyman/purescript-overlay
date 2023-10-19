@@ -17,8 +17,10 @@ workspace:
       dependencies:
         - aff-promise
         - argonaut-core
+        - b64
         - codec-argonaut
         - effect
+        - fetch
         - http-methods
         - node-execa
         - prelude
@@ -149,6 +151,20 @@ packages:
       - exceptions
       - functions
       - maybe
+  b64:
+    type: registry
+    version: 0.0.8
+    integrity: sha256-3QkOhnewZIqhfn0wIU6Zde6Q/LfrS59kgSOcQQaG0gM=
+    dependencies:
+      - arraybuffer-types
+      - either
+      - encoding
+      - enums
+      - exceptions
+      - functions
+      - partial
+      - prelude
+      - strings
   bifunctors:
     type: registry
     version: 6.0.0
@@ -300,6 +316,16 @@ packages:
       - invariant
       - maybe
       - prelude
+  encoding:
+    type: registry
+    version: 0.0.8
+    integrity: sha256-n0HhENAax0yr7JFwZXcisx0jJvVf1dFwqd+Q5i2Pr88=
+    dependencies:
+      - arraybuffer-types
+      - either
+      - exceptions
+      - functions
+      - prelude
   enums:
     type: registry
     version: 6.0.1
@@ -330,6 +356,52 @@ packages:
     integrity: sha256-A0JQHpTfo1dNOj9U5/Fd3xndlRSE0g2IQWOGor2yXn8=
     dependencies:
       - unsafe-coerce
+  fetch:
+    type: registry
+    version: 1.1.4
+    integrity: sha256-Tmt60rjS4PNtKMVGpo8O6W1Fdhcu3a3CvyN/x+SwXEs=
+    dependencies:
+      - aff
+      - aff-promise
+      - arraybuffer-types
+      - effect
+      - fetch-core
+      - foreign
+      - http-methods
+      - newtype
+      - prelude
+      - record
+      - typelevel-prelude
+      - unsafe-coerce
+      - web-file
+      - web-promise
+      - web-streams
+  fetch-core:
+    type: registry
+    version: 4.0.4
+    integrity: sha256-lS4yhvznII/vg37LewU/Ubeoj6OpxED2kb5/yn58YQQ=
+    dependencies:
+      - arraybuffer-types
+      - arrays
+      - console
+      - effect
+      - foldable-traversable
+      - foreign
+      - foreign-object
+      - functions
+      - http-methods
+      - maybe
+      - newtype
+      - nullable
+      - prelude
+      - record
+      - tuples
+      - typelevel-prelude
+      - unfoldable
+      - unsafe-coerce
+      - web-file
+      - web-promise
+      - web-streams
   fixed-points:
     type: registry
     version: 7.0.0
@@ -603,6 +675,13 @@ packages:
     dependencies:
       - control
       - invariant
+      - newtype
+      - prelude
+  media-types:
+    type: registry
+    version: 6.0.0
+    integrity: sha256-n/4FoGBasbVSYscGVRSyBunQ6CZbL3jsYL+Lp01mc9k=
+    dependencies:
       - newtype
       - prelude
   mmorph:
@@ -1246,3 +1325,49 @@ packages:
       - record
       - tuples
       - unsafe-coerce
+  web-dom:
+    type: registry
+    version: 6.0.0
+    integrity: sha256-1kSKWFDI4LupdmpjK01b1MMxDFW7jvatEgPgVmCmSBQ=
+    dependencies:
+      - web-events
+  web-events:
+    type: registry
+    version: 4.0.0
+    integrity: sha256-YDt8b6u1tzGtnWyNRodne57iO8FNSGPaTCVzBUyUn4k=
+    dependencies:
+      - datetime
+      - enums
+      - foreign
+      - nullable
+  web-file:
+    type: registry
+    version: 4.0.0
+    integrity: sha256-1h5jPBkvjY71jLEdwVadXCx86/2inNoMBO//Rd3eCSU=
+    dependencies:
+      - foreign
+      - media-types
+      - web-dom
+  web-promise:
+    type: registry
+    version: 3.1.0
+    integrity: sha256-YfqJyEC3bHH6D8QgTi0ME5oJmGYOuZ2TlcyOdpG8dIE=
+    dependencies:
+      - effect
+      - exceptions
+      - foldable-traversable
+      - functions
+      - maybe
+      - prelude
+  web-streams:
+    type: registry
+    version: 3.0.0
+    integrity: sha256-+QELAR7lb08Ebr4lCntxeGk5Z1i+NInDJwzEzz3Pigc=
+    dependencies:
+      - arraybuffer-types
+      - effect
+      - exceptions
+      - nullable
+      - prelude
+      - tuples
+      - web-promise

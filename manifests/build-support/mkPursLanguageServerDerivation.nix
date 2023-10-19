@@ -4,16 +4,12 @@
   lib,
   nodejs,
   writeText,
-}: {
-  version,
-  url,
-  hash,
-}:
+}: version: source:
 stdenv.mkDerivation rec {
   pname = "purescript-language-server";
   inherit version;
 
-  src = fetchurl {inherit url hash;};
+  src = fetchurl source;
 
   nativeBuildInputs = [nodejs];
 

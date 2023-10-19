@@ -1,5 +1,5 @@
 module Lib.Nix.Prefetch
-  ( nixPrefetchTarball
+  ( nixPrefetch
   ) where
 
 import Prelude
@@ -13,8 +13,8 @@ import Node.Library.Execa as Execa
 import Registry.Sha256 (Sha256)
 import Registry.Sha256 as Sha256
 
-nixPrefetchTarball :: forall m. MonadAff m => String -> m (Either String Sha256)
-nixPrefetchTarball url = Except.runExceptT do
+nixPrefetch :: forall m. MonadAff m => String -> m (Either String Sha256)
+nixPrefetch url = Except.runExceptT do
   nixHash <- ExceptT (nixPrefetchUrl url)
   sha256 <- ExceptT (nixHashToSha256 nixHash)
   pure sha256

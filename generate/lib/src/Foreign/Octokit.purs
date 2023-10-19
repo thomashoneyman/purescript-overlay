@@ -1,6 +1,7 @@
 -- | Low-level bindings to Octokit and its request functions.
 module Lib.Foreign.Octokit
   ( Address
+  , Base64Content(..)
   , GitHubAPIError
   , GitHubError(..)
   , GitHubRoute
@@ -12,6 +13,7 @@ module Lib.Foreign.Octokit
   , Release
   , ReleaseAsset
   , Request
+  , decodeBase64Content
   , githubErrorCodec
   , newAuthOctokit
   , newOctokit
@@ -21,6 +23,7 @@ module Lib.Foreign.Octokit
   , request
   , requestCreatePullRequest
   , requestGetCommitDate
+  , requestGetContent
   , requestGetLatestRelease
   , requestGetPullRequests
   , requestGetRefCommitSha
@@ -56,6 +59,8 @@ import Data.Nullable (Nullable)
 import Data.Nullable as Nullable
 import Data.Profunctor as Profunctor
 import Data.String as String
+import Data.String.Base64 as Base64
+import Data.Traversable (traverse)
 import Data.Tuple (Tuple(..))
 import Data.Variant as Variant
 import Effect.Aff as Aff
@@ -65,6 +70,7 @@ import Effect.Class.Console as Console
 import Effect.Uncurried (EffectFn1, EffectFn6, runEffectFn1, runEffectFn6)
 import Foreign.Object (Object)
 import Foreign.Object as Object
+import Node.Path (FilePath)
 import Registry.Internal.Codec as Internal.Codec
 import Registry.Internal.Codec as Registry.Codec
 import Type.Proxy (Proxy(..))
@@ -84,6 +90,17 @@ newOctokit = liftEffect $ runEffectFn1 newOctokitImpl Nullable.null
 
 newAuthOctokit :: forall m. MonadEffect m => GitHubToken -> m Octokit
 newAuthOctokit token = liftEffect $ runEffectFn1 newOctokitImpl (Nullable.notNull token)
+
+-- | A newline-delimited base64-encoded file retrieved from the GitHub API
+newtype Base64Content = Base64Content String
+
+derive instance Newtype Base64Content _
+
+decodeBase64Content :: Base64Content -> Either String String
+decodeBase64Content (Base64Content string) =
+  case traverse Base64.decode $ String.split (String.Pattern "\n") string of
+    Left error -> Left $ Aff.message error
+    Right values -> Right $ Array.fold values
 
 -- | The address of a GitHub repository as a owner/repo pair.
 type Address = { owner :: String, repo :: String }
@@ -181,6 +198,32 @@ releaseAssetCodec = Profunctor.dimap toJsonRep fromJsonRep $ CA.Record.object "R
     { downloadUrl: browser_download_url
     , name
     }
+
+-- | Fetch a specific file  from the provided repository at the given ref and
+-- | filepath. Filepaths should lead to a single file from the root of the repo.
+-- | https://github.com/octokit/plugin-rest-endpoint-methods.js/blob/v5.16.0/docs/repos/getContent.md
+requestGetContent :: { address :: Address, ref :: String, path :: FilePath } -> Request Base64Content
+requestGetContent { address, ref, path } =
+  { route: GitHubRoute GET [ "repos", address.owner, address.repo, "contents", path ] (Map.singleton "ref" ref)
+  , headers: Object.empty
+  , args: noArgs
+  , paginate: false
+  , codec: Profunctor.dimap toJsonRep fromJsonRep $ CA.Record.object "Content"
+      { data: CA.Record.object "Content.data"
+          { type: value "file"
+          , encoding: value "base64"
+          , content: CA.string
+          }
+      }
+  }
+  where
+  value :: String -> JsonCodec String
+  value expected = CA.codec'
+    (\json -> CA.decode CA.string json >>= \decoded -> if decoded == expected then pure expected else Left (CA.UnexpectedValue json))
+    (\_ -> CA.encode CA.string expected)
+
+  toJsonRep (Base64Content str) = { data: { type: "file", encoding: "base64", content: str } }
+  fromJsonRep { data: { content } } = Base64Content content
 
 -- | Fetch the commit SHA for a given ref on a GitHub repository
 requestGetRefCommitSha :: { address :: Address, ref :: String } -> Request String

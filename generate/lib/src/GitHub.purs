@@ -2,9 +2,11 @@ module Lib.GitHub where
 
 import Prelude
 
-import Control.Monad.Error.Class (class MonadThrow)
+import Control.Monad.Error.Class (class MonadThrow, liftEither)
 import Control.Monad.Except (ExceptT(..))
 import Control.Monad.Reader (class MonadAsk, ReaderT, ask)
+import Data.Array as Array
+import Data.Bifunctor (lmap)
 import Data.DateTime (DateTime)
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
@@ -14,11 +16,12 @@ import Effect.Aff as Aff
 import Effect.Aff.Class (class MonadAff, liftAff)
 import Effect.Class (class MonadEffect)
 import Effect.Class.Console as Console
-import Lib.Foreign.Octokit (GitHubError(..), Octokit, Release, Request, PullRequest)
+import Lib.Foreign.Octokit (GitHubError(..), Octokit, PullRequest, Release, Request)
 import Lib.Foreign.Octokit as Octokit
 import Lib.Git (CommitSha(..), Tag(..))
 import Lib.Tool (Tool(..))
 import Lib.Utils as Utils
+import Node.Path (FilePath)
 
 -- | A monad for executing requests to GitHub
 newtype GitHubM a = GitHubM (ExceptT GitHubError (ReaderT Octokit Aff) a)
@@ -44,6 +47,20 @@ toolRepo = case _ of
   PursBackendEs -> { owner: "aristanetworks", repo: "purescript-backend-optimizer" }
   PursLanguageServer -> { owner: "nwolverson", repo: "purescript-language-server" }
 
+rawContentUrl :: Tool -> CommitSha -> FilePath -> String
+rawContentUrl tool (CommitSha gitHead) path = do
+  let { owner, repo } = toolRepo tool
+  Array.fold
+    [ "https://raw.githubusercontent.com/"
+    , owner
+    , "/"
+    , repo
+    , "/"
+    , gitHead
+    , "/"
+    , path
+    ]
+
 listReleases :: Tool -> GitHubM (Array Release)
 listReleases tool = do
   octokit <- ask
@@ -67,6 +84,17 @@ getReleaseByTagName tool tag = do
   Console.log $ "Getting release identified by tag " <> un Tag tag <> " in repo " <> address.owner <> "/" <> address.repo
   let req = requestWithBackoff octokit (Octokit.requestGetReleaseByTagName address (un Tag tag))
   GitHubM $ ExceptT req
+
+getContent :: Tool -> CommitSha -> FilePath -> GitHubM String
+getContent tool sha path = do
+  octokit <- ask
+  let address = toolRepo tool
+  Console.log $ "Getting content for commit SHA " <> un CommitSha sha <> " in repo " <> address.owner <> "/" <> address.repo <> " at path " <> path
+  let req = requestWithBackoff octokit (Octokit.requestGetContent { address, ref: un CommitSha sha, path })
+  GitHubM $ do
+    res <- ExceptT req
+    let liftDecode = liftEither <<< lmap (UnexpectedError <<< append "Base64 decode failed: ")
+    liftDecode (Octokit.decodeBase64Content res)
 
 getTagCommitSha :: Tool -> Tag -> GitHubM CommitSha
 getTagCommitSha tool tag = do

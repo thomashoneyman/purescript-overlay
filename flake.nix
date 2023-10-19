@@ -149,6 +149,7 @@
           self.packages.${system}.purs-tidy-unstable
           self.packages.${system}.purs-backend-es-unstable
           self.packages.${system}.purescript-language-server-unstable
+          pkgs.nodejs_18
         ];
       };
     });

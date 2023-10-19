@@ -40,58 +40,64 @@ namedManifestCodec = do
   let decodeKey = Either.hush <<< Tool.parseToolChannel
   Registry.Codec.strMap "NamedManifest" decodeKey encodeKey Tool.toolPackageCodec
 
-type PursManifest = Map SemVer (Map NixSystem FetchUrl)
+type GitHubBinaryManifest = Map SemVer (Map NixSystem FetchUrl)
 
-pursManifestCodec :: JsonCodec PursManifest
-pursManifestCodec = do
+githubBinaryManifestCodec :: JsonCodec GitHubBinaryManifest
+githubBinaryManifestCodec = do
   let encodeKey = SemVer.print
   let decodeKey = Either.hush <<< SemVer.parse
-  Registry.Codec.strMap "PursManifest" decodeKey encodeKey (Nix.System.systemMapCodec fetchUrlCodec)
+  Registry.Codec.strMap "GitHubBinaryManifest" decodeKey encodeKey (Nix.System.systemMapCodec fetchUrlCodec)
 
-type SpagoManifest = Map SemVer (Either FetchUrl (Map NixSystem FetchUrl))
+type NPMRegistryManifest = Map SemVer NPMFetch
 
-spagoManifestCodec :: JsonCodec SpagoManifest
-spagoManifestCodec = SemVer.semverMapCodec (CA.codec' decode encode)
+npmRegistryManifestCodec :: JsonCodec NPMRegistryManifest
+npmRegistryManifestCodec = do
+  let encodeKey = SemVer.print
+  let decodeKey = Either.hush <<< SemVer.parse
+  Registry.Codec.strMap "NPMRegistryManifest" decodeKey encodeKey npmFetchCodec
+
+type CombinedManifest = Map SemVer (Either NPMFetch (Map NixSystem FetchUrl))
+
+combinedManifestCodec :: JsonCodec CombinedManifest
+combinedManifestCodec = SemVer.semverMapCodec (CA.codec' decode encode)
   where
   decode json =
-    map Left (CA.decode fetchUrlCodec json)
+    map Left (CA.decode npmFetchCodec json)
       <|> map Right (CA.decode (Nix.System.systemMapCodec fetchUrlCodec) json)
       <|> Left (CA.TypeMismatch "Expected a FetchUrl or a SystemMap FetchUrl")
 
   encode = case _ of
-    Left gitRev -> CA.encode fetchUrlCodec gitRev
+    Left npmFetch -> CA.encode npmFetchCodec npmFetch
     Right fetchUrl -> CA.encode (Nix.System.systemMapCodec fetchUrlCodec) fetchUrl
 
-type PursTidyManifest = Map SemVer FetchUrl
+-- | A manifest entry for a package which has a fetchable tarball, where the
+-- | tarball contains either the entire bundled script, or contains a script
+-- | that still requires dependencies. Since the package-lock.json is not
+-- | included in the NPM tarball we fetch it separately from GitHub.
+data NPMFetch
+  = Bundled FetchUrl
+  | Unbundled FetchUrlAndLock
 
-pursTidyManifestCodec :: JsonCodec PursTidyManifest
-pursTidyManifestCodec = do
-  let encodeKey = SemVer.print
-  let decodeKey = Either.hush <<< SemVer.parse
-  Registry.Codec.strMap "PursTidyManifest" decodeKey encodeKey fetchUrlCodec
+derive instance Eq NPMFetch
 
-type PursBackendEsManifest = Map SemVer FetchUrl
+npmFetchCodec :: JsonCodec NPMFetch
+npmFetchCodec = CA.codec' decode encode
+  where
+  decode json =
+    map Bundled (CA.decode fetchUrlCodec json)
+      <|> map Unbundled (CA.decode fetchUrlAndLockCodec json)
+      <|> Left (CA.TypeMismatch "Expected a FetchUrl or a FetchUrlAndLock")
 
-pursBackendEsManifestCodec :: JsonCodec PursBackendEsManifest
-pursBackendEsManifestCodec = do
-  let encodeKey = SemVer.print
-  let decodeKey = Either.hush <<< SemVer.parse
-  Registry.Codec.strMap "PursBackendEsManifest" decodeKey encodeKey fetchUrlCodec
+  encode = case _ of
+    Bundled fetchUrl -> CA.encode fetchUrlCodec fetchUrl
+    Unbundled fetchUrlAndLock -> CA.encode fetchUrlAndLockCodec fetchUrlAndLock
 
-type PursLanguageServerManifest = Map SemVer FetchUrl
+type FetchUrlAndLock = { tarball :: FetchUrl, lockfile :: FilePath }
 
-pursLanguageServerManifestCodec :: JsonCodec PursLanguageServerManifest
-pursLanguageServerManifestCodec = do
-  let encodeKey = SemVer.print
-  let decodeKey = Either.hush <<< SemVer.parse
-  Registry.Codec.strMap "PursLanguageServerManifest" decodeKey encodeKey fetchUrlCodec
-
--- | A manifest entry for a package that can be fetched from git
-type GitRev = { rev :: String }
-
-gitRevCodec :: JsonCodec GitRev
-gitRevCodec = CA.Record.object "SpagoManifestEntry"
-  { rev: CA.string
+fetchUrlAndLockCodec :: JsonCodec FetchUrlAndLock
+fetchUrlAndLockCodec = CA.Record.object "FetchUrlAndLock"
+  { tarball: fetchUrlCodec
+  , lockfile: CA.string
   }
 
 -- | A manifest entry for a package which has a fetchable tarball
