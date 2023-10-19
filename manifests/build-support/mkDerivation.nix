@@ -8,68 +8,62 @@
   fetchurl,
   nodejs,
   runCommand,
-  slimlock,
-  pkgs,
+  buildNpmPackage,
 }: version: source: let
-  node_modules =
-    if source.lockfile or {} != {}
-    then
-      (slimlock.buildPackageLock {
-        src = runCommand "package-lock-dir" {} ''
-          mkdir -p $out
-          cp ${./. + ("/" + source.lockfile)} $out/package-lock.json
-        '';
-        omit = ["dev" "peer"];
-      })
-      .overrideAttrs (final: prev: {
-        nativeBuildInputs =
-          (prev.nativeBuildInputs or [])
-          ++ [pkgs.python3] # bump
-          ++ lib.optionals stdenv.isDarwin [pkgs.darwin.cctools];
-      })
-    else {};
 in
-  stdenv.mkDerivation {
-    pname = name;
+  # If there is NOT a lockfile set, then we can build this as a simple bundle.
+  if source.lockfile or {} == {}
+  then
+    stdenv.mkDerivation {
+      pname = name;
+      inherit version;
 
-    inherit version;
+      src = fetchurl source;
 
-    # Source is either { url, hash } or { tarball: { url, hash } }
-    src =
-      if source.url or {} != {}
-      then fetchurl source
-      else fetchurl source.tarball;
+      nativeBuildInputs = [nodejs];
 
-    nativeBuildInputs = [nodejs];
+      buildPhase = ''
+        tar xf $src
+      '';
 
-    buildPhase = ''
-      tar xf $src
-    '';
+      installPhase = ''
+        PACKAGE=$out/node_modules/${name}
+        mkdir -p $PACKAGE
+        mv package/* $PACKAGE
 
-    installPhase = ''
-      mkdir -p $out/node_modules
+        BIN=$PACKAGE/${js}
+        chmod +x $BIN
+        patchShebangs $BIN
 
-      ${
-        if node_modules != {}
-        then ''
-          cp -r ${node_modules}/js/node_modules $out
-        ''
-        else ''
-          echo "No package-lock.json found, not including node_modules."
-        ''
-      }
+        mkdir -p $out/bin
+        ln -s $BIN $out/bin/${name}
+      '';
 
-      PACKAGE=$out/node_modules/${name}
-      mkdir -p $PACKAGE
-      mv package/* $PACKAGE
+      meta = meta lib;
+    }
+  # Otherwise, if there IS a lockfile set, then we need to include dependencies.
+  else let
+    packageJson = fetchurl source.lockfile;
+  in
+    buildNpmPackage {
+      pname = name;
+      inherit version;
+      src = fetchurl source.tarball;
 
-      BIN=$PACKAGE/${js}
-      chmod +x $BIN
-      patchShebangs $BIN
+      makeCacheWritable = true;
 
-      mkdir -p $out/bin
-      ln -s $BIN $out/bin/${name}
-    '';
+      postPatch = ''
+        cp ${packageJson} package-lock.json
+      '';
 
-    meta = meta lib;
-  }
+      npmDepsHash = source.depsHash;
+
+      nativeBuildInputs = [nodejs];
+
+      # The prepack script runs the build script, but (so far) all derivations
+      # are pre-built.
+      npmPackFlags = ["--ignore-scripts"];
+      dontNpmBuild = true;
+
+      meta = meta lib;
+    }
