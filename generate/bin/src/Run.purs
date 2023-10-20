@@ -21,6 +21,7 @@ import Prelude
 import Bin.AppM (AppM)
 import Bin.AppM as AppM
 import Control.Alternative (guard)
+import Control.Monad.Reader (ask)
 import Data.Array as Array
 import Data.Either (Either(..), fromRight')
 import Data.Either as Either
@@ -40,10 +41,11 @@ import Effect.Class (liftEffect)
 import Effect.Class.Console as Console
 import Lib.Foreign.Octokit (Release, ReleaseAsset)
 import Lib.Foreign.Octokit as Octokit
+import Lib.Foreign.Tmp as Tmp
 import Lib.GitHub as GitHub
 import Lib.NPMRegistry (NPMVersion)
 import Lib.NPMRegistry as NPMRegistry
-import Lib.Nix.Manifest (CombinedManifest, FetchUrl, GitHubBinaryManifest, NPMFetch(..), NamedManifest, NPMRegistryManifest)
+import Lib.Nix.Manifest (CombinedManifest, FetchUrl, GitHubBinaryManifest, NPMFetch(..), NPMRegistryManifest, NamedManifest)
 import Lib.Nix.Prefetch as Nix.Prefetch
 import Lib.Nix.System (NixSystem(..))
 import Lib.Nix.System as NixSystem
@@ -51,9 +53,14 @@ import Lib.SemVer (SemVer(..))
 import Lib.SemVer as SemVer
 import Lib.Tool (Channel(..), Tool(..), ToolChannel(..), ToolPackage(..))
 import Lib.Tool as Tool
+import Lib.Utils (withBackoff')
+import Node.Encoding (Encoding(..))
+import Node.FS.Aff as FS.Aff
 import Node.Path (FilePath)
+import Node.Path as Path
 import Node.Process as Process
 import Partial.Unsafe (unsafeCrashWith)
+import Registry.Sha256 as Sha256
 import Registry.Version (Version)
 import Registry.Version as Version
 
@@ -138,16 +145,14 @@ prefetchSpago = do
 
     , includePackageLock: \(SemVer { version }) -> do
         let
-          -- We only include the package-lock.json for Spago releases from
-          -- 0.93.15 onward because that's when it started unbundling better-sqlite
-          unbundled =
-            Version.major version > 0
-              || (Version.major version == 0 && Version.minor version > 93)
-              || (Version.major version == 0 && Version.minor version == 93 && Version.patch version >= 15)
+          -- spago 0.93.15 and up use better-sqlite3 at 8.6.0 and have malformed
+          -- package-lock.json files which make them unsuitable for remote use.
+          -- should be fixed from 0.93.19 on.
+          local_0_93 =
+            Version.major version == 0 && Version.minor version == 93 && Version.patch version > 15 && Version.patch version < 19
 
-        -- TODO: This is annoying and manual. Hopefully there's some better way.
-        if unbundled then
-          Just "spago/better-sqlite3-8_6_0.json"
+        if local_0_93 then
+          Just $ Local $ Path.concat [ "spago", "0.93.x.json" ]
         else
           Nothing
 
@@ -280,7 +285,7 @@ prefetchPursLanguageServer = do
   hashedReleases <- forWithIndex newReleases \version downloadUrl -> do
     Console.log $ "Processing release " <> SemVer.print version
     Console.log $ "Fetching hashes for release asset download url " <> downloadUrl
-    Nix.Prefetch.nixPrefetch downloadUrl >>= case _ of
+    Nix.Prefetch.nixPrefetchUrl downloadUrl >>= case _ of
       Left error -> do
         Console.log $ "Failed to hash release asset at url " <> downloadUrl <> ": " <> error
         liftEffect $ Process.exit 1
@@ -513,10 +518,14 @@ writePursLanguageServerUpdates updates = do
 unsafeVersion :: String -> Version
 unsafeVersion = Either.fromRight' (\_ -> unsafeCrashWith "Unexpected Left") <<< Version.parse
 
+data PackageLockSource = Remote | Local FilePath
+
+derive instance Eq PackageLockSource
+
 type NPMRegistryArgs =
   { tool :: Tool
   , readManifest :: AppM NPMRegistryManifest
-  , includePackageLock :: SemVer -> Maybe FilePath
+  , includePackageLock :: SemVer -> Maybe PackageLockSource
   , filterVersion :: SemVer -> Boolean
   }
 
@@ -544,11 +553,11 @@ prefetchNPMRegistry { tool, readManifest, filterVersion, includePackageLock } = 
 
   Console.log $ "Found " <> show (Map.size newReleases) <> " new releases for " <> Tool.print PursLanguageServer Tool.Executable
 
-  forWithIndex newReleases \version { dist } -> do
+  forWithIndex newReleases \version { gitHead: mbGitHead, dist } -> do
     Console.log $ "Processing release " <> SemVer.print version
 
     Console.log $ "Fetching hash for NPM tarball at url " <> dist.tarball
-    tarballHash <- Nix.Prefetch.nixPrefetch dist.tarball >>= case _ of
+    tarballHash <- Nix.Prefetch.nixPrefetchUrl dist.tarball >>= case _ of
       Left error -> do
         Console.log $ "Failed to hash tarball at url " <> dist.tarball <> ": " <> error
         liftEffect $ Process.exit 1
@@ -558,9 +567,64 @@ prefetchNPMRegistry { tool, readManifest, filterVersion, includePackageLock } = 
       Nothing -> do
         Console.log $ "Version is bundled, returning tarball hash..."
         pure $ Bundled tarballHash
-      Just path -> do
-        Console.log $ "Version is not bundled, returning tarball hash and lockfile at path: " <> path
-        pure $ Unbundled { tarball: tarballHash, lockfile: path }
+
+      Just (Local path) -> do
+        Console.log "Version is not bundled, fetching local lockfile..."
+        { manifestDir } <- ask
+        npmDepsHash <- withBackoff' (Nix.Prefetch.prefetchNpmDeps (Path.concat [ manifestDir, "build-support", path ])) >>= case _ of
+          Nothing -> do
+            Console.log "Timed out trying to prefetch package-lock.json file."
+            liftEffect $ Process.exit 1
+          Just (Left error) -> do
+            Console.log $ "Failed to prefetch npm deps from local package-lock.json file " <> path
+            Console.log error
+            liftEffect $ Process.exit 1
+          Just (Right hash) -> do
+            Console.log $ "Got hash of npm deps from local package-lock.json file."
+            Console.log $ Sha256.print hash
+            pure hash
+        pure $ UnbundledLocal { tarball: tarballHash, path, depsHash: npmDepsHash }
+
+      Just Remote -> do
+        Console.log "Version is not bundled, fetching lockfile..."
+        { lockfileUrl, lockfileHash, npmDepsHash } <- case mbGitHead of
+          Nothing -> do
+            Console.log "No git commit associated with version, cannot fetch package-lock.json."
+            liftEffect $ Process.exit 1
+          Just sha -> do
+            let packageLockUrl = GitHub.rawContentUrl tool sha "package-lock.json"
+            packageLockRemoteHash <- withBackoff' (Nix.Prefetch.nixPrefetchUrl packageLockUrl) >>= case _ of
+              Nothing -> do
+                Console.log "Timed out trying to prefetch package-lock.json file."
+                liftEffect $ Process.exit 1
+              Just (Left error) -> do
+                Console.log $ "Failed to prefetch package-lock.json file from url " <> packageLockUrl
+                Console.log error
+                liftEffect $ Process.exit 1
+              Just (Right hash) ->
+                pure hash
+            packageLockContents <- AppM.runGitHubM (GitHub.getContent tool sha "package-lock.json") >>= case _ of
+              Left error -> do
+                Console.log "Failed to fetch remote package-lock.json file!"
+                Console.log $ Octokit.printGitHubError error
+                liftEffect $ Process.exit 1
+              Right result ->
+                pure result
+            tmp <- Tmp.mkTmpDir
+            let packageLockPath = Path.concat [ tmp, "package-lock.json" ]
+            liftAff $ FS.Aff.writeTextFile UTF8 packageLockPath packageLockContents
+            npmDepsHash <- Nix.Prefetch.prefetchNpmDeps packageLockPath >>= case _ of
+              Left error -> do
+                Console.log "Failed to prefetch npm deps from package-lock.json file"
+                Console.log error
+                liftAff $ FS.Aff.rm' tmp { force: true, maxRetries: 1, recursive: true, retryDelay: 100 }
+                liftEffect $ Process.exit 1
+              Right hash -> do
+                Console.log $ "Got hash of npm deps: " <> Sha256.print hash
+                liftAff $ FS.Aff.rm' tmp { force: true, maxRetries: 1, recursive: true, retryDelay: 100 }
+                pure hash
+            pure { lockfileUrl: packageLockUrl, lockfileHash: packageLockRemoteHash, npmDepsHash }
+        pure $ Unbundled { tarball: tarballHash, lockfile: { url: lockfileUrl, hash: lockfileHash }, depsHash: npmDepsHash }
 
 type GitHubArgs =
   { tool :: Tool
@@ -610,7 +674,7 @@ fetchGitHub { tool, readManifest, parseAsset, filterVersion, filterSystem } = do
     Console.log $ "Fetching hashes for release assets"
     for assets \asset -> do
       Console.log $ "  " <> asset
-      Nix.Prefetch.nixPrefetch asset >>= case _ of
+      Nix.Prefetch.nixPrefetchUrl asset >>= case _ of
         Left error -> do
           Console.log $ "Failed to hash release asset at url " <> asset <> ": " <> error
           liftEffect $ Process.exit 1

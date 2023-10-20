@@ -142,14 +142,16 @@
       pkgs = nixpkgsFor.${system};
     in {
       default = pkgs.mkShell {
-        name = "purescript-nix";
+        name = "purescript-overlay";
         buildInputs = [
           self.packages.${system}.spago-unstable
           self.packages.${system}.purs-unstable
           self.packages.${system}.purs-tidy-unstable
           self.packages.${system}.purs-backend-es-unstable
           self.packages.${system}.purescript-language-server-unstable
-          pkgs.nodejs_18
+
+          pkgs.nodejs_20
+          pkgs.prefetch-npm-deps
         ];
       };
     });

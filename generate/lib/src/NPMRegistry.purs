@@ -22,10 +22,6 @@ import Lib.SemVer as SemVer
 import Lib.Tool (Tool(..))
 import Node.Path (FilePath)
 
--- NOTE: Spago bundles all but better-sqlite3 in their release process,
--- so I need to handle that somehow. Like some kind of 'extra_node_modules'
--- I can apply.
-
 listNPMReleases :: Tool -> Aff (Either String (Map SemVer NPMVersion))
 listNPMReleases tool = do
   { status, text } <- Fetch.fetch (printNPMRegistryUrl tool) {}

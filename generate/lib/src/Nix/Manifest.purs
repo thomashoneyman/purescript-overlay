@@ -76,7 +76,8 @@ combinedManifestCodec = SemVer.semverMapCodec (CA.codec' decode encode)
 -- | included in the NPM tarball we fetch it separately from GitHub.
 data NPMFetch
   = Bundled FetchUrl
-  | Unbundled FetchUrlAndLock
+  | Unbundled FetchWithLock
+  | UnbundledLocal FetchWithPath
 
 derive instance Eq NPMFetch
 
@@ -85,19 +86,31 @@ npmFetchCodec = CA.codec' decode encode
   where
   decode json =
     map Bundled (CA.decode fetchUrlCodec json)
-      <|> map Unbundled (CA.decode fetchUrlAndLockCodec json)
-      <|> Left (CA.TypeMismatch "Expected a FetchUrl or a FetchUrlAndLock")
+      <|> map Unbundled (CA.decode fetchWithLockCodec json)
+      <|> map UnbundledLocal (CA.decode fetchWithPathCodec json)
+      <|> Left (CA.TypeMismatch "Expected FetchUrl or FetchWithLock or FetchWithPath")
 
   encode = case _ of
     Bundled fetchUrl -> CA.encode fetchUrlCodec fetchUrl
-    Unbundled fetchUrlAndLock -> CA.encode fetchUrlAndLockCodec fetchUrlAndLock
+    Unbundled fetchWithLock -> CA.encode fetchWithLockCodec fetchWithLock
+    UnbundledLocal fetchWithPath -> CA.encode fetchWithPathCodec fetchWithPath
 
-type FetchUrlAndLock = { tarball :: FetchUrl, lockfile :: FilePath }
+type FetchWithPath = { tarball :: FetchUrl, path :: FilePath, depsHash :: Sha256 }
 
-fetchUrlAndLockCodec :: JsonCodec FetchUrlAndLock
-fetchUrlAndLockCodec = CA.Record.object "FetchUrlAndLock"
+fetchWithPathCodec :: JsonCodec FetchWithPath
+fetchWithPathCodec = CA.Record.object "FetchWithPath"
   { tarball: fetchUrlCodec
-  , lockfile: CA.string
+  , path: CA.string
+  , depsHash: Sha256.codec
+  }
+
+type FetchWithLock = { tarball :: FetchUrl, lockfile :: FetchUrl, depsHash :: Sha256 }
+
+fetchWithLockCodec :: JsonCodec FetchWithLock
+fetchWithLockCodec = CA.Record.object "FetchWithLock"
+  { tarball: fetchUrlCodec
+  , lockfile: fetchUrlCodec
+  , depsHash: Sha256.codec
   }
 
 -- | A manifest entry for a package which has a fetchable tarball

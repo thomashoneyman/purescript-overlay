@@ -206,21 +206,24 @@
     "url": "https://registry.npmjs.org/spago/-/spago-0.93.14.tgz"
   },
   "0.93.16": {
-    "lockfile": "spago/better-sqlite3-8_6_0.json",
+    "depsHash": "sha256-jcvoWDsCvQ7M5G3kf6UMXJQ23/PZUwRhPEgioRhvqa8=",
+    "path": "spago/0.93.x.json",
     "tarball": {
       "hash": "sha256-eHh/+iKPSO6WS72meJmpdcwlgvhAyK+/6s+Eay35NOU=",
       "url": "https://registry.npmjs.org/spago/-/spago-0.93.16.tgz"
     }
   },
   "0.93.17": {
-    "lockfile": "spago/better-sqlite3-8_6_0.json",
+    "depsHash": "sha256-jcvoWDsCvQ7M5G3kf6UMXJQ23/PZUwRhPEgioRhvqa8=",
+    "path": "spago/0.93.x.json",
     "tarball": {
       "hash": "sha256-ZBDPxh3xQXk7BJK+YDWgcTvQWj/4JUPLiHdt3DzU0VU=",
       "url": "https://registry.npmjs.org/spago/-/spago-0.93.17.tgz"
     }
   },
   "0.93.18": {
-    "lockfile": "spago/better-sqlite3-8_6_0.json",
+    "depsHash": "sha256-jcvoWDsCvQ7M5G3kf6UMXJQ23/PZUwRhPEgioRhvqa8=",
+    "path": "spago/0.93.x.json",
     "tarball": {
       "hash": "sha256-4njqpauwKFtHqhoRIrS9HWhhWBQCCchXY1Z8jbaO6JE=",
       "url": "https://registry.npmjs.org/spago/-/spago-0.93.18.tgz"
