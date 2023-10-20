@@ -1,4 +1,4 @@
-import ./mkDerivation.nix {
+import ./mkDerivationBasic.nix {
   name = "purs-tidy";
   js = "bin/index.js";
   meta = lib: {

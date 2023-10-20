@@ -77,6 +77,7 @@ combinedManifestCodec = SemVer.semverMapCodec (CA.codec' decode encode)
 data NPMFetch
   = Bundled FetchUrl
   | Unbundled FetchWithLock
+  | UnbundledLocal FetchWithPath
 
 derive instance Eq NPMFetch
 
@@ -86,11 +87,22 @@ npmFetchCodec = CA.codec' decode encode
   decode json =
     map Bundled (CA.decode fetchUrlCodec json)
       <|> map Unbundled (CA.decode fetchWithLockCodec json)
-      <|> Left (CA.TypeMismatch "Expected a FetchUrl or a FetchUrlAndLock")
+      <|> map UnbundledLocal (CA.decode fetchWithPathCodec json)
+      <|> Left (CA.TypeMismatch "Expected FetchUrl or FetchWithLock or FetchWithPath")
 
   encode = case _ of
     Bundled fetchUrl -> CA.encode fetchUrlCodec fetchUrl
     Unbundled fetchWithLock -> CA.encode fetchWithLockCodec fetchWithLock
+    UnbundledLocal fetchWithPath -> CA.encode fetchWithPathCodec fetchWithPath
+
+type FetchWithPath = { tarball :: FetchUrl, path :: FilePath, depsHash :: Sha256 }
+
+fetchWithPathCodec :: JsonCodec FetchWithPath
+fetchWithPathCodec = CA.Record.object "FetchWithPath"
+  { tarball: fetchUrlCodec
+  , path: CA.string
+  , depsHash: Sha256.codec
+  }
 
 type FetchWithLock = { tarball :: FetchUrl, lockfile :: FetchUrl, depsHash :: Sha256 }
 

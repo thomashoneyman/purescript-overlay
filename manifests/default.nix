@@ -43,7 +43,7 @@
         entry = entries.${version};
       in
         # To accommodate systems that don't work for legacy spago versions
-        if legacyEntry == {} && !(builtins.hasAttr "url" entry) && !(builtins.hasAttr "lockfile" entry)
+        if legacyEntry == {} && !(builtins.hasAttr "url" entry) && !(builtins.hasAttr "tarball" entry)
         then acc
         else if legacyEntry != {}
         then acc // {${name} = mkLegacySpagoDerivation ({inherit version;} // legacyEntry);}

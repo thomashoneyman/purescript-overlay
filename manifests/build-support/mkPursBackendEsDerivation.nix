@@ -1,4 +1,4 @@
-import ./mkDerivation.nix {
+import ./mkDerivationBasic.nix {
   name = "purs-backend-es";
   js = "index.js";
   meta = lib: {

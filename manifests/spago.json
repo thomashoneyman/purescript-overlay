@@ -206,33 +206,24 @@
     "url": "https://registry.npmjs.org/spago/-/spago-0.93.14.tgz"
   },
   "0.93.16": {
-    "depsHash": "sha256-s+oO8ftYtCHkyt+yA2Mu557ACLmg7LcijgzxmxTRuUo=",
-    "lockfile": {
-      "hash": "sha256-+Nb4erLd45ANOnIj1CAWlOiQ/sxBz7Vl5CgoIf7+SI4=",
-      "url": "https://raw.githubusercontent.com/purescript/spago/29cd3cad10e0b2dca093ade0a7a2d114186002ba/package-lock.json"
-    },
+    "depsHash": "sha256-jcvoWDsCvQ7M5G3kf6UMXJQ23/PZUwRhPEgioRhvqa8=",
+    "path": "spago/0.93.x.json",
     "tarball": {
       "hash": "sha256-eHh/+iKPSO6WS72meJmpdcwlgvhAyK+/6s+Eay35NOU=",
       "url": "https://registry.npmjs.org/spago/-/spago-0.93.16.tgz"
     }
   },
   "0.93.17": {
-    "depsHash": "sha256-s+oO8ftYtCHkyt+yA2Mu557ACLmg7LcijgzxmxTRuUo=",
-    "lockfile": {
-      "hash": "sha256-+Nb4erLd45ANOnIj1CAWlOiQ/sxBz7Vl5CgoIf7+SI4=",
-      "url": "https://raw.githubusercontent.com/purescript/spago/29cd3cad10e0b2dca093ade0a7a2d114186002ba/package-lock.json"
-    },
+    "depsHash": "sha256-jcvoWDsCvQ7M5G3kf6UMXJQ23/PZUwRhPEgioRhvqa8=",
+    "path": "spago/0.93.x.json",
     "tarball": {
       "hash": "sha256-ZBDPxh3xQXk7BJK+YDWgcTvQWj/4JUPLiHdt3DzU0VU=",
       "url": "https://registry.npmjs.org/spago/-/spago-0.93.17.tgz"
     }
   },
   "0.93.18": {
-    "depsHash": "sha256-RAWle+tQliSAN5PaLdsoZvH6wyMpJHXFCK7ywTlhOD8=",
-    "lockfile": {
-      "hash": "sha256-UgdxJGxNOy35VQ4OghIHcqklCEXtl1wOKjD3MrqFvuY=",
-      "url": "https://raw.githubusercontent.com/purescript/spago/8bc78b4d7ca57c613685635a06ba31249321abeb/package-lock.json"
-    },
+    "depsHash": "sha256-jcvoWDsCvQ7M5G3kf6UMXJQ23/PZUwRhPEgioRhvqa8=",
+    "path": "spago/0.93.x.json",
     "tarball": {
       "hash": "sha256-4njqpauwKFtHqhoRIrS9HWhhWBQCCchXY1Z8jbaO6JE=",
       "url": "https://registry.npmjs.org/spago/-/spago-0.93.18.tgz"

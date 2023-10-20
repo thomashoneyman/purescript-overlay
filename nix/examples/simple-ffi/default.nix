@@ -29,7 +29,7 @@ in
         --platform=node
     '';
     installPhase = ''
-      mkdir $out 
+      mkdir $out
       cp app.js $out
     '';
   }
