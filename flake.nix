@@ -151,6 +151,7 @@
           self.packages.${system}.purescript-language-server-unstable
 
           pkgs.nodejs_20
+          pkgs.nix
           pkgs.prefetch-npm-deps
         ];
       };
