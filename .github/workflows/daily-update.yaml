@@ -28,4 +28,4 @@ jobs:
         run: |
           cd generate
           npm ci
-          nix develop --command spago run -p bin -m Bin.Main -- update ../manifests
+          nix develop --command spago run -p bin -m Bin.Main -- update ../manifests --commit
