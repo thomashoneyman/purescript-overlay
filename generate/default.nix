@@ -5,7 +5,9 @@
   nodejs,
   esbuild,
   slimlock,
+  # runtime
   prefetch-npm-deps,
+  nix,
   # from purix
   purix,
   purs-backend-es,
@@ -25,7 +27,7 @@ in
     name = "bin";
     src = ./.;
     nativeBuildInputs = [purs-backend-es purs-tidy esbuild];
-    buildInputs = [prefetch-npm-deps];
+    buildInputs = [prefetch-npm-deps nix];
 
     buildPhase = ''
       ln -s ${npmDependencies}/js/node_modules .
