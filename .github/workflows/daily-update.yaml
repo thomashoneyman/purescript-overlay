@@ -25,4 +25,7 @@ jobs:
         uses: DeterminateSystems/magic-nix-cache-action@main
 
       - name: Run the generate script
-        run: cd generate && nix develop --command spago run -p bin -m Bin.Main -- update ../manifests
+        run: |
+          cd generate
+          npm ci
+          nix develop --command spago run -p bin -m Bin.Main -- update ../manifests
