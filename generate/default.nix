@@ -6,6 +6,7 @@
   esbuild,
   slimlock,
   prefetch-npm-deps,
+  nix,
   makeWrapper,
   # from purix
   purix,
@@ -57,6 +58,6 @@ in
 
     postFixup = ''
       wrapProgram $out/bin/${name} \
-        --set PATH ${lib.makeBinPath [prefetch-npm-deps]}
+        --set PATH ${lib.makeBinPath [prefetch-npm-deps nix]}
     '';
   }

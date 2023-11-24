@@ -109,25 +109,27 @@ prefetchPurs = fetchGitHub
       let
         -- We only accept compiler releases back to 0.13
         afterCutoff :: Boolean
-        afterCutoff = Version.major version == 0 && Version.minor version >= 13
+        afterCutoff =
+          Version.major version > 0
+            || Version.major version == 0 && Version.minor version >= 13
 
         -- Some versions are broken and we don't want to include them
-        notBroken :: Boolean
-        notBroken = Array.notElem version
+        broken :: Boolean
+        broken = Array.elem version
           [ unsafeVersion "0.13.1" -- https://github.com/purescript/purescript/releases/tag/v0.13.1 (doesn't work)
           , unsafeVersion "0.13.7" -- https://github.com/purescript/purescript/releases/tag/v0.13.7 (has no releases)
           , unsafeVersion "0.15.1" -- https://github.com/purescript/purescript/releases/tag/v0.15.1 (incorrect version number, identical to 0.15.2)
           ]
 
-      afterCutoff && notBroken
+      afterCutoff && not broken
 
   , filterSystem: \(SemVer { version, pre }) system ->
       -- Darwin prereleases from 0.15.0 to 0.15.9 have incorrect version numbers
       if system == X86_64_darwin && Version.major version == 0 && Version.minor version == 15 then case pre of
-        Nothing -> false
-        Just _ -> Version.patch version < 10
+        Nothing -> true
+        Just _ -> Version.patch version > 10
       else
-        false
+        true
   }
 
 prefetchSpago :: AppM CombinedManifest

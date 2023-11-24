@@ -30,14 +30,20 @@ import Lib.Foreign.Tmp as Tmp
 import Lib.Git as Git
 import Lib.GitHub as GitHub
 import Lib.Nix.Manifest as Nix.Manifest
+import Lib.Nix.Prefetch as Nix.Prefetch
 import Lib.SemVer as SemVer
 import Lib.Utils as Utils
 import Node.Path as Path
 import Node.Process as Process
+import Registry.Sha256 as Sha256
 
 main :: Effect Unit
 main = Aff.launchAff_ do
   mode <- CLI.run
+
+  Nix.Prefetch.nixPrefetchUrl "https://github.com/purescript/purescript/releases/download/v0.15.13-0/linux64.tar.gz" >>= case _ of
+    Left error -> Aff.throwError $ Aff.error error
+    Right hash -> Console.log $ Sha256.print hash
 
   -- Set up the environment...
   tmp <- Tmp.mkTmpDir
