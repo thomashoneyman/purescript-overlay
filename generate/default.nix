@@ -5,8 +5,9 @@
   nodejs,
   esbuild,
   slimlock,
+  # runtime
   prefetch-npm-deps,
-  makeWrapper,
+  nix,
   # from purix
   purix,
   purs-backend-es,
@@ -25,7 +26,8 @@ in
   stdenv.mkDerivation rec {
     name = "bin";
     src = ./.;
-    nativeBuildInputs = [purs-backend-es purs-tidy esbuild makeWrapper];
+    nativeBuildInputs = [purs-backend-es purs-tidy esbuild];
+    buildInputs = [prefetch-npm-deps];
 
     buildPhase = ''
       ln -s ${npmDependencies}/js/node_modules .
@@ -53,10 +55,5 @@ in
       echo 'exec ${nodejs}/bin/node '"$out/${name}.js"' "$@"' >> $out/bin/${name}
       chmod +x $out/bin/${name}
       cp ${name}.js $out
-    '';
-
-    postFixup = ''
-      wrapProgram $out/bin/${name} \
-        --set PATH ${lib.makeBinPath [prefetch-npm-deps]}
     '';
   }
