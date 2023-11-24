@@ -41,10 +41,6 @@ main :: Effect Unit
 main = Aff.launchAff_ do
   mode <- CLI.run
 
-  Nix.Prefetch.nixPrefetchUrl "https://github.com/purescript/purescript/releases/download/v0.15.13-0/linux64.tar.gz" >>= case _ of
-    Left error -> Aff.throwError $ Aff.error error
-    Right hash -> Console.log $ Sha256.print hash
-
   -- Set up the environment...
   tmp <- Tmp.mkTmpDir
   now <- liftEffect Now.now
