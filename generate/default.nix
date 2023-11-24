@@ -25,7 +25,7 @@ in
     name = "bin";
     src = ./.;
     nativeBuildInputs = [purs-backend-es purs-tidy esbuild];
-    buildInputs = [prefetch-npm-deps]
+    buildInputs = [prefetch-npm-deps];
 
     buildPhase = ''
       ln -s ${npmDependencies}/js/node_modules .
