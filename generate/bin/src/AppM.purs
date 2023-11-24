@@ -2,6 +2,7 @@ module Bin.AppM where
 
 import Prelude
 
+import Control.Monad.Error.Class (class MonadThrow)
 import Control.Monad.Except (runExceptT)
 import Control.Monad.Reader (class MonadAsk, class MonadReader, ReaderT, ask, runReaderT)
 import Control.Monad.Reader as ReaderT
@@ -9,7 +10,8 @@ import Data.Either (Either)
 import Data.Newtype (class Newtype)
 import Effect.Aff (Aff)
 import Effect.Aff.Class (class MonadAff, liftAff)
-import Effect.Class (class MonadEffect)
+import Effect.Class (class MonadEffect, liftEffect)
+import Effect.Exception as Exception
 import Lib.Foreign.Octokit (GitHubError, Octokit)
 import Lib.Git (GitM(..))
 import Lib.GitHub (GitHubM(..))
@@ -45,6 +47,9 @@ derive newtype instance MonadEffect AppM
 derive newtype instance MonadAff AppM
 derive newtype instance MonadAsk Env AppM
 derive newtype instance MonadReader Env AppM
+
+instance MonadThrow String AppM where
+  throwError = liftEffect <<< Exception.throwException <<< Exception.error
 
 instance MonadApp AppM where
   runGitHubM (GitHubM run) = do

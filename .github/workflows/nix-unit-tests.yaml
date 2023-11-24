@@ -17,3 +17,6 @@ jobs:
 
       - name: Run tests
         run: nix eval .#lib
+
+      - name: Run spago tests
+        run: nix develop --command spago test

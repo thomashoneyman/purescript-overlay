@@ -7,7 +7,6 @@ import Data.Maybe (Maybe(..))
 import Data.String as String
 import Dotenv as Dotenv
 import Effect.Aff (Aff)
-import Effect.Aff as Aff
 import Effect.Class (class MonadEffect, liftEffect)
 import Effect.Class.Console as Console
 import Lib.Foreign.Octokit (GitHubToken(..))
@@ -19,10 +18,8 @@ import Node.Process as Process
 -- | Loads the environment from a .env file, if one exists.
 loadEnvFile :: FilePath -> Aff Unit
 loadEnvFile dotenv = do
-  contents <- Aff.attempt $ FS.Aff.readTextFile UTF8 dotenv
-  case contents of
-    Left _ -> pure unit
-    Right string -> void $ Dotenv.loadContents (String.trim string)
+  contents <- FS.Aff.readTextFile UTF8 dotenv
+  Dotenv.loadContents (String.trim contents)
 
 -- | An environment key
 newtype EnvKey a = EnvKey { key :: String, decode :: String -> Either String a }

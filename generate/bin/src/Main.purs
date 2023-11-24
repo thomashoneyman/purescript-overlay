@@ -32,8 +32,12 @@ import Lib.GitHub as GitHub
 import Lib.Nix.Manifest as Nix.Manifest
 import Lib.SemVer as SemVer
 import Lib.Utils as Utils
+import Node.Path (FilePath)
 import Node.Path as Path
 import Node.Process as Process
+
+envFile :: FilePath
+envFile = ".env"
 
 main :: Effect Unit
 main = Aff.launchAff_ do
@@ -47,7 +51,6 @@ main = Aff.launchAff_ do
 
   case mode of
     Verify dir -> do
-      let envFile = Path.concat [ dir, "..", "generate", ".env" ]
       Console.log $ "Loading .env file from " <> envFile
       liftAff $ Env.loadEnvFile envFile
       token <- Env.lookupOptional Env.githubToken
@@ -64,7 +67,6 @@ main = Aff.launchAff_ do
         Run.verifyPursLanguageServer
 
     Prefetch dir -> do
-      let envFile = Path.concat [ dir, "..", "generate", ".env" ]
       Console.log $ "Loading .env file from " <> envFile
       liftAff $ Env.loadEnvFile envFile
       token <- Env.lookupOptional Env.githubToken
@@ -106,7 +108,6 @@ main = Aff.launchAff_ do
             Console.log $ "New purescript-language-server releases: " <> Utils.printJson Nix.Manifest.npmRegistryManifestCodec updates
 
     Update dir commit -> do
-      let envFile = Path.concat [ dir, "..", "generate", ".env" ]
       Console.log $ "Loading .env file from " <> envFile
       liftAff $ Env.loadEnvFile envFile
       octokit <- case commit of

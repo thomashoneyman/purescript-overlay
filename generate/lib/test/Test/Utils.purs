@@ -2,7 +2,6 @@ module Test.Utils where
 
 import Prelude
 
-import Lib.Utils as App.Utils
 import Control.Monad.Error.Class (class MonadThrow)
 import Data.Argonaut.Core as Argonaut
 import Data.Argonaut.Parser as Argonaut.Parser
@@ -11,9 +10,15 @@ import Data.Bifunctor (lmap)
 import Data.Codec.Argonaut (JsonCodec)
 import Data.Codec.Argonaut as CA
 import Data.Either (Either(..))
+import Data.Either as Either
 import Data.String as String
 import Effect.Exception (Error)
+import Lib.Utils as App.Utils
+import Partial.Unsafe (unsafeCrashWith)
 import Test.Spec.Assertions as Assert
+
+unsafeFromRight :: forall a b. Either a b -> b
+unsafeFromRight = Either.fromRight' (\_ -> unsafeCrashWith "unsafeFromRight: Left")
 
 type Fixture = { label :: String, value :: String }
 
