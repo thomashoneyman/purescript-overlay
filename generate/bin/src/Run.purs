@@ -147,16 +147,22 @@ prefetchSpago = do
 
     , includePackageLock: \(SemVer { version }) -> do
         let
-          -- spago 0.93.15 and up use better-sqlite3 at 8.6.0 and have malformed
-          -- package-lock.json files which make them unsuitable for remote use.
-          -- should be fixed from 0.93.19 on.
+          -- spago 0.93.15 and up use better-sqlite3
+          pre_bettersqlite =
+            Version.major version == 0 && Version.major version <= 93 && Version.minor version <= 15
+
+          -- spago versions in this range have malformed package-lock.json files
+          -- which make them unsuitable for remote use. Should be fixed from
+          -- 0.93.19 on.
           local_0_93 =
             Version.major version == 0 && Version.minor version == 93 && Version.patch version > 15 && Version.patch version < 19
 
-        if local_0_93 then
+        if pre_bettersqlite then
+          Nothing
+        else if local_0_93 then
           Just $ Local $ Path.concat [ "spago", "0.93.x.json" ]
         else
-          Nothing
+          Just Remote
 
     , filterVersion: \(SemVer { version, pre }) -> do
         let
