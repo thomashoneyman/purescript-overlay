@@ -6,12 +6,15 @@
 
     slimlock.url = "github:thomashoneyman/slimlock";
     slimlock.inputs.nixpkgs.follows = "nixpkgs";
+
+    flake-compat.url = "https://flakehub.com/f/edolstra/flake-compat/1.tar.gz";
   };
 
   outputs = {
     self,
     nixpkgs,
     slimlock,
+    flake-compat,
   }: let
     supportedSystems = ["x86_64-linux" "x86_64-darwin" "aarch64-linux" "aarch64-darwin"];
     forAllSystems = nixpkgs.lib.genAttrs supportedSystems;
