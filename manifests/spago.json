@@ -228,5 +228,9 @@
       "hash": "sha256-4njqpauwKFtHqhoRIrS9HWhhWBQCCchXY1Z8jbaO6JE=",
       "url": "https://registry.npmjs.org/spago/-/spago-0.93.18.tgz"
     }
+  },
+  "0.93.19": {
+    "hash": "sha256-HU42fHbrKWm5/P+TC+Who4dXtFiJKqTO7d7yYKGLMts=",
+    "url": "https://registry.npmjs.org/spago/-/spago-0.93.19.tgz"
   }
 }
