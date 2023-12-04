@@ -2,12 +2,13 @@
   description = "Nix derivations for PureScript core language tools.";
 
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/release-23.05";
+    nixpkgs.url = "github:nixos/nixpkgs/release-23.11";
 
     slimlock.url = "github:thomashoneyman/slimlock";
     slimlock.inputs.nixpkgs.follows = "nixpkgs";
 
-    flake-compat.url = "https://flakehub.com/f/edolstra/flake-compat/1.tar.gz";
+    flake-compat.url = "github:edolstra/flake-compat";
+    flake-compat.flake = false;
   };
 
   outputs = {
