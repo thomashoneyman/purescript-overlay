@@ -189,13 +189,19 @@
 
           # This is bad...but without Spago, how else can we get this?
           buildInfo = pkgs.writeText "BuildInfo.purs" ''
+            -- @inline export packages always
+            -- @inline export pursVersion always
+            -- @inline export spagoVersion always
             module Spago.Generated.BuildInfo where
 
-            buildInfo =
-              { packages: []
-              , pursVersion: "${purs.version}"
-              , spagoVersion: ""
-              }
+            packages :: { }
+            packages = { }
+            
+            pursVersion :: String
+            pursVersion = "${purs.version}"
+            
+            spagoVersion :: String
+            spagoVersion = ""
           '';
 
           preBuild = ''
