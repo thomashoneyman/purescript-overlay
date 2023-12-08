@@ -74,5 +74,9 @@
   "0.10.0": {
     "hash": "sha256-yDHOaOXNt+9SXfLUnymBZTSWMU5fkAFBxTTsl8lvzjM=",
     "url": "https://registry.npmjs.org/purs-tidy/-/purs-tidy-0.10.0.tgz"
+  },
+  "0.10.1": {
+    "hash": "sha256-6DvOAhD/X61SQFoNDjgWaQmNlBVxihg8rLmH5DJaUU4=",
+    "url": "https://registry.npmjs.org/purs-tidy/-/purs-tidy-0.10.1.tgz"
   }
 }
