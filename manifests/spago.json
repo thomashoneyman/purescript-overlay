@@ -239,5 +239,27 @@
       "hash": "sha256-HU42fHbrKWm5/P+TC+Who4dXtFiJKqTO7d7yYKGLMts=",
       "url": "https://registry.npmjs.org/spago/-/spago-0.93.19.tgz"
     }
+  },
+  "0.93.20": {
+    "depsHash": "sha256-f2jQdArDsPCbxuD7KU1FAvWPbVsPnSYMkKFKGUqsmoU=",
+    "lockfile": {
+      "hash": "sha256-iWoKNWJJ2iztrMGNxm5Vqc5YQMA72EPb6vzDS1avObA=",
+      "url": "https://raw.githubusercontent.com/purescript/spago/9672eba062ddd558f7bb3db8c29836736e2251d1/package-lock.json"
+    },
+    "tarball": {
+      "hash": "sha256-M4gBZE4tca42XzSVUH+/IvYSs3FFF4bV3lKAyBb27vM=",
+      "url": "https://registry.npmjs.org/spago/-/spago-0.93.20.tgz"
+    }
+  },
+  "0.93.21": {
+    "depsHash": "sha256-f2jQdArDsPCbxuD7KU1FAvWPbVsPnSYMkKFKGUqsmoU=",
+    "lockfile": {
+      "hash": "sha256-iWoKNWJJ2iztrMGNxm5Vqc5YQMA72EPb6vzDS1avObA=",
+      "url": "https://raw.githubusercontent.com/purescript/spago/8103ab83039d244baa420b10e5984f3cfe939530/package-lock.json"
+    },
+    "tarball": {
+      "hash": "sha256-8927l5MWCTG6+nlOZVciZQR/fKFE6Y44X/1bclvdBLk=",
+      "url": "https://registry.npmjs.org/spago/-/spago-0.93.21.tgz"
+    }
   }
 }
