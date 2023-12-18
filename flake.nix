@@ -2,7 +2,7 @@
   description = "Nix derivations for PureScript core language tools.";
 
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/release-23.11";
+    nixpkgs.url = "github:nixos/nixpkgs/release-23.05";
 
     slimlock.url = "github:thomashoneyman/slimlock";
     slimlock.inputs.nixpkgs.follows = "nixpkgs";
