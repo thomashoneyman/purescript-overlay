@@ -102,8 +102,8 @@
             # flags to print their version
             if [ ${builtins.toString (name == "spago" && pkgs.lib.versionOlder version "0.90.0")} ]; then
               VERSION="$(${bin}/bin/${name} version --global-cache skip)"
-            # spago-next at 0.93.21 reports its version incorrectly 
-            if [ ${builtins.toString (name == "spago" && pkgs.lib.versionOlder version "0.93.21")} ]; then
+            # spago@0.93.21 incorrecly reports its version
+            elif [ ${builtins.toString (name == "spago" && version == "0.93.21")} ]; then
               VERSION="0.93.21"
             else
               # spago-next writes --version to stderr, oddly enough, so we need to
