@@ -151,7 +151,7 @@
       default = pkgs.mkShell {
         name = "purescript-overlay";
         buildInputs = [
-          self.packages.${system}.spago-unstable
+          self.packages.${system}.spago-0_93_19
           self.packages.${system}.purs-unstable
           self.packages.${system}.purs-tidy-unstable
           self.packages.${system}.purs-backend-es-unstable
