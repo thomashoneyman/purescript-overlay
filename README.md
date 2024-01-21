@@ -35,30 +35,49 @@ In a Nix flake, use the provided overlay when importing nixpkgs to get access to
 {
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-23.05";
-    flake-utils.url  = "github:numtide/flake-utils";
-    purescript-overlay.url = "github:thomashoneyman/purescript-overlay";
-    purescript-overlay.inputs.nixpkgs.follows = "nixpkgs";
+    purescript-overlay = {
+      url = "github:thomashoneyman/purescript-overlay";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
-  outputs = { self, nixpkgs, flake-utils, purescript-overlay }:
-    flake-utils.lib.eachDefaultSystem (system:
-      let
-        overlays = [ purescript-overlay.overlays.default ];
-        pkgs = import nixpkgs {
-          inherit system overlays;
-        };
-      in {
-        devShells.default = pkgs.mkShell {
-          # You now have access to the standard PureScript toolchain in pkgs
-          buildInputs = [
-            pkgs.purs
-            pkgs.spago-unstable
-            pkgs.purs-tidy-bin.purs-tidy-0_10_0
-            pkgs.purs-backend-es
-          ];
-        };
-      }
-    );
+  outputs = { self, nixpkgs, ... }@input:
+    let
+      supportedSystems = ["x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin"];
+
+      forAllSystems = nixpkgs.lib.genAttrs supportedSystems;
+
+      nixpkgsFor = forAllSystems (system: import nixpkgs {
+        inherit system;
+        config = { };
+        overlays = builtins.attrValues self.overlays.default;
+      });
+    in {
+      overlays = {
+        purescript = inputs.purescript-overlay;
+      };
+
+      packages = forAllSystems (system:
+        let pkgs = nixpkgsFor.${system}; in {
+          default = pkgs.hello; # your package here
+        });
+
+      devShells = forAllSystems (system:
+        # pkgs now has access to the standard PureScript toolchain
+        let pkgs = nixpkgsFor.${system}; in {
+          default = pkgs.mkShell {
+            name = "my-purescript-project";
+            inputsFrom = builtins.attrValues self.packages.${system};
+            buildInputs = with pkgs; [
+              purs
+              spago-unstable
+              purs-tidy-bin.purs-tidy-0_10_0
+              purs-backend-es
+            ];
+          };
+        });
+    };
+  };
 }
 ```
 
