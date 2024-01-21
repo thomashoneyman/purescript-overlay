@@ -42,5 +42,6 @@ stdenv.mkDerivation rec {
     description = "A Node-based language server protocol for PureScript";
     homepage = "https://github.com/nwolverson/purescript-language-server";
     license = lib.licenses.mit;
+    mainProgram = pname;
   };
 }
