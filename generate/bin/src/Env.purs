@@ -39,7 +39,7 @@ lookupOptional (EnvKey { key, decode }) = liftEffect $ Process.lookupEnv key >>=
   Just value -> case decode value of
     Left error -> do
       Console.log $ "Found " <> key <> " in the environment with value " <> value <> ", but it could not be decoded: " <> error
-      liftEffect (Process.exit 1)
+      liftEffect (Process.exit' 1)
     Right decoded -> pure $ Just decoded
 
 -- | Look up a required environment variable, throwing an exception if it is
@@ -48,14 +48,14 @@ lookupRequired :: forall m a. MonadEffect m => EnvKey a -> m a
 lookupRequired (EnvKey { key, decode }) = liftEffect $ Process.lookupEnv key >>= case _ of
   Nothing -> do
     Console.log $ key <> " is not present in the environment."
-    liftEffect (Process.exit 1)
+    liftEffect (Process.exit' 1)
   Just "" -> do
     Console.log $ "Found " <> key <> " in the environment, but its value was an empty string."
-    liftEffect (Process.exit 1)
+    liftEffect (Process.exit' 1)
   Just value -> case decode value of
     Left error -> do
       Console.log $ "Found " <> key <> " in the environment with value " <> value <> ", but it could not be decoded: " <> error
-      liftEffect (Process.exit 1)
+      liftEffect (Process.exit' 1)
     Right decoded -> pure decoded
 
 -- | A user GitHub token at the REPO_TOKEN key.

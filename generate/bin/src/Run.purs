@@ -264,7 +264,7 @@ prefetchPursLanguageServer = do
     Left error -> do
       Console.log $ "Failed to fetch releases for purescript-language-server"
       Console.log $ Octokit.printGitHubError error
-      liftEffect $ Process.exit 1
+      liftEffect $ Process.exit' 1
     Right releases -> pure releases
 
   Console.log $ "Retrieved " <> show (Array.length rawReleases) <> " releases for purescript-language-server"
@@ -296,7 +296,7 @@ prefetchPursLanguageServer = do
     Nix.Prefetch.nixPrefetchUrl downloadUrl >>= case _ of
       Left error -> do
         Console.log $ "Failed to hash release asset at url " <> downloadUrl <> ": " <> error
-        liftEffect $ Process.exit 1
+        liftEffect $ Process.exit' 1
       Right hash -> pure $ Bundled { url: downloadUrl, hash }
 
   pure hashedReleases
@@ -339,7 +339,7 @@ writePursUpdates updates = do
       pure (updateStable (updateUnstable named))
 
   case named' of
-    Nothing -> Console.log "Failed to update named manifest" *> liftEffect (Process.exit 1)
+    Nothing -> Console.log "Failed to update named manifest" *> liftEffect (Process.exit' 1)
     Just result -> AppM.writeNamedManifest result
 
 writeSpagoUpdates :: CombinedManifest -> AppM Unit
@@ -391,7 +391,7 @@ writeSpagoUpdates updates = do
       pure (updateStable (updateUnstable named))
 
   case named' of
-    Nothing -> Console.log "Failed to update named manifest" *> liftEffect (Process.exit 1)
+    Nothing -> Console.log "Failed to update named manifest" *> liftEffect (Process.exit' 1)
     Just result -> AppM.writeNamedManifest result
 
 writePursTidyUpdates :: NPMRegistryManifest -> AppM Unit
@@ -434,7 +434,7 @@ writePursTidyUpdates updates = do
       pure (updateStable (updateUnstable named))
 
   case named' of
-    Nothing -> Console.log "Failed to update named manifest" *> liftEffect (Process.exit 1)
+    Nothing -> Console.log "Failed to update named manifest" *> liftEffect (Process.exit' 1)
     Just result -> AppM.writeNamedManifest result
 
 writePursBackendEsUpdates :: NPMRegistryManifest -> AppM Unit
@@ -477,7 +477,7 @@ writePursBackendEsUpdates updates = do
       pure (updateStable (updateUnstable named))
 
   case named' of
-    Nothing -> Console.log "Failed to update named manifest" *> liftEffect (Process.exit 1)
+    Nothing -> Console.log "Failed to update named manifest" *> liftEffect (Process.exit' 1)
     Just result -> AppM.writeNamedManifest result
 
 writePursLanguageServerUpdates :: NPMRegistryManifest -> AppM Unit
@@ -520,7 +520,7 @@ writePursLanguageServerUpdates updates = do
       pure (updateStable (updateUnstable named))
 
   case named' of
-    Nothing -> Console.log "Failed to update named manifest" *> liftEffect (Process.exit 1)
+    Nothing -> Console.log "Failed to update named manifest" *> liftEffect (Process.exit' 1)
     Just result -> AppM.writeNamedManifest result
 
 unsafeVersion :: String -> Version
@@ -547,7 +547,7 @@ prefetchNPMRegistry { tool, readManifest, filterVersion, includePackageLock } = 
     Left error -> do
       Console.log $ "Failed to fetch releases from NPM registry for " <> Tool.print tool Tool.Executable <> " at url " <> NPMRegistry.printNPMRegistryUrl tool
       Console.log error
-      liftEffect $ Process.exit 1
+      liftEffect $ Process.exit' 1
     Right releases -> pure releases
 
   Console.log $ "Retrieved " <> show (Map.size rawReleases) <> " releases for " <> Tool.print tool Tool.Executable
@@ -568,7 +568,7 @@ prefetchNPMRegistry { tool, readManifest, filterVersion, includePackageLock } = 
     tarballHash <- Nix.Prefetch.nixPrefetchUrl dist.tarball >>= case _ of
       Left error -> do
         Console.log $ "Failed to hash tarball at url " <> dist.tarball <> ": " <> error
-        liftEffect $ Process.exit 1
+        liftEffect $ Process.exit' 1
       Right hash -> pure { url: dist.tarball, hash }
 
     case includePackageLock version of
@@ -582,11 +582,11 @@ prefetchNPMRegistry { tool, readManifest, filterVersion, includePackageLock } = 
         npmDepsHash <- withBackoff' (Nix.Prefetch.prefetchNpmDeps (Path.concat [ manifestDir, "build-support", path ])) >>= case _ of
           Nothing -> do
             Console.log "Timed out trying to prefetch package-lock.json file."
-            liftEffect $ Process.exit 1
+            liftEffect $ Process.exit' 1
           Just (Left error) -> do
             Console.log $ "Failed to prefetch npm deps from local package-lock.json file " <> path
             Console.log error
-            liftEffect $ Process.exit 1
+            liftEffect $ Process.exit' 1
           Just (Right hash) -> do
             Console.log $ "Got hash of npm deps from local package-lock.json file."
             Console.log $ Sha256.print hash
@@ -598,24 +598,24 @@ prefetchNPMRegistry { tool, readManifest, filterVersion, includePackageLock } = 
         { lockfileUrl, lockfileHash, npmDepsHash } <- case mbGitHead of
           Nothing -> do
             Console.log "No git commit associated with version, cannot fetch package-lock.json."
-            liftEffect $ Process.exit 1
+            liftEffect $ Process.exit' 1
           Just sha -> do
             let packageLockUrl = GitHub.rawContentUrl tool sha "package-lock.json"
             packageLockRemoteHash <- withBackoff' (Nix.Prefetch.nixPrefetchUrl packageLockUrl) >>= case _ of
               Nothing -> do
                 Console.log "Timed out trying to prefetch package-lock.json file."
-                liftEffect $ Process.exit 1
+                liftEffect $ Process.exit' 1
               Just (Left error) -> do
                 Console.log $ "Failed to prefetch package-lock.json file from url " <> packageLockUrl
                 Console.log error
-                liftEffect $ Process.exit 1
+                liftEffect $ Process.exit' 1
               Just (Right hash) ->
                 pure hash
             packageLockContents <- AppM.runGitHubM (GitHub.getContent tool sha "package-lock.json") >>= case _ of
               Left error -> do
                 Console.log "Failed to fetch remote package-lock.json file!"
                 Console.log $ Octokit.printGitHubError error
-                liftEffect $ Process.exit 1
+                liftEffect $ Process.exit' 1
               Right result ->
                 pure result
             tmp <- Tmp.mkTmpDir
@@ -626,7 +626,7 @@ prefetchNPMRegistry { tool, readManifest, filterVersion, includePackageLock } = 
                 Console.log "Failed to prefetch npm deps from package-lock.json file"
                 Console.log error
                 liftAff $ FS.Aff.rm' tmp { force: true, maxRetries: 1, recursive: true, retryDelay: 100 }
-                liftEffect $ Process.exit 1
+                liftEffect $ Process.exit' 1
               Right hash -> do
                 Console.log $ "Got hash of npm deps: " <> Sha256.print hash
                 liftAff $ FS.Aff.rm' tmp { force: true, maxRetries: 1, recursive: true, retryDelay: 100 }
@@ -653,7 +653,7 @@ fetchGitHub { tool, readManifest, parseAsset, filterVersion, filterSystem } = do
       Console.log $ "Failed to fetch releases for " <> Tool.print tool Tool.Executable
       Console.log $ "  due to a GitHub error: "
       Console.log $ Octokit.printGitHubError error
-      liftEffect $ Process.exit 1
+      liftEffect $ Process.exit' 1
     Right releases -> pure releases
 
   Console.log $ "Retrieved " <> show (Array.length rawReleases) <> " releases in total for " <> Tool.print tool Tool.Executable
@@ -685,7 +685,7 @@ fetchGitHub { tool, readManifest, parseAsset, filterVersion, filterSystem } = do
       Nix.Prefetch.nixPrefetchUrl asset >>= case _ of
         Left error -> do
           Console.log $ "Failed to hash release asset at url " <> asset <> ": " <> error
-          liftEffect $ Process.exit 1
+          liftEffect $ Process.exit' 1
         Right hash -> pure { url: asset, hash }
 
   pure hashedReleases

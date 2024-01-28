@@ -182,12 +182,12 @@ main = Aff.launchAff_ do
                   Git.gitCommitManifests "Update manifests" >>= case _ of
                     Git.NothingToCommit -> do
                       Console.log "No files were changed, not committing."
-                      liftEffect (Process.exit 1)
+                      liftEffect (Process.exit' 1)
                     Git.Committed ->
                       Console.log "Committed changes!"
 
                 case commitResult of
-                  Left error -> Console.log error *> liftEffect (Process.exit 1)
+                  Left error -> Console.log error *> liftEffect (Process.exit' 1)
                   Right _ -> pure unit
 
                 let
@@ -210,7 +210,7 @@ main = Aff.launchAff_ do
                 existing <- AppM.runGitHubM GitHub.getPullRequests >>= case _ of
                   Left error -> do
                     Console.log $ Octokit.printGitHubError error
-                    liftEffect (Process.exit 1)
+                    liftEffect (Process.exit' 1)
                   Right existing -> pure existing
 
                 -- TODO: Title comparison is a bit simplistic. Better to compare
@@ -220,26 +220,26 @@ main = Aff.launchAff_ do
                     pushResult <- AppM.runGitM $ Git.gitPushBranch token >>= case _ of
                       Git.NothingToPush -> do
                         Console.log "Did not push branch because we're up-to-date (expected to push change)."
-                        liftEffect (Process.exit 1)
+                        liftEffect (Process.exit' 1)
                       Git.Pushed ->
                         Console.log "Pushed changes!"
                     case pushResult of
                       Left error -> do
                         Console.log error
-                        liftEffect (Process.exit 1)
+                        liftEffect (Process.exit' 1)
                       Right _ ->
                         AppM.runGitHubM $ GitHub.createPullRequest { title: commitMsg, body: commitMsg, branch }
 
                   Just pull -> do
                     Console.log "A pull request with this title is already open: "
                     Console.log pull.url
-                    liftEffect (Process.exit 1)
+                    liftEffect (Process.exit' 1)
 
                 case createPullResult of
                   Left error -> do
                     Console.log "Failed to create pull request:"
                     Console.log $ Octokit.printGitHubError error
-                    liftEffect (Process.exit 1)
+                    liftEffect (Process.exit' 1)
                   Right { url } -> do
                     Console.log "Successfully created pull request."
                     Console.log url
