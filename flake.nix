@@ -37,35 +37,15 @@
 
     packages = forAllSystems (system: let
       pkgs = nixpkgsFor.${system};
-
-      purs = pkgs.purs;
-      purs-unstable = pkgs.purs-unstable;
-      purs-bin = pkgs.purs-bin;
-
-      spago = pkgs.spago;
-      spago-unstable = pkgs.spago-unstable;
-      spago-bin = pkgs.spago-bin;
-
-      purs-tidy = pkgs.purs-tidy;
-      purs-tidy-unstable = pkgs.purs-tidy-unstable;
-      purs-tidy-bin = pkgs.purs-tidy-bin;
-
-      purs-backend-es = pkgs.purs-backend-es;
-      purs-backend-es-unstable = pkgs.purs-backend-es-unstable;
-      purs-backend-es-bin = pkgs.purs-backend-es-bin;
-
-      purescript-language-server = pkgs.purescript-language-server;
-      purescript-language-server-unstable = pkgs.purescript-language-server-unstable;
-      purescript-language-server-bin = pkgs.purescript-language-server-bin;
     in
       {
-        inherit purs purs-unstable spago spago-unstable purs-tidy purs-tidy-unstable purs-backend-es purs-backend-es-unstable purescript-language-server purescript-language-server-unstable;
+        inherit (pkgs) purs purs-unstable spago spago-unstable purs-tidy purs-tidy-unstable purs-backend-es purs-backend-es-unstable purescript-language-server purescript-language-server-unstable;
       }
-      // purs-bin
-      // spago-bin
-      // purs-tidy-bin
-      // purs-backend-es-bin
-      // purescript-language-server-bin);
+      // pkgs.purs-bin
+      // pkgs.spago-bin
+      // pkgs.purs-tidy-bin
+      // pkgs.purs-backend-es-bin
+      // pkgs.purescript-language-server-bin);
 
     apps = forAllSystems (system: let
       pkgs = nixpkgsFor.${system};
