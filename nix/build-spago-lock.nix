@@ -168,6 +168,15 @@
         transitive = builtins.foldl' (a: pkg: a // self.${pkg}.dependencies) {} drv.dependencies;
 
         dependencies = transitive // directs;
+
+        defaultVersion = "0.0.0";
+        
+        dependenciesList = lib.attrValues dependencies;
+
+        renderPackageType = p: ''"${p.name}" :: String'';
+        packagesType = "{ ${ lib.concatMapStringsSep ", " renderPackageType dependenciesList } }";
+        renderPackage = p: ''"${p.name}": "${p.version or defaultVersion}"'';
+        packages = ''{ ${lib.concatMapStringsSep "\n  , " renderPackage dependenciesList } }'';
       in
         stdenv.mkDerivation rec {
           name = drv.name;
@@ -194,14 +203,14 @@
             -- @inline export spagoVersion always
             module Spago.Generated.BuildInfo where
 
-            packages :: { }
-            packages = { }
+            packages :: ${packagesType}
+            packages = ${packages}
             
             pursVersion :: String
             pursVersion = "${purs.version}"
             
             spagoVersion :: String
-            spagoVersion = ""
+            spagoVersion = "${defaultVersion}"
           '';
 
           preBuild = ''
