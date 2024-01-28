@@ -22,7 +22,11 @@
     nixpkgsFor = forAllSystems (system:
       import nixpkgs {
         inherit system;
-        overlays = [self.overlays.default slimlock.overlays.default];
+        overlays = [
+          self.overlays.default
+          slimlock.overlays.default
+          (_: prev: { nodejs = prev.nodejs_20; })
+        ];
       });
   in {
     overlays.default = import ./overlay.nix;
