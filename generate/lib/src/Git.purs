@@ -224,7 +224,7 @@ gitStatusParser = do
 git :: forall m. MonadAff m => Maybe String -> Array String -> m (Either String String)
 git cwd args = liftAff do
   spawned <- Execa.execa "git" args (_ { cwd = cwd })
-  result <- spawned.result
-  pure $ case result of
-    Left error -> Left error.message
-    Right { stdout } -> Right (String.trim stdout)
+  result <- spawned.getResult
+  pure $ case result.exitCode of
+    Just 0 -> Right (String.trim result.stdout)
+    _ -> Left result.message
