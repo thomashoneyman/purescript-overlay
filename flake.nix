@@ -60,9 +60,10 @@
 
     checks = forAllSystems (system: let
       pkgs = nixpkgsFor.${system};
+      inherit (pkgs) lib;
 
       package-checks =
-        pkgs.lib.mapAttrs (key: bin: let
+        lib.mapAttrs (key: bin: let
           name = bin.pname or bin.name;
           version = bin.version or "0.0.0";
         in
@@ -81,14 +82,14 @@
             # Different packages at different versions use different 'version'
             # flags to print their version
             if [ ${builtins.toString (name == "spago" && pkgs.lib.versionOlder version "0.90.0")} ]; then
-              VERSION="$(${bin}/bin/${name} version --global-cache skip)"
-            # spago@0.93.21 incorrecly reports its version
+              VERSION="$(${lib.getExe bin} version --global-cache skip)"
+            # spago@0.93.21 incorrectly reports its version
             elif [ ${builtins.toString (name == "spago" && version == "0.93.21")} ]; then
               VERSION="0.93.21"
             else
               # spago-next writes --version to stderr, oddly enough, so we need to
               # capture both in the VERSION var.
-              VERSION="$(${bin}/bin/${name} --version 2>&1)"
+              VERSION="$(${lib.getExe bin} --version 2>&1)"
             fi
 
             # purs-tidy includes a 'v' prefix in its output beginning with version 0.9.0
