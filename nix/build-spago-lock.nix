@@ -177,7 +177,8 @@
           else defaultVersion
         );
         
-        dependenciesList = lib.attrValues dependencies;
+        # FIXME hack to provide spago and spago-bin with spagoVersion
+        dependenciesList = lib.attrValues dependencies ++ [ { name = "spago-bin"; version = version; } ];
 
         renderPackageType = p: ''"${p.name}" :: String'';
         packagesType = "{ ${ lib.concatMapStringsSep ", " renderPackageType dependenciesList } }";
@@ -218,7 +219,7 @@
             pursVersion = "${purs.version}"
             
             spagoVersion :: String
-            spagoVersion = "${defaultVersion}"
+            spagoVersion = "${version}"
           '';
 
           preBuild = ''
