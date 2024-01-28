@@ -170,6 +170,12 @@
         dependencies = transitive // directs;
 
         defaultVersion = "0.0.0";
+
+        version = drv.version or (
+          if builtins.pathExists "${drv.out}/spago.yaml"
+          then lib.attrByPath [ "package" "publish" "version" ] defaultVersion (fromYAML (builtins.readFile "${drv.out}/spago.yaml"))
+          else defaultVersion
+        );
         
         dependenciesList = lib.attrValues dependencies;
 
@@ -182,6 +188,8 @@
           name = drv.name;
 
           src = drv.out;
+
+          inherit version;
 
           nativeBuildInputs = [purs jq];
 
