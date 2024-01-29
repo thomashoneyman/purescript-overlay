@@ -41,7 +41,7 @@ In a Nix flake, use the provided overlay when importing nixpkgs to get access to
     };
   };
 
-  outputs = { self, nixpkgs, ... }@input:
+  outputs = { self, nixpkgs, ... }@inputs:
     let
       supportedSystems = ["x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin"];
 
@@ -50,11 +50,11 @@ In a Nix flake, use the provided overlay when importing nixpkgs to get access to
       nixpkgsFor = forAllSystems (system: import nixpkgs {
         inherit system;
         config = { };
-        overlays = builtins.attrValues self.overlays.default;
+        overlays = builtins.attrValues self.overlays;
       });
     in {
       overlays = {
-        purescript = inputs.purescript-overlay;
+        purescript = inputs.purescript-overlay.overlays.default;
       };
 
       packages = forAllSystems (system:
@@ -76,7 +76,6 @@ In a Nix flake, use the provided overlay when importing nixpkgs to get access to
             ];
           };
         });
-    };
   };
 }
 ```
