@@ -25,7 +25,6 @@
         overlays = [
           self.overlays.default
           slimlock.overlays.default
-          (_: prev: { nodejs = prev.nodejs_20; })
         ];
       });
   in {
@@ -142,7 +141,7 @@
           self.packages.${system}.purs-backend-es-unstable
           self.packages.${system}.purescript-language-server-unstable
 
-          pkgs.nodejs_20
+          pkgs.nodejs
           pkgs.prefetch-npm-deps
         ];
       };
