@@ -141,6 +141,8 @@
         ];
       };
     };
+
+    formatter = pkgs.alejandra;
   })
   // {
     overlays.default = import ./overlay.nix;
