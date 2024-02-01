@@ -33,5 +33,5 @@ stdenv.mkDerivation {
     ln -s $BIN $out/bin/${name}
   '';
 
-  meta = meta lib // { mainProgram = name; };
+  meta = meta lib // {mainProgram = name;};
 }

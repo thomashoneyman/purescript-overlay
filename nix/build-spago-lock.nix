@@ -171,19 +171,28 @@
 
         defaultVersion = "0.0.0";
 
-        version = drv.version or (
-          if builtins.pathExists "${drv.out}/spago.yaml"
-          then lib.attrByPath [ "package" "publish" "version" ] defaultVersion (fromYAML (builtins.readFile "${drv.out}/spago.yaml"))
-          else defaultVersion
-        );
-        
+        version =
+          drv.version
+          or (
+            if builtins.pathExists "${drv.out}/spago.yaml"
+            then lib.attrByPath ["package" "publish" "version"] defaultVersion (fromYAML (builtins.readFile "${drv.out}/spago.yaml"))
+            else defaultVersion
+          );
+
         # FIXME hack to provide spago and spago-bin with spagoVersion
-        dependenciesList = lib.attrValues dependencies ++ [ { name = "spago-bin"; version = version; } ];
+        dependenciesList =
+          lib.attrValues dependencies
+          ++ [
+            {
+              name = "spago-bin";
+              version = version;
+            }
+          ];
 
         renderPackageType = p: ''"${p.name}" :: String'';
-        packagesType = "{ ${ lib.concatMapStringsSep ", " renderPackageType dependenciesList } }";
+        packagesType = "{ ${lib.concatMapStringsSep ", " renderPackageType dependenciesList} }";
         renderPackage = p: ''"${p.name}": "${p.version or defaultVersion}"'';
-        packages = ''{ ${lib.concatMapStringsSep "\n  , " renderPackage dependenciesList } }'';
+        packages = ''{ ${lib.concatMapStringsSep "\n  , " renderPackage dependenciesList} }'';
       in
         stdenv.mkDerivation rec {
           name = drv.name;
@@ -214,10 +223,10 @@
 
             packages :: ${packagesType}
             packages = ${packages}
-            
+
             pursVersion :: String
             pursVersion = "${purs.version}"
-            
+
             spagoVersion :: String
             spagoVersion = "${version}"
           '';
