@@ -15,9 +15,12 @@ import Effect.Aff (Aff)
 import Effect.Aff as Aff
 import Effect.Aff as Parallel
 import Effect.Aff.Class (class MonadAff, liftAff)
+import Effect.Class (class MonadEffect, liftEffect)
+import Effect.Class.Console as Console
 import Node.Encoding (Encoding(..))
 import Node.FS.Aff as FS.Aff
 import Node.Path (FilePath)
+import Node.Process as Process
 
 writeJsonFile :: forall m a. MonadAff m => FilePath -> JsonCodec a -> a -> m Unit
 writeJsonFile path codec a = liftAff do
@@ -92,3 +95,8 @@ withBackoff { delay: Aff.Milliseconds timeout, action, shouldCancel, shouldRetry
 
   maybeResult <- runAction 0 action (Int.floor timeout)
   loop 1 maybeResult
+
+die :: forall m u. MonadEffect m => String -> m u
+die msg = do
+  Console.error msg
+  liftEffect (Process.exit' 1)

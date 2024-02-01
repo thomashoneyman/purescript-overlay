@@ -31,9 +31,9 @@ import Lib.Git as Git
 import Lib.GitHub as GitHub
 import Lib.Nix.Manifest as Nix.Manifest
 import Lib.SemVer as SemVer
+import Lib.Utils (die)
 import Lib.Utils as Utils
 import Node.Path as Path
-import Node.Process as Process
 
 main :: Effect Unit
 main = Aff.launchAff_ do
@@ -181,13 +181,12 @@ main = Aff.launchAff_ do
                 commitResult <- AppM.runGitM do
                   Git.gitCommitManifests "Update manifests" >>= case _ of
                     Git.NothingToCommit -> do
-                      Console.log "No files were changed, not committing."
-                      liftEffect (Process.exit' 1)
+                      die "No files were changed, not committing."
                     Git.Committed ->
                       Console.log "Committed changes!"
 
                 case commitResult of
-                  Left error -> Console.log error *> liftEffect (Process.exit' 1)
+                  Left error -> die error
                   Right _ -> pure unit
 
                 let
@@ -209,8 +208,7 @@ main = Aff.launchAff_ do
 
                 existing <- AppM.runGitHubM GitHub.getPullRequests >>= case _ of
                   Left error -> do
-                    Console.log $ Octokit.printGitHubError error
-                    liftEffect (Process.exit' 1)
+                    die $ Octokit.printGitHubError error
                   Right existing -> pure existing
 
                 -- TODO: Title comparison is a bit simplistic. Better to compare
@@ -219,27 +217,21 @@ main = Aff.launchAff_ do
                   Nothing -> do
                     pushResult <- AppM.runGitM $ Git.gitPushBranch token >>= case _ of
                       Git.NothingToPush -> do
-                        Console.log "Did not push branch because we're up-to-date (expected to push change)."
-                        liftEffect (Process.exit' 1)
+                        die "Did not push branch because we're up-to-date (expected to push change)."
                       Git.Pushed ->
                         Console.log "Pushed changes!"
                     case pushResult of
                       Left error -> do
-                        Console.log error
-                        liftEffect (Process.exit' 1)
+                        die error
                       Right _ ->
                         AppM.runGitHubM $ GitHub.createPullRequest { title: commitMsg, body: commitMsg, branch }
 
                   Just pull -> do
-                    Console.log "A pull request with this title is already open: "
-                    Console.log pull.url
-                    liftEffect (Process.exit' 1)
+                    die $ "A pull request with this title is already open:\n" <> pull.url
 
                 case createPullResult of
                   Left error -> do
-                    Console.log "Failed to create pull request:"
-                    Console.log $ Octokit.printGitHubError error
-                    liftEffect (Process.exit' 1)
+                    die $ "Failed to create pull request:\n" <> Octokit.printGitHubError error
                   Right { url } -> do
                     Console.log "Successfully created pull request."
                     Console.log url
