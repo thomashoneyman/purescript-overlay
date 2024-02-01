@@ -17,30 +17,29 @@
     slimlock,
     flake-compat,
   }: let
-    supportedSystems = ["x86_64-linux" "x86_64-darwin" "aarch64-linux" "aarch64-darwin"];
-    forAllSystems = nixpkgs.lib.genAttrs supportedSystems;
-    nixpkgsFor = forAllSystems (system:
-      import nixpkgs {
+    inherit (nixpkgs) lib;
+    eachDefaultSystem = perSystem:
+      lib.pipe ["x86_64-linux" "x86_64-darwin" "aarch64-linux" "aarch64-darwin"] [
+        (map (sys: builtins.mapAttrs (_: value: { ${sys} = value; }) (perSystem sys)))
+        (builtins.foldl' nixpkgs.lib.recursiveUpdate { })
+      ];
+  in 
+  eachDefaultSystem (system:
+    let 
+      pkgs = import nixpkgs {
         inherit system;
         overlays = [
           self.overlays.default
           slimlock.overlays.default
         ];
-      });
-  in {
-    overlays.default = import ./overlay.nix;
-
+      };
+    in
+    {
     # A warning-free top-level flake output suitable for running unit tests via
     # e.g. `nix eval .#lib`.
-    lib = forAllSystems (system: let
-      pkgs = nixpkgsFor.${system};
-      tests = pkgs.callPackage ./nix/tests {};
-    in
-      tests);
+    lib = pkgs.callPackage ./nix/tests {};
 
-    packages = forAllSystems (system: let
-      pkgs = nixpkgsFor.${system};
-    in
+    packages =
       {
         inherit (pkgs) purs purs-unstable spago spago-unstable purs-tidy purs-tidy-unstable purs-backend-es purs-backend-es-unstable purescript-language-server purescript-language-server-unstable;
       }
@@ -48,10 +47,10 @@
       // pkgs.spago-bin
       // pkgs.purs-tidy-bin
       // pkgs.purs-backend-es-bin
-      // pkgs.purescript-language-server-bin);
+      // pkgs.purescript-language-server-bin;
 
-    apps = forAllSystems (system: let
-      pkgs = nixpkgsFor.${system};
+    apps =
+    let
       mkApp = bin: {
         type = "app";
         program = "${bin}/bin/${bin.pname or bin.name}";
@@ -59,12 +58,10 @@
       apps = pkgs.lib.mapAttrs (_: mkApp) self.packages.${system};
       scripts = {generate = mkApp (pkgs.callPackage ./generate {});};
     in
-      apps // scripts);
+      apps // scripts;
 
-    checks = forAllSystems (system: let
-      pkgs = nixpkgsFor.${system};
-      inherit (pkgs) lib;
-
+    checks = 
+      let
       package-checks =
         lib.mapAttrs (key: bin: let
           name = bin.pname or bin.name;
@@ -127,11 +124,9 @@
           '';
       };
     in
-      package-checks // example-checks // script-checks);
+      package-checks // example-checks // script-checks;
 
-    devShells = forAllSystems (system: let
-      pkgs = nixpkgsFor.${system};
-    in {
+    devShells = {
       default = pkgs.mkShell {
         name = "purescript-overlay";
         buildInputs = [
@@ -145,6 +140,9 @@
           pkgs.prefetch-npm-deps
         ];
       };
-    });
+    };
+  })
+  // {
+    overlays.default = import ./overlay.nix;
   };
 }
