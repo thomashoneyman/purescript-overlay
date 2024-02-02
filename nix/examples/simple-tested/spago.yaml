@@ -1,0 +1,14 @@
+package:
+  name: simple-tested
+  dependencies:
+    - prelude
+    - decimals
+  test:
+    dependencies:
+      - spec-discovery
+      - spec-quickcheck
+    main: Example.Simple.Tested.Tests
+workspace:
+  extra_packages: {}
+  package_set:
+    registry: 25.2.1
