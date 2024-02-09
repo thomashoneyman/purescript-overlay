@@ -168,11 +168,38 @@
         transitive = builtins.foldl' (a: pkg: a // self.${pkg}.dependencies) {} drv.dependencies;
 
         dependencies = transitive // directs;
+
+        defaultVersion = "0.0.0";
+
+        version =
+          drv.version
+          or (
+            if builtins.pathExists "${drv.out}/spago.yaml"
+            then lib.attrByPath ["package" "publish" "version"] defaultVersion (fromYAML (builtins.readFile "${drv.out}/spago.yaml"))
+            else defaultVersion
+          );
+
+        # FIXME hack to provide spago and spago-bin with spagoVersion
+        dependenciesList =
+          lib.attrValues dependencies
+          ++ [
+            {
+              name = "spago-bin";
+              version = version;
+            }
+          ];
+
+        renderPackageType = p: ''"${p.name}" :: String'';
+        packagesType = "{ ${lib.concatMapStringsSep ", " renderPackageType dependenciesList} }";
+        renderPackage = p: ''"${p.name}": "${p.version or defaultVersion}"'';
+        packages = ''{ ${lib.concatMapStringsSep "\n  , " renderPackage dependenciesList} }'';
       in
         stdenv.mkDerivation rec {
           name = drv.name;
 
           src = drv.out;
+
+          inherit version;
 
           nativeBuildInputs = [purs jq];
 
@@ -194,14 +221,14 @@
             -- @inline export spagoVersion always
             module Spago.Generated.BuildInfo where
 
-            packages :: { }
-            packages = { }
-            
+            packages :: ${packagesType}
+            packages = ${packages}
+
             pursVersion :: String
             pursVersion = "${purs.version}"
-            
+
             spagoVersion :: String
-            spagoVersion = ""
+            spagoVersion = "${version}"
           '';
 
           preBuild = ''

@@ -9,8 +9,8 @@ import Dotenv as Dotenv
 import Effect.Aff (Aff)
 import Effect.Aff as Aff
 import Effect.Class (class MonadEffect, liftEffect)
-import Effect.Class.Console as Console
 import Lib.Foreign.Octokit (GitHubToken(..))
+import Lib.Utils (die)
 import Node.Encoding (Encoding(..))
 import Node.FS.Aff as FS.Aff
 import Node.Path (FilePath)
@@ -38,8 +38,7 @@ lookupOptional (EnvKey { key, decode }) = liftEffect $ Process.lookupEnv key >>=
   Just "" -> pure Nothing
   Just value -> case decode value of
     Left error -> do
-      Console.log $ "Found " <> key <> " in the environment with value " <> value <> ", but it could not be decoded: " <> error
-      liftEffect (Process.exit 1)
+      die $ "Found " <> key <> " in the environment with value " <> value <> ", but it could not be decoded: " <> error
     Right decoded -> pure $ Just decoded
 
 -- | Look up a required environment variable, throwing an exception if it is
@@ -47,15 +46,12 @@ lookupOptional (EnvKey { key, decode }) = liftEffect $ Process.lookupEnv key >>=
 lookupRequired :: forall m a. MonadEffect m => EnvKey a -> m a
 lookupRequired (EnvKey { key, decode }) = liftEffect $ Process.lookupEnv key >>= case _ of
   Nothing -> do
-    Console.log $ key <> " is not present in the environment."
-    liftEffect (Process.exit 1)
+    die $ key <> " is not present in the environment."
   Just "" -> do
-    Console.log $ "Found " <> key <> " in the environment, but its value was an empty string."
-    liftEffect (Process.exit 1)
+    die $ "Found " <> key <> " in the environment, but its value was an empty string."
   Just value -> case decode value of
     Left error -> do
-      Console.log $ "Found " <> key <> " in the environment with value " <> value <> ", but it could not be decoded: " <> error
-      liftEffect (Process.exit 1)
+      die $ "Found " <> key <> " in the environment with value " <> value <> ", but it could not be decoded: " <> error
     Right decoded -> pure decoded
 
 -- | A user GitHub token at the REPO_TOKEN key.

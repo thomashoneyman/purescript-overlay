@@ -49,5 +49,6 @@ in
     meta = with lib; {
       description = "Package manager for PureScript";
       homepage = "https://github.com/purescript/spago";
+      mainProgram = pname;
     };
   }

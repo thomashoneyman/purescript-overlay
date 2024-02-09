@@ -42,7 +42,7 @@ in
         ln -s $BIN $out/bin/${name}
       '';
 
-      meta = meta lib;
+      meta = meta lib // {mainProgram = name;};
     }
   # Otherwise, if there IS a lockfile set, then we need to include dependencies.
   else let
@@ -71,5 +71,5 @@ in
 
       npmInstallFlags = ["--loglevel=verbose"];
 
-      meta = meta lib;
+      meta = meta lib // {mainProgram = name;};
     }

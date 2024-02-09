@@ -43,5 +43,6 @@ in
     meta = with lib; {
       description = "Compiler for a strongly-typed language that compiles to JavaScript";
       homepage = "https://github.com/purescript/purescript";
+      mainProgram = pname;
     };
   }

@@ -70,8 +70,8 @@ run = do
       Console.log (Arg.printArgError error)
       case error of
         Arg.ArgError _ Arg.ShowHelp -> do
-          liftEffect (Process.exit 0)
+          liftEffect (Process.exit' 0)
         _ ->
-          liftEffect (Process.exit 1)
+          liftEffect (Process.exit' 1)
     Right command ->
       pure command
