@@ -99,7 +99,7 @@
 
   # Read a workspace package. These are listed at the top of the
   # lockfile, not in the main packages list.
-  readWorkspacePackage = src: name: attr:
+  readWorkspacePackage = src: extraSrcs: name: attr:
     stdenv.mkDerivation {
       name = name;
       # The workspace packages list version ranges with their dependencies, so
@@ -117,12 +117,22 @@
         else pathExists "${src}/${attr.path}";
       installPhase = ''
         cp -R . $out
+        ${
+          if builtins.hasAttr name extraSrcs
+          then ''
+            echo "Copying extra sources from ${extraSrcs.${name}}..."
+            cp -r ${extraSrcs.${name}} $out/src
+          ''
+          else ''
+            echo "No extra sources to copy for ${name}."
+          ''
+        }
       '';
     };
 
   # Read the workspace packages
-  workspacePackages = src: lock:
-    lib.mapAttrs (readWorkspacePackage src) lock.workspace.packages;
+  workspacePackages = src: extraSrcs: lock:
+    lib.mapAttrs (readWorkspacePackage src extraSrcs) lock.workspace.packages;
 
   # Merges together the dependencies into a local output directory such that
   # they can be used for incremental compilation.
@@ -290,6 +300,11 @@
     corefn ? false,
     purs ? pkgs.purs,
     lockfile ? src + "/spago.lock",
+    # A record from a name of a spago package in this workspace to a derivation with additional
+    # source files. This is useful for injecting generated code (e.g. from `graphql-client`).
+    #
+    # Non-existent packages are silently ignored.
+    extraSrcs ? {},
   }: let
     lock = readSpagoLock lockfile;
     workspaceDirs = builtins.attrValues (lib.mapAttrs (_: attr: attr.path) lock.workspace.packages);
@@ -300,5 +315,5 @@
     };
   in
     fixDependencies {inherit purs corefn;}
-    (lockedPackages filteredSrc lock // workspacePackages filteredSrc lock);
+    (lockedPackages filteredSrc lock // workspacePackages filteredSrc extraSrcs lock);
 }
