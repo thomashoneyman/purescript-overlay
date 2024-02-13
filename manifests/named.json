@@ -7,6 +7,6 @@
   "purs-tidy-unstable": "purs-tidy-0_10_1",
   "purs-backend-es-stable": "purs-backend-es-1_4_2",
   "purs-backend-es-unstable": "purs-backend-es-1_4_2",
-  "purescript-language-server-stable": "purescript-language-server-0_17_3",
-  "purescript-language-server-unstable": "purescript-language-server-0_17_3"
+  "purescript-language-server-stable": "purescript-language-server-0_18_1",
+  "purescript-language-server-unstable": "purescript-language-server-0_18_1"
 }
