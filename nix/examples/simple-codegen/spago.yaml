@@ -1,0 +1,14 @@
+package:
+  name: simple-codegen
+  dependencies:
+    - console
+    - effect
+    - prelude
+    - newtype
+  test:
+    dependencies: []
+    main: Test.Main
+workspace:
+  extra_packages: {}
+  package_set:
+    registry: 25.2.1
