@@ -62,7 +62,7 @@ in
 
       npmDepsHash = source.depsHash;
 
-      nativeBuildInputs = [nodejs];
+      nativeBuildInputs = [nodejs] ++ lib.optionals (name == "spago") ([nodePackages.node-gyp python3] ++ lib.optionals stdenv.isDarwin [darwin.cctools]);
 
       # The prepack script runs the build script, but (so far) all derivations
       # are pre-built.
