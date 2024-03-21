@@ -62,14 +62,14 @@ in
 
       npmDepsHash = source.depsHash;
 
-      nativeBuildInputs = [nodejs] ++ lib.optionals (name == "spago") ([nodePackages.node-gyp python3] ++ lib.optionals stdenv.isDarwin [darwin.cctools]);
+      nativeBuildInputs = [nodejs];
 
       # The prepack script runs the build script, but (so far) all derivations
       # are pre-built.
       npmPackFlags = ["--ignore-scripts"];
       dontNpmBuild = true;
 
-      npmInstallFlags = ["--loglevel=verbose"];
+      npmInstallFlags = ["--loglevel=verbose"] ++ lib.optionals (name == "spago") ["--omit=optional"];
 
       meta = meta lib // {mainProgram = name;};
     }
