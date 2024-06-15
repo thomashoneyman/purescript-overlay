@@ -360,5 +360,16 @@
       "hash": "sha256-UYrzUkzaWojVhtJOsIHmxZ+vQIX+q7bnI4DL0IigoyY=",
       "url": "https://registry.npmjs.org/spago/-/spago-0.93.31.tgz"
     }
+  },
+  "0.93.32": {
+    "depsHash": "sha256-7Sc78vmUHWNs/T8ekI+BWDy4ah878WJQyrd0di6mQ/U=",
+    "lockfile": {
+      "hash": "sha256-kll4roN7ePLk0NcEDL78QAM3PfXSZfu0AGvLeqp5Na0=",
+      "url": "https://raw.githubusercontent.com/purescript/spago/0e175ad2e0bdadf0bc5e31e45af6f117766a70ee/package-lock.json"
+    },
+    "tarball": {
+      "hash": "sha256-sD/TpxxtRyVcRqQuamc69BVrjTvkJM+v35ClUpChyTs=",
+      "url": "https://registry.npmjs.org/spago/-/spago-0.93.32.tgz"
+    }
   }
 }
