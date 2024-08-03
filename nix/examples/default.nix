@@ -4,4 +4,5 @@
   simple = callPackage ./simple {};
   simple-ffi = callPackage ./simple-ffi {};
   simple-codegen = callPackage ./simple-codegen {};
+  simple-tested = callPackage ./simple-tested {};
 }
