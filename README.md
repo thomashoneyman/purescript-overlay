@@ -86,6 +86,12 @@ You can also run individual packages from the flake, e.g. to format your `src` d
 nix run github:thomashoneyman/purescript-overlay#purs-tidy format-in-place src
 ```
 
+You can run a `nix shell` with `purs` and `spago-unstable` straight from this flake:
+
+```console
+nix shell github:thomashoneyman/purescript-overlay#purs github:thomashoneyman/purescript-overlay#spago-unstable
+```
+
 ## Tests
 
 You can run the repository tests using a combination of `nix eval .#lib` (to run the unit tests in Nix) and `nix flake check` (to run the derivation-based tests). Both are executed in CI.
