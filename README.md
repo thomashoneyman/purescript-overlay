@@ -80,13 +80,19 @@ In a Nix flake, use the provided overlay when importing nixpkgs to get access to
 }
 ```
 
+The latest versions of all the supported tools are including in the default development shell of this flake. To enter a `nix develop` shell environment with all of the supported tools:
+
+```console
+nix develop github:thomashoneyman/purescript-overlay
+```
+
 You can also run individual packages from the flake, e.g. to format your `src` directory:
 
 ```console
 nix run github:thomashoneyman/purescript-overlay#purs-tidy format-in-place src
 ```
 
-You can run a `nix shell` with `purs` and `spago-unstable` straight from this flake:
+You can run a `nix shell` with `purs` and `spago-unstable` selected from this flake:
 
 ```console
 nix shell github:thomashoneyman/purescript-overlay#purs github:thomashoneyman/purescript-overlay#spago-unstable
