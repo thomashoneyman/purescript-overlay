@@ -28,4 +28,5 @@ jobs:
         run: |
           cd generate
           npm ci
-          nix develop --command spago run -p bin -m Bin.Main -- update ../manifests --commit
+          # FIXME: Update spago when lockfile format stabilizes
+          nix develop --command spago-0_93_37 run -p bin -m Bin.Main -- update ../manifests --commit
