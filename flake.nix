@@ -127,7 +127,7 @@
           name = "purescript-overlay";
           buildInputs = [
             # FIXME: Change when lockfile format stabilizes
-            self.packages.${system}.spago-bin.spago-0_93_37
+            self.packages.${system}.spago-0_93_37
             self.packages.${system}.purs-unstable
             self.packages.${system}.purs-tidy-unstable
             self.packages.${system}.purs-backend-es-unstable
