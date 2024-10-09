@@ -126,7 +126,8 @@
         default = pkgs.mkShell {
           name = "purescript-overlay";
           buildInputs = [
-            self.packages.${system}.spago-unstable
+            # FIXME: Change when lockfile format stabilizes
+            self.packages.${system}.spago-bin.spago-0_93_37
             self.packages.${system}.purs-unstable
             self.packages.${system}.purs-tidy-unstable
             self.packages.${system}.purs-backend-es-unstable
