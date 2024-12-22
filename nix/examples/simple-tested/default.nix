@@ -5,6 +5,7 @@
   locked = purix.buildSpagoLock {
     src = ./.;
     lockfile = ./spago.lock;
+    tests.simple-tested = "Example.Simple.Tested.Tests";
   };
 in
   stdenv.mkDerivation {
@@ -12,7 +13,7 @@ in
     src = ./.;
     buildPhase = ''
       echo "Linking ..."
-      ln -s ${locked.jsArtifacts.simple}/output .
+      ln -s ${locked.jsArtifacts.simple-tested}/output .
     '';
     installPhase = ''
       mkdir -p $out

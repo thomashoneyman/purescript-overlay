@@ -2,12 +2,10 @@
   stdenv,
   writeText,
   esbuild,
-  slimlock,
   purix,
   purs-bin,
 }: let
-  packageLock = slimlock.buildPackageLock {src = ./.;};
-  spagoLock = purix.buildSpagoLock {src = ./.;};
+  locked = purix.buildSpagoLock {src = ./.;};
   entrypoint = writeText "entrypoint.js" ''
     import { main } from "./output/Main";
     main();
@@ -19,8 +17,8 @@ in
     nativeBuildInputs = [purs-bin.purs-0_15_9 esbuild];
     buildPhase = ''
       echo "Linking ..."
-      ln -s ${packageLock}/js/node_modules .
-      cp -r ${spagoLock.simple-ffi}/output .
+      ln -s ${locked.npmDependencies}/js/node_modules .
+      cp -r ${locked.jsArtifacts.simple-ffi}/output .
       cp ${entrypoint} entrypoint.js
       cat entrypoint.js
       esbuild entrypoint.js \

@@ -5,7 +5,7 @@ final: prev: let
   tooling = import ./manifests {inherit (prev) system lib callPackage stdenv;};
 
   # All of the library functions supported by this repo
-  buildSpagoLock = prev.callPackage ./nix/build-spago-lock.nix {inherit fromYAML;};
+  buildSpagoLock = final.callPackage ./nix/build-spago-lock.nix {inherit fromYAML;};
 
   purix = {
     buildSpagoLock = buildSpagoLock.buildSpagoLock;
