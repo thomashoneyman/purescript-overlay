@@ -12,7 +12,7 @@ in
     src = ./.;
     buildPhase = ''
       echo "Linking ..."
-      ln -s ${locked.jsArtifacts.simple}/output .
+      ln -s ${locked.simple}/output .
     '';
     installPhase = ''
       mkdir -p $out

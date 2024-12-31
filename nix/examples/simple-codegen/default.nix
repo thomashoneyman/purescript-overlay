@@ -27,7 +27,7 @@ in
     src = ./.;
     buildPhase = ''
       echo "Linking ..."
-      ln -s ${lock.jsArtifacts.simple-codegen}/output .
+      ln -s ${lock.simple-codegen}/output .
     '';
     installPhase = ''
       mkdir -p $out

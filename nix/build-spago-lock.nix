@@ -1,6 +1,5 @@
 {
   stdenv,
-  slimlock,
   lib,
   fetchurl,
   fetchgit,
@@ -333,7 +332,7 @@
                     ++ ["${src}/test/**/*.purs"]
                     ++ map (dep: ''"${dep.src}/src/**/*.purs"'') (builtins.attrValues testDeps);
 
-                  spagoTestCommands = ''
+                  spagoTestCommands = assert lib.assertMsg (npmDependencies != null) "npmDependencies must be set to run tests"; ''
                     echo "Compiling tests..."
                     set -f
                     purs compile ${lib.concatStringsSep " " testGlobs} --codegen js 2>&1
@@ -343,7 +342,7 @@
                       if builtins.pathExists "${src}/package-lock.json"
                       then ''
                         echo "Symlinking node modules..."
-                        ln -s ${npmDependencies}/js/node_modules .
+                        ln -s ${npmDependencies} node_modules
                       ''
                       else "echo 'No package-lock.json found in ${src}. Skipping symlinking.'"
                     }
@@ -365,6 +364,8 @@
     corefn ? false,
     purs ? pkgs.purs,
     lockfile ? src + "/spago.lock",
+    # The node_modules directory. Only needed for tests.
+    npmDependencies ? null,
     # A record from a name of a spago package in this workspace to a derivation with additional
     # source files. This is useful for injecting generated code (e.g. from `graphql-client`).
     #
@@ -391,11 +392,7 @@
         filter = name: type: name != "spago.lock" && !(builtins.elem name workspaceDirs);
         src = cleanSrc;
       };
-    in rec
-    {
-      jsArtifacts =
-        fixDependencies {inherit purs corefn tests npmDependencies;}
-        (lockedPackages filteredSrc lock // workspacePackages filteredSrc extraSrcs lock);
-      npmDependencies = slimlock.buildPackageLock {src = cleanSrc;};
-    };
+    in
+      fixDependencies {inherit purs corefn tests npmDependencies;}
+      (lockedPackages filteredSrc lock // workspacePackages filteredSrc extraSrcs lock);
 }
