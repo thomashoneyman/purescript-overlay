@@ -338,7 +338,7 @@
                     purs compile ${lib.concatStringsSep " " testGlobs} --codegen js 2>&1
                     set +f
                     ${
-                      # Only simplink if the package-lock.json existsts.
+                      # Only symlink if the package-lock.json exists.
                       if builtins.pathExists "${src}/package-lock.json"
                       then ''
                         echo "Symlinking node modules..."
