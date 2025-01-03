@@ -179,6 +179,7 @@
   fixDependencies = {
     purs,
     corefn,
+    workspaceSrc,
     tests,
     npmDependencies,
   }: spagoPkgs:
@@ -339,10 +340,11 @@
                     set +f
                     ${
                       # Only symlink if the package-lock.json exists.
-                      if builtins.pathExists "${src}/package-lock.json"
+                      if builtins.pathExists "${workspaceSrc}/package-lock.json"
                       then ''
                         echo "Symlinking node modules..."
                         ln -s ${npmDependencies} node_modules
+                        ln -s ${workspaceSrc}/package-lock.json .
                       ''
                       else "echo 'No package-lock.json found in ${src}. Skipping symlinking.'"
                     }
@@ -387,12 +389,12 @@
       workspaceDirs =
         builtins.attrValues (lib.mapAttrs (_: attr: attr.path) lock.workspace.packages);
       # We only want to include the lockfile and code from any listed workspaces
-      cleanSrc = lib.cleanSource src;
+      workspaceSrc = lib.cleanSource src;
       filteredSrc = lib.cleanSourceWith {
         filter = name: type: name != "spago.lock" && !(builtins.elem name workspaceDirs);
-        src = cleanSrc;
+        src = workspaceSrc;
       };
     in
-      fixDependencies {inherit purs corefn tests npmDependencies;}
+      fixDependencies {inherit purs corefn tests npmDependencies workspaceSrc;}
       (lockedPackages filteredSrc lock // workspacePackages filteredSrc extraSrcs lock);
 }
