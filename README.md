@@ -23,9 +23,7 @@ The overlay is tested on the following architectures:
 
 The included overlay inserts the latest stable and unstable executables into your packages (ie. `purs`, `purs-unstable`, and so on). You can see all specific versions in the [named.json](./manifests/named.json) file. It also provides many versions of each executable under a `-bin` namespace (ie. `purs-bin`, `spago-bin`, and so on) so you can access specific versions of a tool. For example, you can use `purs-bin.purs-0_15_8` to get the 0.15.8 PureScript compiler. These are tracked in the [manifests](./manifests/) directory.
 
-There is also an included library named `purix` which provides helper functions for building PureScript packages, namely:
-
-- `buildSpagoLock`: Build `output` directories for any package or workspace listed in a spago.lock file
+If you're looking for a way to *build* your `spago@next`-based projects using Nix, take a look at https://github.com/jeslie0/mkSpagoDerivation.
 
 ## Usage
 
