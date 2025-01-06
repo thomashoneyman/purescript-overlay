@@ -13,8 +13,8 @@
   purs-backend-es,
   purs-tidy,
 }: let
-  npmDependencies = slimlock.buildPackageLock {src = ./.;};
-  packages = purix.buildSpagoLock {
+  npmDependencies = slimlock.buildPackageLock {src = ./.;} + "/js/node_modules";
+  locked = purix.buildSpagoLock {
     src = ./.;
     corefn = true;
   };
@@ -30,8 +30,8 @@ in
     buildInputs = [prefetch-npm-deps];
 
     buildPhase = ''
-      ln -s ${npmDependencies}/js/node_modules .
-      cp -r ${packages.${name}}/output .
+      ln -s ${npmDependencies} .
+      cp -r ${locked.${name}}/output .
       set -f
       echo "Optimizing..."
       purs-backend-es build
