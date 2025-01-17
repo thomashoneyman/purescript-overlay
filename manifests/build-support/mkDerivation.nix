@@ -69,7 +69,7 @@ in
       npmPackFlags = ["--ignore-scripts"];
       dontNpmBuild = true;
 
-      npmInstallFlags = ["--loglevel=verbose"];
+      npmInstallFlags = ["--loglevel=verbose"] ++ lib.optionals (name == "spago") ["--omit=optional"];
 
       meta = meta lib // {mainProgram = name;};
     }
