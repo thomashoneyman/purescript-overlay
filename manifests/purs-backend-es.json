@@ -42,5 +42,9 @@
   "1.4.2": {
     "hash": "sha256-oEkAUq7VFz2gB5r124ssu4H/zu2g6ydrArV3Nz584Do=",
     "url": "https://registry.npmjs.org/purs-backend-es/-/purs-backend-es-1.4.2.tgz"
+  },
+  "1.4.3": {
+    "hash": "sha256-tTYfMKkwlCLxEmAoqROEmvj6PLgKWqdikGypasx5vJU=",
+    "url": "https://registry.npmjs.org/purs-backend-es/-/purs-backend-es-1.4.3.tgz"
   }
 }
