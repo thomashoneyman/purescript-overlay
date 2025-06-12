@@ -70,5 +70,9 @@
   "0.18.4": {
     "hash": "sha256-RHvIHwOAs4zYl1YTVJknlgcFQvwzrKDD243SgMV9Lp0=",
     "url": "https://github.com/nwolverson/purescript-language-server/releases/download/v0.18.4/purescript-language-server.js"
+  },
+  "0.18.5": {
+    "hash": "sha256-RHvIHwOAs4zYl1YTVJknlgcFQvwzrKDD243SgMV9Lp0=",
+    "url": "https://github.com/nwolverson/purescript-language-server/releases/download/v0.18.5/purescript-language-server.js"
   }
 }
