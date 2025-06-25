@@ -21,13 +21,16 @@
 
   # Read a package listed in the lockfile
   readLockedPackage = src: name: attr:
-    if attr.type == "registry"
-    then readRegistryPackage name attr
-    else if attr.type == "git"
-    then readGitPackage name attr
-    else if attr.type == "local"
-    then readLocalPackage src name attr
-    else throw "Unknown package type ${attr.type}";
+    (
+      if attr.type == "registry"
+      then readRegistryPackage name attr
+      else if attr.type == "git"
+      then readGitPackage name attr
+      else if attr.type == "local"
+      then readLocalPackage src name attr
+      else throw "Unknown package type ${attr.type}"
+    )
+    // {fromWorkspace = false;};
 
   # Option 1: Fetch and unpack the given package from the registry
   # "effect": {
@@ -39,7 +42,7 @@
     stdenv.mkDerivation {
       name = name;
       version = attr.version;
-      dependencies = attr.dependencies;
+      depNames = attr.dependencies;
 
       src = fetchurl {
         name = "${name}-${attr.version}.tar.gz";
@@ -68,7 +71,7 @@
   in
     stdenv.mkDerivation {
       name = name;
-      dependencies = attr.dependencies;
+      depNames = attr.dependencies;
       src =
         if builtins.hasAttr "subdir" attr
         then "${fetched}/${attr.subdir}"
@@ -86,7 +89,7 @@
   readLocalPackage = src: name: attr:
     stdenv.mkDerivation {
       name = name;
-      dependencies = attr.dependencies;
+      depNames = attr.dependencies;
       src = pathExists "${src}/${attr.path}";
       installPhase = ''
         cp -R . "$out"
@@ -99,22 +102,29 @@
 
   # Read a workspace package. These are listed at the top of the
   # lockfile, not in the main packages list.
-  readWorkspacePackage = src: extraSrcs: name: attr:
+  readWorkspacePackage = src: extraSrcs: name: attr: let
+    toNames = dep:
+      if builtins.typeOf dep == "set"
+      then lib.attrNames dep
+      else [dep];
+  in
     stdenv.mkDerivation {
       name = name;
+
       # The workspace packages list version ranges with their dependencies, so
       # we want to take only the keys.
-      dependencies = let
-        toNames = dep:
-          if builtins.typeOf dep == "set"
-          then lib.attrNames dep
-          else [dep];
-      in
-        lib.concatMap toNames attr.dependencies;
+      depNames = lib.concatMap toNames attr.dependencies;
+
+      testDepNames =
+        if attr ? test_dependencies
+        then lib.concatMap toNames attr.test_dependencies
+        else {};
+
       src =
         if attr.path == "./"
         then src
         else pathExists "${src}/${attr.path}";
+
       installPhase = ''
         cp -R . $out
         ${
@@ -128,6 +138,8 @@
           ''
         }
       '';
+
+      fromWorkspace = true;
     };
 
   # Read the workspace packages
@@ -153,6 +165,9 @@
   # not to rebuild them.
   mergeCacheDb = deps: ''
     caches=()
+    if [ -f output/cache-db.json ]; then
+      caches+="output/cache-db.json "
+    fi
     for dir in ${lib.concatStringsSep " " deps}
     do
       caches+="$dir/output/cache-db.json "
@@ -164,156 +179,222 @@
   fixDependencies = {
     purs,
     corefn,
-  }: deps:
-    lib.fix (self:
-      lib.mapAttrs (name: drv: let
-        get-dep = dep: self.${dep};
-
-        directs = builtins.listToAttrs (map (name: {
+    workspaceSrc,
+    tests,
+    npmDependencies,
+  }: spagoPkgs:
+    lib.fix (
+      self:
+        lib.mapAttrs (name: spagoPkg: let
+          depNameToAttr = name: {
             name = name;
-            value = get-dep name;
-          })
-          drv.dependencies);
-
-        transitive = builtins.foldl' (a: pkg: a // self.${pkg}.dependencies) {} drv.dependencies;
-
-        dependencies = transitive // directs;
-
-        defaultVersion = "0.0.0";
-
-        version =
-          drv.version
-          or (
-            if builtins.pathExists "${drv.out}/spago.yaml"
-            then lib.attrByPath ["package" "publish" "version"] defaultVersion (fromYAML (builtins.readFile "${drv.out}/spago.yaml"))
-            else defaultVersion
-          );
-
-        # FIXME hack to provide spago and spago-bin with spagoVersion
-        dependenciesList =
-          lib.attrValues dependencies
-          ++ [
-            {
-              name = "spago-bin";
-              version = version;
-            }
-          ];
-
-        renderPackageType = p: ''"${p.name}" :: String'';
-        packagesType = "{ ${lib.concatMapStringsSep ", " renderPackageType dependenciesList} }";
-        renderPackage = p: ''"${p.name}": "${p.version or defaultVersion}"'';
-        packages = ''{ ${lib.concatMapStringsSep "\n  , " renderPackage dependenciesList} }'';
-      in
-        stdenv.mkDerivation rec {
-          name = drv.name;
-
-          src = drv.out;
-
-          inherit version;
-
-          nativeBuildInputs = [purs jq];
-
-          phases = ["buildPhase" "installPhase" "checkPhase"];
-
-          passthru = {
-            inherit dependencies;
+            value = self.${name};
           };
 
-          # TODO: The 'files' key can indicate additional deps.
-          globs =
-            ["${src}/src/**/*.purs"]
-            ++ map (dep: ''"${dep.src}/src/**/*.purs"'') (builtins.attrValues dependencies);
+          makeTransitiveDeps = builtins.foldl' (a: depName: a // self.${depName}.deps) {};
 
-          # This is bad...but without Spago, how else can we get this?
-          buildInfo = pkgs.writeText "BuildInfo.purs" ''
-            -- @inline export packages always
-            -- @inline export pursVersion always
-            -- @inline export spagoVersion always
-            module Spago.Generated.BuildInfo where
+          directs = builtins.listToAttrs (map depNameToAttr spagoPkg.depNames);
 
-            packages :: ${packagesType}
-            packages = ${packages}
+          transitive = makeTransitiveDeps spagoPkg.depNames;
 
-            pursVersion :: String
-            pursVersion = "${purs.version}"
+          deps = transitive // directs;
 
-            spagoVersion :: String
-            spagoVersion = "${version}"
-          '';
+          defaultVersion = "0.0.0";
 
-          preBuild = ''
-            mkdir output
-            echo "Fetching dependencies..."
-            ${syncOutput (builtins.attrValues directs)}
-            echo "Merge cache-db.json files..."
-            ${mergeCacheDb (builtins.attrValues directs)}
-          '';
+          version =
+            spagoPkg.version
+            or (
+              if builtins.pathExists "${spagoPkg.out}/spago.yaml"
+              then lib.attrByPath ["package" "publish" "version"] defaultVersion (fromYAML (builtins.readFile "${spagoPkg.out}/spago.yaml"))
+              else defaultVersion
+            );
 
-          buildPhase = ''
-            runHook preBuild
+          # FIXME hack to provide spago and spago-bin with spagoVersion
+          depsList =
+            lib.attrValues deps
+            ++ [
+              {
+                name = "spago-bin";
+                version = version;
+              }
+            ];
 
-            cleanup() {
-              exit_code=$?
-              if [ $exit_code -ne 0 ]; then
-                echo "purs compile failed with exit code $exit_code."
+          renderPackageType = p: ''"${p.name}" :: String'';
+          packagesType = "{ ${lib.concatMapStringsSep ", " renderPackageType depsList} }";
+          renderPackage = p: ''"${p.name}": "${p.version or defaultVersion}"'';
+          packages = ''{ ${lib.concatMapStringsSep "\n  , " renderPackage depsList} }'';
+        in
+          stdenv.mkDerivation rec {
+            name = spagoPkg.name;
+
+            src = spagoPkg.out;
+
+            inherit version;
+
+            nativeBuildInputs =
+              [purs jq]
+              # Nodejs is only needed if there is a tested package.
+              ++ (
+                if runSpagoTests
+                then [pkgs.nodejs]
+                else []
+              );
+
+            phases = ["buildPhase" "installPhase" "checkPhase"];
+
+            passthru = {
+              inherit deps;
+            };
+
+            # TODO: The 'files' key can indicate additional deps.
+            globs =
+              ["${src}/src/**/*.purs"]
+              ++ map (dep: ''"${dep.src}/src/**/*.purs"'') (builtins.attrValues deps);
+
+            # This is bad...but without Spago, how else can we get this?
+            buildInfo = pkgs.writeText "BuildInfo.purs" ''
+              -- @inline export packages always
+              -- @inline export pursVersion always
+              -- @inline export spagoVersion always
+              module Spago.Generated.BuildInfo where
+
+              packages :: ${packagesType}
+              packages = ${packages}
+
+              pursVersion :: String
+              pursVersion = "${purs.version}"
+
+              spagoVersion :: String
+              spagoVersion = "${version}"
+            '';
+
+            preBuild = ''
+              mkdir output
+              echo "Fetching dependencies..."
+              ${syncOutput (builtins.attrValues directs)}
+              echo "Merge cache-db.json files..."
+              ${mergeCacheDb (builtins.attrValues directs)}
+            '';
+
+            buildPhase = ''
+              runHook preBuild
+
+              cleanup() {
+                exit_code=$?
+                if [ $exit_code -ne 0 ]; then
+                  echo "purs compile failed with exit code $exit_code."
+                  cat purs-log.txt
+                fi
+                exit $exit_code
+              }
+
+              trap cleanup EXIT
+              # TODO: Ideally we would only compile to corefn if we know it's
+              # necessary (for example, a 'backend' command was supplied).
+              set -f
+              purs compile ${lib.concatStringsSep " " globs} ${buildInfo} --codegen js${
+                if corefn
+                then ",corefn"
+                else ""
+              } 2>&1 | tee purs-log.txt
+              set +f
+
+              # Cancel trap.
+              trap - EXIT
+            '';
+
+            installPhase = ''
+              mkdir $out
+              cp -r output $out
+            '';
+
+            runSpagoTests = spagoPkg.fromWorkspace && builtins.hasAttr spagoPkg.name tests;
+
+            doCheck = true;
+            checkPhase = ''
+              # The +1 is for the BuildInfo.purs file.
+              FILE_COUNT=$(($(find ${src}/src -name '*.purs' | wc -l) + 1))
+              COMPILE_LINE=$(grep -m 1 "^\[[0-9]* of [0-9]*\] Compiling" purs-log.txt)
+              MODULE_COUNT=$(echo $COMPILE_LINE | sed -n 's/^\[\([0-9]*\) of \([0-9]*\)\] Compiling.*$/\2/p')
+              if [[ $FILE_COUNT -ne $MODULE_COUNT ]]; then
+                echo ".purs file count ($FILE_COUNT) does not match the module count ($MODULE_COUNT)."
+                echo "This indicates incremental compilation is wrong."
                 cat purs-log.txt
+                exit 1
               fi
-              exit $exit_code
-            }
+              ${
+                let
+                  testDepNames = spagoPkg.testDepNames or [];
+                  directTestDeps = builtins.listToAttrs (map depNameToAttr testDepNames);
+                  transitiveTestDeps = makeTransitiveDeps testDepNames;
+                  testDeps = transitiveTestDeps // directTestDeps;
+                  testGlobs =
+                    globs
+                    ++ ["${src}/test/**/*.purs"]
+                    ++ map (dep: ''"${dep.src}/src/**/*.purs"'') (builtins.attrValues testDeps);
 
-            trap cleanup EXIT
-
-            # TODO: Ideally we would only compile to corefn if we know it's
-            # necessary (for example, a 'backend' command was supplied).
-            set -f
-            purs compile ${lib.concatStringsSep " " globs} ${buildInfo} --codegen js${
-              if corefn
-              then ",corefn"
-              else ""
-            } 2>&1 | tee purs-log.txt
-            set +f
-          '';
-
-          installPhase = ''
-            mkdir $out
-            mv output $out/output
-          '';
-
-          # We can add tests here, but they're off by default.
-          doCheck = false;
-          checkPhase = ''
-            FILE_COUNT=$(find ${src}/src -name '*.purs' | wc -l)
-            COMPILE_LINE=$(grep -m 1 "^\[[0-9]* of [0-9]*\] Compiling" purs-log.txt)
-            MODULE_COUNT=$(echo $COMPILE_LINE | sed -n 's/^\[\([0-9]*\) of \([0-9]*\)\] Compiling.*$/\2/p')
-            if [[ $FILE_COUNT -ne $MODULE_COUNT ]]; then
-              echo ".purs file count ($FILE_COUNT) does not match the module count ($MODULE_COUNT)."
-              echo "This indicates incremental compilation is wrong."
-              cat purs-log.txt
-              exit 1
-            fi
-          '';
-        })
-      deps);
+                  spagoTestCommands = assert lib.assertMsg (npmDependencies != null) "npmDependencies must be set to run tests"; ''
+                    echo "Compiling tests..."
+                    set -f
+                    purs compile ${lib.concatStringsSep " " testGlobs} --codegen js 2>&1
+                    set +f
+                    ${
+                      # Only symlink if the package-lock.json exists.
+                      if builtins.pathExists "${workspaceSrc}/package-lock.json"
+                      then ''
+                        echo "Symlinking node modules..."
+                        ln -s ${npmDependencies} node_modules
+                        ln -s ${workspaceSrc}/package-lock.json .
+                      ''
+                      else "echo 'No package-lock.json found in ${src}. Skipping symlinking.'"
+                    }
+                    # Generate test_entrypoint.mjs.
+                    echo "import { main } from './output/${tests."${spagoPkg.name}"}/index.js'; main();" > test_entrypoint.mjs
+                    echo "Running tests..."
+                    node test_entrypoint.mjs
+                  '';
+                in
+                  lib.optionalString runSpagoTests spagoTestCommands
+              }
+            '';
+          })
+        spagoPkgs
+    );
 
   buildSpagoLock = {
     src,
     corefn ? false,
     purs ? pkgs.purs,
     lockfile ? src + "/spago.lock",
+    # The node_modules directory. Only needed for tests.
+    npmDependencies ? null,
     # A record from a name of a spago package in this workspace to a derivation with additional
     # source files. This is useful for injecting generated code (e.g. from `graphql-client`).
     #
     # Non-existent packages are silently ignored.
     extraSrcs ? {},
-  }: let
-    lock = readSpagoLock lockfile;
-    workspaceDirs = builtins.attrValues (lib.mapAttrs (_: attr: attr.path) lock.workspace.packages);
-    # We only want to include the lockfile and code from any listed workspaces
-    filteredSrc = lib.cleanSourceWith {
-      filter = name: type: name != "spago.lock" && !(builtins.elem name workspaceDirs);
-      src = lib.cleanSource src;
-    };
-  in
-    fixDependencies {inherit purs corefn;}
-    (lockedPackages filteredSrc lock // workspacePackages filteredSrc extraSrcs lock);
+    # A record from a name of a spago package in this workspace to the name of its test module.
+    #
+    # Non-existent packages are silently ignored.
+    #
+    # TODO: Don't require the user to pass the name of the main module of the test. It is in
+    # stack.yaml, but we don't have a way to parse that yet.
+    tests ? {},
+  }:
+    assert lib.assertMsg (builtins.isAttrs extraSrcs)
+    "argument `extraSrcs` to `buildSpagoLock` must be a set";
+    assert lib.assertMsg (builtins.isAttrs tests)
+    "argument `tests` to `buildSpagoLock` must be a set"; let
+      lock = readSpagoLock lockfile;
+      workspaceDirs =
+        builtins.attrValues (lib.mapAttrs (_: attr: attr.path) lock.workspace.packages);
+      # We only want to include the lockfile and code from any listed workspaces
+      workspaceSrc = lib.cleanSource src;
+      filteredSrc = lib.cleanSourceWith {
+        filter = name: type: name != "spago.lock" && !(builtins.elem name workspaceDirs);
+        src = workspaceSrc;
+      };
+    in
+      fixDependencies {inherit purs corefn tests npmDependencies workspaceSrc;}
+      (lockedPackages filteredSrc lock // workspacePackages filteredSrc extraSrcs lock);
 }
