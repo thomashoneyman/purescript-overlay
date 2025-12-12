@@ -6,3 +6,4 @@ node_modules
 .psc*
 
 TODO.md
+.direnv
