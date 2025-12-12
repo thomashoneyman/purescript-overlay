@@ -7,8 +7,10 @@
   lib,
   callPackage,
 }:
-lib.remove [] (builtins.attrValues {
-  testFromYAML = callPackage ./from-yaml {};
-  testSpagoLock = callPackage ./build-spago-lock {};
-  testSpagoConfig = callPackage ./spago-config {};
-})
+lib.remove [ ] (
+  builtins.attrValues {
+    testFromYAML = callPackage ./from-yaml { };
+    testSpagoLock = callPackage ./build-spago-lock { };
+    testSpagoConfig = callPackage ./spago-config { };
+  }
+)

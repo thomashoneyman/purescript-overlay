@@ -1,7 +1,8 @@
 {
   stdenv,
   purix,
-}: let
+}:
+let
   generated = stdenv.mkDerivation {
     name = "generated";
     src = ./.;
@@ -22,15 +23,15 @@
     extraSrcs.simple-codegen = generated;
   };
 in
-  stdenv.mkDerivation {
-    name = "bin";
-    src = ./.;
-    buildPhase = ''
-      echo "Linking ..."
-      ln -s ${lock.simple-codegen}/output .
-    '';
-    installPhase = ''
-      mkdir -p $out
-      cp -r output $out
-    '';
-  }
+stdenv.mkDerivation {
+  name = "bin";
+  src = ./.;
+  buildPhase = ''
+    echo "Linking ..."
+    ln -s ${lock.simple-codegen}/output .
+  '';
+  installPhase = ''
+    mkdir -p $out
+    cp -r output $out
+  '';
+}

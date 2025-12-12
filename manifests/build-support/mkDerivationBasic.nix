@@ -2,19 +2,21 @@
   name,
   js,
   meta,
-}: {
+}:
+{
   lib,
   stdenv,
   fetchurl,
   nodejs,
-}: version: source:
+}:
+version: source:
 stdenv.mkDerivation {
   pname = name;
   inherit version;
 
   src = fetchurl source;
 
-  nativeBuildInputs = [nodejs];
+  nativeBuildInputs = [ nodejs ];
 
   buildPhase = ''
     tar xf $src

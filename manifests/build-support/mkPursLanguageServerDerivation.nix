@@ -4,14 +4,15 @@
   lib,
   nodejs,
   writeText,
-}: version: source:
+}:
+version: source:
 stdenv.mkDerivation rec {
   pname = "purescript-language-server";
   inherit version;
 
   src = fetchurl source;
 
-  nativeBuildInputs = [nodejs];
+  nativeBuildInputs = [ nodejs ];
 
   # We are just downloading a file, so we need to ensure we do not attempt to
   # unpack it as if it were a tarball.
