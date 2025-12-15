@@ -25,6 +25,9 @@ in
 stdenv.mkDerivation rec {
   name = "bin";
   src = ./.;
+
+  meta.description = "Generate and verify purescript-overlay manifests";
+
   nativeBuildInputs = [
     purs-backend-es
     purs-tidy

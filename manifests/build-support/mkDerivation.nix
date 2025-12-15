@@ -8,7 +8,7 @@
   stdenv,
   fetchurl,
   nodejs,
-  nodejs_20,
+  nodejs_20 ? null,
   python3,
   darwin,
   nodePackages,
@@ -22,6 +22,13 @@ let
   commonMeta = meta lib // {
     mainProgram = name;
   };
+
+  isSpago = name == "spago";
+
+  # Legacy spago versions (< 0.93.45) require Node.js 20 due to better-sqlite3
+  # build issues with Node 22+. Spago 0.93.45+ works with the standard nodejs.
+  # See: https://github.com/purescript/registry-dev/blob/87c5900ff6fb7090cf2b085b7eb3f75371560522/nix/overlay.nix#L152
+  isLegacySpago = isSpago && builtins.compareVersions version "0.93.45" < 0;
 in
 # Simple tarball without dependencies - just extract and link
 if isSimpleTarball then
@@ -55,31 +62,25 @@ if isSimpleTarball then
 # Package with npm dependencies - use buildNpmPackage
 else
   let
-    # Use Node.js 20 for spago to avoid better-sqlite3 build issues with Node 22+
-    # Same approach as registry-dev: https://github.com/purescript/registry-dev/blob/87c5900ff6fb7090cf2b085b7eb3f75371560522/nix/overlay.nix#L152
-    isSpago = name == "spago";
-    selectedNodejs = if isSpago then nodejs_20 else nodejs;
+    selectedNodejs = if isLegacySpago then nodejs_20 else nodejs;
 
     packageJson =
-      if (builtins.hasAttr "lockfile" source) then
+      if builtins.hasAttr "lockfile" source then
         fetchurl source.lockfile
       else
         "${./. + ("/" + source.path)}";
 
-    baseNativeBuildInputs = [ selectedNodejs ];
-
-    # Spago needs additional native build tools for better-sqlite3
+    # Spago needs native build tools for better-sqlite3
     spagoNativeBuildInputs = [
       nodePackages.node-gyp
       python3
     ]
     ++ lib.optionals stdenv.isDarwin [ darwin.cctools ];
-
-    allNativeBuildInputs = baseNativeBuildInputs ++ lib.optionals isSpago spagoNativeBuildInputs;
   in
   (buildNpmPackage.override { nodejs = selectedNodejs; }) {
     pname = name;
     inherit version;
+
     src = fetchurl source.tarball;
 
     postPatch = ''
@@ -88,14 +89,17 @@ else
 
     npmDepsHash = source.depsHash;
 
-    nativeBuildInputs = allNativeBuildInputs;
+    nativeBuildInputs = [ selectedNodejs ] ++ lib.optionals isSpago spagoNativeBuildInputs;
 
     # The prepack script runs the build script, but (so far) all derivations
     # are pre-built.
     npmPackFlags = [ "--ignore-scripts" ];
     dontNpmBuild = true;
 
-    npmInstallFlags = [ "--loglevel=verbose" ] ++ lib.optionals isSpago [ "--omit=optional" ];
+    npmInstallFlags = [
+      "--logs-max=0"
+      "--omit=optional"
+    ];
 
     meta = commonMeta;
   }
