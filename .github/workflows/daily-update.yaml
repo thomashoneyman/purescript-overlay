@@ -4,28 +4,30 @@ name: "daily-update"
 # The importer is run every day at 07:00 UTC and can also be run manually from
 # the 'Actions' tab.
 on:
-  workflow_dispatch:
-  schedule:
-    - cron: "0 7 * * *"
+    workflow_dispatch:
+    schedule:
+        - cron: "0 7 * * *"
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
+    build:
+        runs-on: ubuntu-latest
 
-    env:
-      REPO_TOKEN: ${{ secrets.REPO_TOKEN }}
+        env:
+            REPO_TOKEN: ${{ secrets.REPO_TOKEN }}
 
-    steps:
-      - uses: actions/checkout@v3
+        steps:
+            - uses: actions/checkout@v6
 
-      - name: Install Nix
-        uses: DeterminateSystems/nix-installer-action@v2
+            - name: Install Nix
+              uses: DeterminateSystems/nix-installer-action@v21
 
-      - name: Setup Nix cache
-        uses: DeterminateSystems/magic-nix-cache-action@main
+            - name: Setup Nix cache
+              uses: DeterminateSystems/magic-nix-cache-action@v13
+              with:
+                  use-flakehub: false
 
-      - name: Run the generate script
-        run: |
-          cd generate
-          npm ci
-          nix develop --command spago run -p bin -m Bin.Main -- update ../manifests --commit
+            - name: Run the generate script
+              run: |
+                  cd generate
+                  npm ci
+                  nix develop --command spago run -p bin -m Bin.Main -- update ../manifests --commit
