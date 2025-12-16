@@ -1,7 +1,0 @@
-{
-  "name": "simple-ffi",
-  "version": "1.0.0",
-  "dependencies": {
-    "spdx-expression-parse": "^4.0.0"
-  }
-}

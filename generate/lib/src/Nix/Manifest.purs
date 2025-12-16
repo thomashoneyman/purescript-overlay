@@ -3,11 +3,10 @@ module Lib.Nix.Manifest where
 import Prelude
 
 import Control.Alt ((<|>))
-import Data.Codec.Argonaut (JsonCodec)
-import Data.Codec.Argonaut as CA
-import Data.Codec.Argonaut.Record as CA.Record
+import Data.Codec as Codec
+import Data.Codec.JSON as CJ
+import Data.Codec.JSON.Record as CJ.Record
 import Data.Either (Either(..))
-import Data.Either as Either
 import Data.Map (Map)
 import Lib.Nix.System (NixSystem)
 import Lib.Nix.System as Nix.System
@@ -34,41 +33,40 @@ type NamedManifest = Map ToolChannel ToolPackage
 namedPath :: FilePath
 namedPath = "named.json"
 
-namedManifestCodec :: JsonCodec NamedManifest
+namedManifestCodec :: CJ.Codec NamedManifest
 namedManifestCodec = do
   let encodeKey = Tool.printToolChannel
-  let decodeKey = Either.hush <<< Tool.parseToolChannel
+  let decodeKey = Tool.parseToolChannel
   Registry.Codec.strMap "NamedManifest" decodeKey encodeKey Tool.toolPackageCodec
 
 type GitHubBinaryManifest = Map SemVer (Map NixSystem FetchUrl)
 
-githubBinaryManifestCodec :: JsonCodec GitHubBinaryManifest
+githubBinaryManifestCodec :: CJ.Codec GitHubBinaryManifest
 githubBinaryManifestCodec = do
   let encodeKey = SemVer.print
-  let decodeKey = Either.hush <<< SemVer.parse
+  let decodeKey = SemVer.parse
   Registry.Codec.strMap "GitHubBinaryManifest" decodeKey encodeKey (Nix.System.systemMapCodec fetchUrlCodec)
 
 type NPMRegistryManifest = Map SemVer NPMFetch
 
-npmRegistryManifestCodec :: JsonCodec NPMRegistryManifest
+npmRegistryManifestCodec :: CJ.Codec NPMRegistryManifest
 npmRegistryManifestCodec = do
   let encodeKey = SemVer.print
-  let decodeKey = Either.hush <<< SemVer.parse
+  let decodeKey = SemVer.parse
   Registry.Codec.strMap "NPMRegistryManifest" decodeKey encodeKey npmFetchCodec
 
 type CombinedManifest = Map SemVer (Either NPMFetch (Map NixSystem FetchUrl))
 
-combinedManifestCodec :: JsonCodec CombinedManifest
-combinedManifestCodec = SemVer.semverMapCodec (CA.codec' decode encode)
+combinedManifestCodec :: CJ.Codec CombinedManifest
+combinedManifestCodec = SemVer.semverMapCodec (Codec.codec' decode encode)
   where
   decode json =
-    map Left (CA.decode npmFetchCodec json)
-      <|> map Right (CA.decode (Nix.System.systemMapCodec fetchUrlCodec) json)
-      <|> Left (CA.TypeMismatch "Expected a FetchUrl or a SystemMap FetchUrl")
+    map Left (Codec.decode npmFetchCodec json)
+      <|> map Right (Codec.decode (Nix.System.systemMapCodec fetchUrlCodec) json)
 
   encode = case _ of
-    Left npmFetch -> CA.encode npmFetchCodec npmFetch
-    Right fetchUrl -> CA.encode (Nix.System.systemMapCodec fetchUrlCodec) fetchUrl
+    Left npmFetch -> Codec.encode npmFetchCodec npmFetch
+    Right fetchUrl -> Codec.encode (Nix.System.systemMapCodec fetchUrlCodec) fetchUrl
 
 -- | A manifest entry for a package which has a fetchable tarball, where the
 -- | tarball contains either the entire bundled script, or contains a script
@@ -81,33 +79,32 @@ data NPMFetch
 
 derive instance Eq NPMFetch
 
-npmFetchCodec :: JsonCodec NPMFetch
-npmFetchCodec = CA.codec' decode encode
+npmFetchCodec :: CJ.Codec NPMFetch
+npmFetchCodec = Codec.codec' decode encode
   where
   decode json =
-    map Bundled (CA.decode fetchUrlCodec json)
-      <|> map Unbundled (CA.decode fetchWithLockCodec json)
-      <|> map UnbundledLocal (CA.decode fetchWithPathCodec json)
-      <|> Left (CA.TypeMismatch "Expected FetchUrl or FetchWithLock or FetchWithPath")
+    map Bundled (Codec.decode fetchUrlCodec json)
+      <|> map Unbundled (Codec.decode fetchWithLockCodec json)
+      <|> map UnbundledLocal (Codec.decode fetchWithPathCodec json)
 
   encode = case _ of
-    Bundled fetchUrl -> CA.encode fetchUrlCodec fetchUrl
-    Unbundled fetchWithLock -> CA.encode fetchWithLockCodec fetchWithLock
-    UnbundledLocal fetchWithPath -> CA.encode fetchWithPathCodec fetchWithPath
+    Bundled fetchUrl -> Codec.encode fetchUrlCodec fetchUrl
+    Unbundled fetchWithLock -> Codec.encode fetchWithLockCodec fetchWithLock
+    UnbundledLocal fetchWithPath -> Codec.encode fetchWithPathCodec fetchWithPath
 
 type FetchWithPath = { tarball :: FetchUrl, path :: FilePath, depsHash :: Sha256 }
 
-fetchWithPathCodec :: JsonCodec FetchWithPath
-fetchWithPathCodec = CA.Record.object "FetchWithPath"
+fetchWithPathCodec :: CJ.Codec FetchWithPath
+fetchWithPathCodec = CJ.Record.object
   { tarball: fetchUrlCodec
-  , path: CA.string
+  , path: CJ.string
   , depsHash: Sha256.codec
   }
 
 type FetchWithLock = { tarball :: FetchUrl, lockfile :: FetchUrl, depsHash :: Sha256 }
 
-fetchWithLockCodec :: JsonCodec FetchWithLock
-fetchWithLockCodec = CA.Record.object "FetchWithLock"
+fetchWithLockCodec :: CJ.Codec FetchWithLock
+fetchWithLockCodec = CJ.Record.object
   { tarball: fetchUrlCodec
   , lockfile: fetchUrlCodec
   , depsHash: Sha256.codec
@@ -116,8 +113,8 @@ fetchWithLockCodec = CA.Record.object "FetchWithLock"
 -- | A manifest entry for a package which has a fetchable tarball
 type FetchUrl = { url :: String, hash :: Sha256 }
 
-fetchUrlCodec :: JsonCodec FetchUrl
-fetchUrlCodec = CA.Record.object "FetchUrl"
-  { url: CA.string
+fetchUrlCodec :: CJ.Codec FetchUrl
+fetchUrlCodec = CJ.Record.object
+  { url: CJ.string
   , hash: Sha256.codec
   }

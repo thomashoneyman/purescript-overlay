@@ -4,9 +4,6 @@
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-25.11";
 
-    slimlock.url = "github:thomashoneyman/slimlock";
-    slimlock.inputs.nixpkgs.follows = "nixpkgs";
-
     flake-compat.url = "github:edolstra/flake-compat";
     flake-compat.flake = false;
   };
@@ -15,7 +12,6 @@
     {
       self,
       nixpkgs,
-      slimlock,
       ...
     }:
     let
@@ -36,15 +32,10 @@
           inherit system;
           overlays = [
             self.overlays.default
-            slimlock.overlays.default
           ];
         };
       in
       {
-        # A warning-free top-level flake output suitable for running unit tests via
-        # e.g. `nix eval .#lib`.
-        lib = pkgs.callPackage ./nix/tests { };
-
         packages = {
           inherit (pkgs)
             purs
@@ -72,12 +63,8 @@
               program = "${bin}/bin/${bin.pname or bin.name}";
               meta = bin.meta or { };
             };
-            apps = pkgs.lib.mapAttrs (_: mkApp) self.packages.${system};
-            scripts = {
-              generate = mkApp (pkgs.callPackage ./generate { });
-            };
           in
-          apps // scripts;
+          pkgs.lib.mapAttrs (_: mkApp) self.packages.${system};
 
         checks =
           let
@@ -133,23 +120,6 @@
                   pkgs.lib.filterAttrs (k: v: !(k == "spago" && system == "aarch64-darwin")) self.packages.${system}
                 );
 
-            example-checks = pkgs.callPackages ./nix/examples { };
-
-            script-checks = {
-              generate =
-                let
-                  bin = pkgs.callPackage ./generate { };
-                  manifests = ./manifests;
-                in
-                pkgs.runCommand "test-generate" { } ''
-                  mkdir -p $out/bin
-                  set -e
-                  set -x
-                  cp ${bin}/bin/${bin.name} $out/bin/test-generate
-                  ${bin}/bin/${bin.name} verify ${manifests}
-                '';
-            };
-
             format-checks = {
               nix-format =
                 pkgs.runCommand "nix-format"
@@ -165,14 +135,13 @@
                   '';
             };
           in
-          package-checks // example-checks // script-checks // format-checks;
+          package-checks // format-checks;
 
         devShells = {
           default = pkgs.mkShell {
             name = "purescript-overlay";
             buildInputs = [
-              # FIXME: Change when lockfile format stabilizes
-              self.packages.${system}.spago-0_93_37
+              self.packages.${system}.spago-unstable
               self.packages.${system}.purs-unstable
               self.packages.${system}.purs-tidy-unstable
               self.packages.${system}.purs-backend-es-unstable

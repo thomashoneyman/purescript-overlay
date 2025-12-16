@@ -2,18 +2,16 @@ module Lib.Nix.System where
 
 import Prelude
 
-import Data.Argonaut.Core as Argonaut
 import Data.Array as Array
-import Data.Bifunctor (lmap)
 import Data.Bounded.Generic (genericBottom, genericTop)
-import Data.Codec.Argonaut (JsonCodec)
-import Data.Codec.Argonaut as CA
-import Data.Either (Either(..))
-import Data.Either as Either
+import Data.Codec.JSON as CJ
+import Data.Codec.JSON.Common as CJ.Common
+import Data.Either (Either(..), either, note)
 import Data.Enum (class BoundedEnum, class Enum, upFromIncluding)
 import Data.Enum.Generic (genericCardinality, genericFromEnum, genericPred, genericSucc, genericToEnum)
 import Data.Generic.Rep (class Generic)
 import Data.Map (Map)
+import Data.Maybe (Maybe(..))
 import Data.String as String
 import Registry.Internal.Codec as Registry.Codec
 
@@ -60,19 +58,16 @@ print = case _ of
   AARCH_64_linux -> "aarch64-linux"
   AARCH_64_darwin -> "aarch64-darwin"
 
-codec :: JsonCodec NixSystem
-codec = CA.codec' decode encode
-  where
-  encode = Argonaut.fromString <<< print
-  decode = lmap CA.TypeMismatch <<< parse <=< CA.decode CA.string
+codec :: CJ.Codec NixSystem
+codec = CJ.Common.prismaticCodec "NixSystem" (parse >>> either (const Nothing) Just) print CJ.string
 
-systemMapCodec :: forall a. JsonCodec a -> JsonCodec (Map NixSystem a)
-systemMapCodec = Registry.Codec.strMap "NixSystemMap" (Either.hush <<< parse) print
+systemMapCodec :: forall a. CJ.Codec a -> CJ.Codec (Map NixSystem a)
+systemMapCodec = Registry.Codec.strMap "NixSystemMap" parse print
 
 -- | Parse the name of a PureScript release tarball into a Nix system
 fromPursReleaseTarball :: String -> Either String NixSystem
 fromPursReleaseTarball assetName = do
-  name <- Either.note ("Expected .tar.gz suffix: " <> assetName) (String.stripSuffix (String.Pattern ".tar.gz") assetName)
+  name <- note ("Expected .tar.gz suffix: " <> assetName) (String.stripSuffix (String.Pattern ".tar.gz") assetName)
 
   let
     aarch64_linux = [ "linux-arm64" ]
@@ -93,7 +88,7 @@ fromPursReleaseTarball assetName = do
 
 fromSpagoReleaseTarball :: String -> Either String NixSystem
 fromSpagoReleaseTarball assetName = do
-  name <- Either.note ("Expected .tar.gz suffix: " <> assetName) (String.stripSuffix (String.Pattern ".tar.gz") assetName)
+  name <- note ("Expected .tar.gz suffix: " <> assetName) (String.stripSuffix (String.Pattern ".tar.gz") assetName)
 
   let
     x86_64_linux = [ "Linux", "linux", "linux-latest" ]

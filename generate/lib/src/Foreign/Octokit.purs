@@ -34,16 +34,13 @@ module Lib.Foreign.Octokit
 
 import Prelude
 
+import Codec.JSON.DecodeError as CJ.DecodeError
 import Control.Promise (Promise)
 import Control.Promise as Promise
-import Data.Argonaut.Core (Json)
-import Data.Argonaut.Core as Argonaut
 import Data.Array as Array
-import Data.Bifunctor (lmap)
-import Data.Codec.Argonaut (JsonDecodeError, JsonCodec)
-import Data.Codec.Argonaut as CA
-import Data.Codec.Argonaut.Record as CA.Record
-import Data.Codec.Argonaut.Variant as CA.Variant
+import Data.Codec as Codec
+import Data.Codec.JSON as CJ
+import Data.Codec.JSON.Record as CJ.Record
 import Data.DateTime (DateTime)
 import Data.DateTime.Instant (Instant)
 import Data.DateTime.Instant as Instant
@@ -52,7 +49,7 @@ import Data.HTTP.Method (Method(..))
 import Data.Int as Int
 import Data.Map (Map)
 import Data.Map as Map
-import Data.Maybe (Maybe)
+import Data.Maybe (Maybe(..))
 import Data.Maybe as Maybe
 import Data.Newtype (class Newtype, unwrap)
 import Data.Nullable (Nullable)
@@ -62,7 +59,6 @@ import Data.String as String
 import Data.String.Base64 as Base64
 import Data.Traversable (traverse)
 import Data.Tuple (Tuple(..))
-import Data.Variant as Variant
 import Effect.Aff as Aff
 import Effect.Aff.Class (class MonadAff, liftAff)
 import Effect.Class (class MonadEffect, liftEffect)
@@ -70,10 +66,11 @@ import Effect.Class.Console as Console
 import Effect.Uncurried (EffectFn1, EffectFn6, runEffectFn1, runEffectFn6)
 import Foreign.Object (Object)
 import Foreign.Object as Object
+import JSON (JSON, JObject)
+import JSON as JSON
+import JSON.Object as JSON.Object
 import Node.Path (FilePath)
-import Registry.Internal.Codec as Internal.Codec
 import Registry.Internal.Codec as Registry.Codec
-import Type.Proxy (Proxy(..))
 import Unsafe.Coerce (unsafeCoerce)
 
 newtype GitHubToken = GitHubToken String
@@ -112,7 +109,7 @@ requestListReleases address =
   , headers: Object.empty
   , args: noArgs
   , paginate: true
-  , codec: CA.array releaseCodec
+  , codec: CJ.array releaseCodec
   }
 
 -- | Get the latest release for the given repository
@@ -146,18 +143,30 @@ type Release =
   , publishedAt :: DateTime
   }
 
-releaseCodec :: JsonCodec Release
-releaseCodec = Profunctor.dimap toJsonRep fromJsonRep $ CA.Record.object "Release"
-  { html_url: CA.string
-  , tag_name: CA.string
+-- Internal representation matching GitHub API
+type ReleaseRep =
+  { html_url :: String
+  , tag_name :: String
+  , created_at :: DateTime
+  , published_at :: DateTime
+  , draft :: Boolean
+  , prerelease :: Boolean
+  , assets :: Array ReleaseAsset
+  }
+
+releaseCodec :: CJ.Codec Release
+releaseCodec = Profunctor.dimap toRep fromRep $ CJ.Record.object
+  { html_url: CJ.string
+  , tag_name: CJ.string
   , created_at: Registry.Codec.iso8601DateTime
   , published_at: Registry.Codec.iso8601DateTime
-  , draft: CA.boolean
-  , prerelease: CA.boolean
-  , assets: CA.array releaseAssetCodec
+  , draft: CJ.boolean
+  , prerelease: CJ.boolean
+  , assets: CJ.array releaseAssetCodec
   }
   where
-  toJsonRep { url, tag, draft, prerelease, assets, createdAt, publishedAt } =
+  toRep :: Release -> ReleaseRep
+  toRep { url, tag, draft, prerelease, assets, createdAt, publishedAt } =
     { html_url: url
     , tag_name: tag
     , created_at: createdAt
@@ -167,7 +176,8 @@ releaseCodec = Profunctor.dimap toJsonRep fromJsonRep $ CA.Record.object "Releas
     , assets
     }
 
-  fromJsonRep { html_url, tag_name, draft, prerelease, assets, created_at, published_at } =
+  fromRep :: ReleaseRep -> Release
+  fromRep { html_url, tag_name, draft, prerelease, assets, created_at, published_at } =
     { url: html_url
     , tag: tag_name
     , createdAt: created_at
@@ -183,47 +193,42 @@ type ReleaseAsset =
   , downloadUrl :: String
   }
 
-releaseAssetCodec :: JsonCodec ReleaseAsset
-releaseAssetCodec = Profunctor.dimap toJsonRep fromJsonRep $ CA.Record.object "ReleaseAsset"
-  { browser_download_url: CA.string
-  , name: CA.string
+type ReleaseAssetRep =
+  { browser_download_url :: String
+  , name :: String
+  }
+
+releaseAssetCodec :: CJ.Codec ReleaseAsset
+releaseAssetCodec = Profunctor.dimap toRep fromRep $ CJ.Record.object
+  { browser_download_url: CJ.string
+  , name: CJ.string
   }
   where
-  toJsonRep { downloadUrl, name } =
-    { browser_download_url: downloadUrl
-    , name
-    }
+  toRep :: ReleaseAsset -> ReleaseAssetRep
+  toRep { downloadUrl, name } = { browser_download_url: downloadUrl, name }
 
-  fromJsonRep { browser_download_url, name } =
-    { downloadUrl: browser_download_url
-    , name
-    }
+  fromRep :: ReleaseAssetRep -> ReleaseAsset
+  fromRep { browser_download_url, name } = { downloadUrl: browser_download_url, name }
 
--- | Fetch a specific file  from the provided repository at the given ref and
+-- | Fetch a specific file from the provided repository at the given ref and
 -- | filepath. Filepaths should lead to a single file from the root of the repo.
--- | https://github.com/octokit/plugin-rest-endpoint-methods.js/blob/v5.16.0/docs/repos/getContent.md
 requestGetContent :: { address :: Address, ref :: String, path :: FilePath } -> Request Base64Content
 requestGetContent { address, ref, path } =
   { route: GitHubRoute GET [ "repos", address.owner, address.repo, "contents", path ] (Map.singleton "ref" ref)
   , headers: Object.empty
   , args: noArgs
   , paginate: false
-  , codec: Profunctor.dimap toJsonRep fromJsonRep $ CA.Record.object "Content"
-      { data: CA.Record.object "Content.data"
-          { type: value "file"
-          , encoding: value "base64"
-          , content: CA.string
+  , codec: Profunctor.dimap toRep fromRep $ CJ.Record.object
+      { data: CJ.Record.object
+          { type: CJ.string
+          , encoding: CJ.string
+          , content: CJ.string
           }
       }
   }
   where
-  value :: String -> JsonCodec String
-  value expected = CA.codec'
-    (\json -> CA.decode CA.string json >>= \decoded -> if decoded == expected then pure expected else Left (CA.UnexpectedValue json))
-    (\_ -> CA.encode CA.string expected)
-
-  toJsonRep (Base64Content str) = { data: { type: "file", encoding: "base64", content: str } }
-  fromJsonRep { data: { content } } = Base64Content content
+  toRep (Base64Content str) = { data: { type: "file", encoding: "base64", content: str } }
+  fromRep { data: { content } } = Base64Content content
 
 -- | Fetch the commit SHA for a given ref on a GitHub repository
 requestGetRefCommitSha :: { address :: Address, ref :: String } -> Request String
@@ -232,14 +237,9 @@ requestGetRefCommitSha { address, ref } =
   , headers: Object.empty
   , args: noArgs
   , paginate: false
-  , codec: Profunctor.dimap toJsonRep fromJsonRep $ CA.Record.object "Ref"
-      { object: CA.Record.object "Ref.object"
-          { sha: CA.string }
-      }
+  , codec: Profunctor.dimap (\sha -> { object: { sha } }) _.object.sha $ CJ.Record.object
+      { object: CJ.Record.object { sha: CJ.string } }
   }
-  where
-  toJsonRep sha = { object: { sha } }
-  fromJsonRep = _.object.sha
 
 -- | Fetch the date associated with a given commit, in the RFC3339String format.
 requestGetCommitDate :: { address :: Address, commitSha :: String } -> Request DateTime
@@ -248,12 +248,9 @@ requestGetCommitDate { address, commitSha } =
   , headers: Object.empty
   , args: noArgs
   , paginate: false
-  , codec: Profunctor.dimap toJsonRep fromJsonRep $ CA.Record.object "Commit"
-      { committer: CA.Record.object "Commit.committer" { date: Internal.Codec.iso8601DateTime } }
+  , codec: Profunctor.dimap (\date -> { committer: { date } }) _.committer.date $ CJ.Record.object
+      { committer: CJ.Record.object { date: Registry.Codec.iso8601DateTime } }
   }
-  where
-  toJsonRep date = { committer: { date } }
-  fromJsonRep = _.committer.date
 
 -- | The 'head' branch is the one where changes have been implemented. The
 -- | 'base' branch is the branch to merge into.
@@ -266,9 +263,7 @@ requestCreatePullRequest { address, content: { title, body, head, base } } =
   , headers: Object.empty
   , args: unsafeToJSArgs { title, body, head, base }
   , paginate: false
-  , codec: CA.Record.object "PullRequestResponse"
-      { url: CA.string
-      }
+  , codec: CJ.Record.object { url: CJ.string }
   }
 
 type PullRequest =
@@ -278,18 +273,18 @@ type PullRequest =
   , title :: String
   }
 
--- | Create a new pull request
+-- | Get pull requests
 requestGetPullRequests :: Address -> Request (Array PullRequest)
 requestGetPullRequests address =
   { route: GitHubRoute GET [ "repos", address.owner, address.repo, "pulls" ] Map.empty
   , headers: Object.empty
   , args: noArgs
   , paginate: true
-  , codec: CA.array $ CA.Record.object "PullRequest"
-      { url: CA.string
-      , state: CA.string
-      , number: CA.int
-      , title: CA.string
+  , codec: CJ.array $ CJ.Record.object
+      { url: CJ.string
+      , state: CJ.string
+      , number: CJ.int
+      , title: CJ.string
       }
   }
 
@@ -299,34 +294,49 @@ type RateLimit =
   , resetTime :: Maybe Instant
   }
 
+type RateLimitRep =
+  { data ::
+      { resources ::
+          { core ::
+              { limit :: Int
+              , remaining :: Int
+              , reset :: Number
+              }
+          }
+      }
+  }
+
 requestRateLimit :: Request RateLimit
 requestRateLimit =
   { route: GitHubRoute GET [ "rate_limit" ] Map.empty
   , headers: Object.empty
   , args: noArgs
   , paginate: false
-  , codec: Profunctor.dimap toJsonRep fromJsonRep $ CA.Record.object "RateLimit"
-      { data: CA.Record.object "RateLimit.data"
-          { resources: CA.Record.object "RateLimit.data.resources"
-              { core: CA.Record.object "RateLimit.data.resources.core"
-                  { limit: CA.int
-                  , remaining: CA.int
-                  , reset: CA.number
+  , codec: Profunctor.dimap toRep fromRep $ CJ.Record.object
+      { data: CJ.Record.object
+          { resources: CJ.Record.object
+              { core: CJ.Record.object
+                  { limit: CJ.int
+                  , remaining: CJ.int
+                  , reset: CJ.number
                   }
               }
           }
       }
   }
   where
-  toJsonRep { limit, remaining, resetTime } = do
-    let reset = Maybe.fromMaybe (-9999.0) ((unwrap <<< Instant.unInstant) <$> resetTime)
-    { data: { resources: { core: { limit, remaining, reset } } } }
+  toRep :: RateLimit -> RateLimitRep
+  toRep { limit, remaining, resetTime } =
+    let
+      reset = Maybe.fromMaybe (-9999.0) ((unwrap <<< Instant.unInstant) <$> resetTime)
+    in
+      { data: { resources: { core: { limit, remaining, reset } } } }
 
-  fromJsonRep { data: { resources: { core: { limit, remaining, reset } } } } =
+  fromRep :: RateLimitRep -> RateLimit
+  fromRep { data: { resources: { core: { limit, remaining, reset } } } } =
     { limit, remaining, resetTime: Instant.instant $ Aff.Milliseconds $ reset * 1000.0 }
 
 -- | A route for the GitHub API, ie. "GET /repos/purescript/registry/tags".
--- | Meant for internal use.
 data GitHubRoute = GitHubRoute Method (Array String) (Map String String)
 
 derive instance Eq GitHubRoute
@@ -342,11 +352,8 @@ printGitHubRoute (GitHubRoute method segments params) = show method <> " " <> pr
     _ -> append "?" $ String.joinWith "&" $ map (\(Tuple key val) -> key <> "=" <> val) $ Map.toUnfoldable params
 
 -- | An opaque type for PureScript types we want to pass directly to JavaScript
--- | through the FFI. Should only be used with JavaScript-compatible types for
--- | the sake of setting headers.
 data JSArgs
 
--- | Coerce a record to a JSArgs opaque type.
 unsafeToJSArgs :: forall a. Record a -> JSArgs
 unsafeToJSArgs = unsafeCoerce
 
@@ -358,11 +365,11 @@ type Request a =
   , headers :: Object String
   , args :: JSArgs
   , paginate :: Boolean
-  , codec :: JsonCodec a
+  , codec :: CJ.Codec a
   }
 
-foreign import requestImpl :: forall r. EffectFn6 Octokit String (Object String) JSArgs (Object Json -> r) (Json -> r) (Promise r)
-foreign import paginateImpl :: forall r. EffectFn6 Octokit String (Object String) JSArgs (Object Json -> r) (Json -> r) (Promise r)
+foreign import requestImpl :: forall r. EffectFn6 Octokit String (Object String) JSArgs (Object JSON -> r) (JSON -> r) (Promise r)
+foreign import paginateImpl :: forall r. EffectFn6 Octokit String (Object String) JSArgs (Object JSON -> r) (JSON -> r) (Promise r)
 
 -- | Make a request to the GitHub API
 request :: forall m a. MonadAff m => Octokit -> Request a -> m (Either GitHubError a)
@@ -374,17 +381,20 @@ request octokit { route, headers, args, paginate, codec } = do
     Left githubError -> case decodeGitHubAPIError githubError of
       Left decodeError -> Left $ UnexpectedError decodeError
       Right decoded -> Left $ APIError decoded
-    Right json -> case CA.decode codec json of
-      Left decodeError -> Left $ DecodeError { error: CA.printJsonDecodeError decodeError, raw: Argonaut.stringifyWithIndent 2 json }
+    Right json -> case CJ.decode codec json of
+      Left decodeError -> Left $ DecodeError { error: CJ.DecodeError.print decodeError, raw: JSON.printIndented json }
       Right parsed -> Right parsed
   where
-  decodeGitHubAPIError :: Object Json -> Either String GitHubAPIError
-  decodeGitHubAPIError object = lmap CA.printJsonDecodeError do
-    statusCode <- atKey "status" CA.int object
+  decodeGitHubAPIError :: Object JSON -> Either String GitHubAPIError
+  decodeGitHubAPIError object = do
+    let jObject = JSON.Object.fromFoldableWithIndex object
+    statusCode <- atKey "status" CJ.int jObject
     message <- case statusCode of
       304 -> pure ""
       500 -> pure "Internal server error"
-      _ -> atKey "response" CA.jobject object >>= atKey "data" CA.jobject >>= atKey "message" CA.string
+      _ -> atKey "response" CJ.jobject jObject >>= \respObj ->
+        atKey "data" CJ.jobject respObj >>= \dataObj ->
+          atKey "message" CJ.string dataObj
     pure { statusCode, message }
 
 type GitHubAPIError =
@@ -392,10 +402,10 @@ type GitHubAPIError =
   , message :: String
   }
 
-githubApiErrorCodec :: JsonCodec GitHubAPIError
-githubApiErrorCodec = CA.Record.object "GitHubAPIError"
-  { statusCode: CA.int
-  , message: CA.string
+githubApiErrorCodec :: CJ.Codec GitHubAPIError
+githubApiErrorCodec = CJ.Record.object
+  { statusCode: CJ.int
+  , message: CJ.string
   }
 
 data GitHubError
@@ -406,26 +416,28 @@ data GitHubError
 derive instance Eq GitHubError
 derive instance Ord GitHubError
 
-githubErrorCodec :: JsonCodec GitHubError
-githubErrorCodec = Profunctor.dimap toVariant fromVariant $ CA.Variant.variantMatch
-  { unexpectedError: Right CA.string
-  , apiError: Right githubApiErrorCodec
-  , decodeError: Right $ CA.Record.object "DecodeError"
-      { error: CA.string
-      , raw: CA.string
-      }
+githubErrorCodec :: CJ.Codec GitHubError
+githubErrorCodec = Profunctor.dimap toRep fromRep $ CJ.Record.object
+  { tag: CJ.string
+  , value: CJ.json
   }
   where
-  toVariant = case _ of
-    UnexpectedError error -> Variant.inj (Proxy :: _ "unexpectedError") error
-    APIError error -> Variant.inj (Proxy :: _ "apiError") error
-    DecodeError error -> Variant.inj (Proxy :: _ "decodeError") error
+  toRep = case _ of
+    UnexpectedError err -> { tag: "unexpectedError", value: Codec.encode CJ.string err }
+    APIError err -> { tag: "apiError", value: Codec.encode githubApiErrorCodec err }
+    DecodeError err -> { tag: "decodeError", value: Codec.encode (CJ.Record.object { error: CJ.string, raw: CJ.string }) err }
 
-  fromVariant = Variant.match
-    { unexpectedError: UnexpectedError
-    , apiError: APIError
-    , decodeError: DecodeError
-    }
+  fromRep { tag, value } = case tag of
+    "unexpectedError" -> case CJ.decode CJ.string value of
+      Right err -> UnexpectedError err
+      Left _ -> UnexpectedError "Failed to decode error"
+    "apiError" -> case CJ.decode githubApiErrorCodec value of
+      Right err -> APIError err
+      Left _ -> UnexpectedError "Failed to decode API error"
+    "decodeError" -> case CJ.decode (CJ.Record.object { error: CJ.string, raw: CJ.string }) value of
+      Right err -> DecodeError err
+      Left _ -> UnexpectedError "Failed to decode decode error"
+    _ -> UnexpectedError $ "Unknown error tag: " <> tag
 
 printGitHubError :: GitHubError -> String
 printGitHubError = case _ of
@@ -446,9 +458,10 @@ printGitHubError = case _ of
     , raw
     ]
 
-atKey :: forall a. String -> JsonCodec a -> Object Json -> Either JsonDecodeError a
+atKey :: forall a. String -> CJ.Codec a -> JObject -> Either String a
 atKey key codec object =
-  Maybe.maybe
-    (Left (CA.AtKey key CA.MissingValue))
-    (lmap (CA.AtKey key) <<< CA.decode codec)
-    (Object.lookup key object)
+  case JSON.Object.lookup key object of
+    Nothing -> Left ("Missing key: " <> key)
+    Just json -> case CJ.decode codec json of
+      Left err -> Left (CJ.DecodeError.print err)
+      Right val -> Right val
