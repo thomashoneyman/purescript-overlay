@@ -4,11 +4,10 @@ import Prelude
 
 import Control.Alt ((<|>))
 import Data.Array as Array
-import Data.Bifunctor (lmap)
 import Data.Bounded.Generic (genericBottom, genericTop)
-import Data.Codec.Argonaut (JsonCodec)
-import Data.Codec.Argonaut as CA
-import Data.Either (Either(..))
+import Data.Codec.JSON as CJ
+import Data.Codec.JSON.Common as CJ.Common
+import Data.Either (Either(..), either)
 import Data.Enum (class BoundedEnum, class Enum, upFromIncluding)
 import Data.Enum.Generic (genericCardinality, genericFromEnum, genericPred, genericSucc, genericToEnum)
 import Data.Generic.Rep (class Generic)
@@ -141,14 +140,8 @@ parseToolChannel str = case String.lastIndexOf (String.Pattern "-") str of
     channel <- parseChannel channelStr
     pure $ ToolChannel { tool, channel }
 
-toolChannelCodec :: JsonCodec ToolChannel
-toolChannelCodec = CA.codec' decode encode
-  where
-  decode json = do
-    str <- CA.decode CA.string json
-    lmap CA.TypeMismatch $ parseToolChannel str
-
-  encode = CA.encode CA.string <<< printToolChannel
+toolChannelCodec :: CJ.Codec ToolChannel
+toolChannelCodec = CJ.Common.prismaticCodec "ToolChannel" (parseToolChannel >>> either (const Nothing) Just) printToolChannel CJ.string
 
 -- | A tool and its version, ie. 'purs-0_14_4-0'
 newtype ToolPackage = ToolPackage { tool :: Tool, version :: SemVer }
@@ -211,11 +204,5 @@ parseToolPackage str = do
   where
   unformatVersion = String.replaceAll (String.Pattern "_") (String.Replacement ".")
 
-toolPackageCodec :: JsonCodec ToolPackage
-toolPackageCodec = CA.codec' decode encode
-  where
-  decode json = do
-    str <- CA.decode CA.string json
-    lmap CA.TypeMismatch $ parseToolPackage str
-
-  encode = CA.encode CA.string <<< printToolPackage
+toolPackageCodec :: CJ.Codec ToolPackage
+toolPackageCodec = CJ.Common.prismaticCodec "ToolPackage" (parseToolPackage >>> either (const Nothing) Just) printToolPackage CJ.string

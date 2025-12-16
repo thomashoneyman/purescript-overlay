@@ -2,12 +2,9 @@ module Lib.SemVer where
 
 import Prelude
 
-import Data.Argonaut.Core as Argonaut
-import Data.Bifunctor (lmap)
-import Data.Codec.Argonaut (JsonCodec)
-import Data.Codec.Argonaut as CA
-import Data.Either (Either(..), note)
-import Data.Either as Either
+import Data.Codec.JSON as CJ
+import Data.Codec.JSON.Common as CJ.Common
+import Data.Either (Either(..), either, note)
 import Data.Int as Int
 import Data.Map (Map)
 import Data.Maybe (Maybe(..), maybe)
@@ -52,11 +49,8 @@ print (SemVer { pre, version }) = do
   let prerelease = maybe "" (\int -> "-" <> Int.toStringAs Int.decimal int) pre
   Version.print version <> prerelease
 
-codec :: JsonCodec SemVer
-codec = CA.codec' decode encode
-  where
-  encode = Argonaut.fromString <<< print <<< coerce
-  decode = lmap CA.TypeMismatch <<< parse <=< CA.decode CA.string
+codec :: CJ.Codec SemVer
+codec = CJ.Common.prismaticCodec "SemVer" (parse >>> either (const Nothing) Just) print CJ.string
 
-semverMapCodec :: forall a. JsonCodec a -> JsonCodec (Map SemVer a)
-semverMapCodec = Registry.Codec.strMap "SemVerMap" (Either.hush <<< parse) print
+semverMapCodec :: forall a. CJ.Codec a -> CJ.Codec (Map SemVer a)
+semverMapCodec = Registry.Codec.strMap "SemVerMap" parse print

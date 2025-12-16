@@ -2,29 +2,29 @@ module Test.Utils where
 
 import Prelude
 
-import Lib.Utils as App.Utils
+import Codec.JSON.DecodeError as CJ.DecodeError
 import Control.Monad.Error.Class (class MonadThrow)
-import Data.Argonaut.Core as Argonaut
-import Data.Argonaut.Parser as Argonaut.Parser
 import Data.Array as Array
-import Data.Bifunctor (lmap)
-import Data.Codec.Argonaut (JsonCodec)
-import Data.Codec.Argonaut as CA
+import Data.Codec.JSON as CJ
 import Data.Either (Either(..))
 import Data.String as String
 import Effect.Exception (Error)
+import JSON as JSON
+import Lib.Utils as App.Utils
 import Test.Spec.Assertions as Assert
 
 type Fixture = { label :: String, value :: String }
 
 -- | Round-trip an input JSON string
-shouldRoundTrip :: forall m a. MonadThrow Error m => String -> JsonCodec a -> Array Fixture -> m Unit
+shouldRoundTrip :: forall m a. MonadThrow Error m => String -> CJ.Codec a -> Array Fixture -> m Unit
 shouldRoundTrip ty codec fixtures = do
   let
     parseFixture { label, value } =
-      case lmap CA.printJsonDecodeError <<< CA.decode codec =<< Argonaut.Parser.jsonParser value of
+      case JSON.parse value of
         Left error -> Left { label, input: value, error }
-        Right result -> Right { label, input: value, result }
+        Right json -> case CJ.decode codec json of
+          Left error -> Left { label, input: value, error: CJ.DecodeError.print error }
+          Right result -> Right { label, input: value, result }
 
     fixtureParseResult = App.Utils.partitionEithers (map parseFixture fixtures)
 
@@ -38,7 +38,7 @@ shouldRoundTrip ty codec fixtures = do
 
   let
     roundtrip = fixtureParseResult.success <#> \fields -> do
-      let printed = Argonaut.stringifyWithIndent 2 $ CA.encode codec fields.result
+      let printed = JSON.printIndented $ CJ.encode codec fields.result
       let input = String.trim fields.input
       if input == printed then Right unit else Left { label: fields.label, input, printed }
 

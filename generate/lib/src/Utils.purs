@@ -2,11 +2,10 @@ module Lib.Utils where
 
 import Prelude
 
-import Data.Argonaut.Core as Argonaut
-import Data.Argonaut.Parser as Argonaut.Parser
 import Data.Array as Array
-import Data.Codec.Argonaut (JsonCodec)
-import Data.Codec.Argonaut as CA
+import Data.Codec as Codec
+import Data.Codec.JSON as CJ
+import Codec.JSON.DecodeError as CJ.DecodeError
 import Data.Either (Either(..))
 import Data.Foldable as Foldable
 import Data.Int as Int
@@ -17,27 +16,27 @@ import Effect.Aff as Parallel
 import Effect.Aff.Class (class MonadAff, liftAff)
 import Effect.Class (class MonadEffect, liftEffect)
 import Effect.Class.Console as Console
+import JSON as JSON
 import Node.Encoding (Encoding(..))
 import Node.FS.Aff as FS.Aff
 import Node.Path (FilePath)
 import Node.Process as Process
 
-writeJsonFile :: forall m a. MonadAff m => FilePath -> JsonCodec a -> a -> m Unit
+writeJsonFile :: forall m a. MonadAff m => FilePath -> CJ.Codec a -> a -> m Unit
 writeJsonFile path codec a = liftAff do
-  let encoded = CA.encode codec a
-  let text = Argonaut.stringifyWithIndent 2 encoded
+  let encoded = Codec.encode codec a
+  let text = JSON.printIndented encoded
   FS.Aff.writeTextFile UTF8 path (text <> "\n")
 
-readJsonFile :: forall m a. MonadAff m => FilePath -> JsonCodec a -> m a
+readJsonFile :: forall m a. MonadAff m => FilePath -> CJ.Codec a -> m a
 readJsonFile path codec = liftAff do
   text <- FS.Aff.readTextFile UTF8 path
-  json <- case Argonaut.Parser.jsonParser text of
+  json <- case JSON.parse text of
     Left error -> Aff.throwError $ Aff.error error
     Right json -> pure json
-  decoded <- case CA.decode codec json of
-    Left error -> Aff.throwError $ Aff.error $ CA.printJsonDecodeError error
+  case CJ.decode codec json of
+    Left error -> Aff.throwError $ Aff.error $ CJ.DecodeError.print error
     Right value -> pure value
-  pure decoded
 
 -- | Partition an array of `Either` values into failure and success  values
 partitionEithers :: forall e a. Array (Either e a) -> { fail :: Array e, success :: Array a }
@@ -46,8 +45,8 @@ partitionEithers = Array.foldMap case _ of
   Right res -> { fail: [], success: [ res ] }
 
 -- | Print a type as a formatted JSON string
-printJson :: forall a. JsonCodec a -> a -> String
-printJson codec = Argonaut.stringifyWithIndent 2 <<< CA.encode codec
+printJson :: forall a. CJ.Codec a -> a -> String
+printJson codec = JSON.printIndented <<< Codec.encode codec
 
 -- | Attempt an effectful computation with exponential backoff.
 withBackoff' :: forall m a. MonadAff m => Aff a -> m (Maybe a)

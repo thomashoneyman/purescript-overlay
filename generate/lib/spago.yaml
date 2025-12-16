@@ -1,18 +1,19 @@
 package:
-  name: lib
-  dependencies:
-    - aff-promise
-    - argonaut-core
-    - b64
-    - codec-argonaut
-    - effect
-    - fetch
-    - http-methods
-    - node-execa
-    - prelude
-    - registry-lib
-  test:
-    main: Test.Lib
+    name: lib
     dependencies:
-      - spec
-      - debug
+        - aff-promise
+        - argonaut-core
+        - b64
+        - codec-argonaut
+        - effect
+        - fetch
+        - http-methods
+        - node-execa
+        - prelude
+        - registry-lib
+    test:
+        main: Test.Lib
+        dependencies:
+            - spec
+            - spec-node
+            - debug

@@ -2,20 +2,19 @@ module Lib.NPMRegistry where
 
 import Prelude
 
-import Data.Argonaut.Core as Argonaut
-import Data.Argonaut.Parser as Argonaut.Parser
-import Data.Codec.Argonaut (JsonCodec)
-import Data.Codec.Argonaut as CA
-import Data.Codec.Argonaut.Common as CA.Common
-import Data.Codec.Argonaut.Record as CA.Record
+import Codec.JSON.DecodeError as CJ.DecodeError
+import Data.Array as Array
+import Data.Codec.JSON as CJ
+import Data.Codec.JSON.Common as CJ.Common
+import Data.Codec.JSON.Record as CJ.Record
 import Data.Either (Either(..))
 import Data.Map (Map)
 import Data.Maybe (Maybe(..))
 import Data.Profunctor as Profunctor
-import Data.Traversable (traverse)
 import Effect.Aff (Aff)
 import Fetch as Fetch
-import Foreign.Object as Object
+import JSON as JSON
+import JSON.Object as JSON.Object
 import Lib.Git (CommitSha(..))
 import Lib.SemVer (SemVer)
 import Lib.SemVer as SemVer
@@ -29,21 +28,21 @@ listNPMReleases tool = do
   if status /= 200 then do
     pure $ Left $ "Received non-200 status in request to NPM registry: " <> response
   else do
-    case Argonaut.Parser.jsonParser response of
+    case JSON.parse response of
       Left parseErr ->
         pure $ Left $ "NPM response is not valid JSON: " <> parseErr <> "\n\n from raw text: " <> response
-      Right json -> case CA.decode npmPackageCodec json of
+      Right json -> case CJ.decode npmPackageCodec json of
         Left decodeErr -> do
-          let err = CA.printJsonDecodeError decodeErr
-          case Argonaut.toObject json of
+          let err = CJ.DecodeError.print decodeErr
+          case JSON.toJObject json of
             Nothing -> pure $ Left $ "Failed to decode NPM response: " <> err <> "\n\n because NPM response is not an object in raw text: " <> response
-            Just obj -> case Object.lookup "versions" obj of
+            Just obj -> case JSON.Object.lookup "versions" obj of
               Nothing -> pure $ Left "NPM response has no 'versions' key!"
-              Just versionsJson -> case Argonaut.toObject versionsJson of
+              Just versionsJson -> case JSON.toJObject versionsJson of
                 Nothing -> pure $ Left "NPM response has a 'versions' key, but it's not an object!"
-                Just versionsObject -> case traverse (CA.decode npmVersionCodec) versionsObject of
-                  Left decodeErr2 -> pure $ Left $ "Failed to decode NPM response: " <> CA.printJsonDecodeError decodeErr2
-                  Right _ -> pure $ Left $ "Failed to decode NPM response (versions OK): " <> err <> "\n\n " <> Argonaut.stringify (Argonaut.fromObject (Object.delete "versions" obj))
+                Just versionsObject -> do
+                  let versionKeys = JSON.Object.keys versionsObject
+                  pure $ Left $ "Failed to decode NPM response (versions exists with " <> show (Array.length versionKeys) <> " keys: " <> show versionKeys <> "): " <> err
         Right npmPackage ->
           pure $ Right $ npmPackage.versions
 
@@ -60,9 +59,9 @@ type NPMPackage =
   , versions :: Map SemVer NPMVersion
   }
 
-npmPackageCodec :: JsonCodec NPMPackage
-npmPackageCodec = CA.Record.object "NPMPackage"
-  { name: CA.string
+npmPackageCodec :: CJ.Codec NPMPackage
+npmPackageCodec = CJ.Record.object
+  { name: CJ.string
   , versions: SemVer.semverMapCodec npmVersionCodec
   }
 
@@ -75,13 +74,13 @@ type NPMVersion =
   , dist :: NPMVersionDist
   }
 
-npmVersionCodec :: JsonCodec NPMVersion
-npmVersionCodec = CA.Record.object "NPMVersion"
-  { name: CA.string
+npmVersionCodec :: CJ.Codec NPMVersion
+npmVersionCodec = CJ.Record.object
+  { name: CJ.string
   , version: SemVer.codec
-  , gitHead: CA.Record.optional (Profunctor.wrapIso CommitSha CA.string)
-  , main: CA.Record.optional CA.string
-  , dependencies: CA.Record.optional (CA.Common.strMap CA.string)
+  , gitHead: CJ.Record.optional (Profunctor.wrapIso CommitSha CJ.string)
+  , main: CJ.Record.optional CJ.string
+  , dependencies: CJ.Record.optional (CJ.Common.strMap CJ.string)
   , dist: npmVersionDistCodec
   }
 
@@ -89,7 +88,7 @@ type NPMVersionDist =
   { tarball :: String
   }
 
-npmVersionDistCodec :: JsonCodec NPMVersionDist
-npmVersionDistCodec = CA.Record.object "NPMVersionDist"
-  { tarball: CA.string
+npmVersionDistCodec :: CJ.Codec NPMVersionDist
+npmVersionDistCodec = CJ.Record.object
+  { tarball: CJ.string
   }

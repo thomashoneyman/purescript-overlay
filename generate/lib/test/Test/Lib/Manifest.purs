@@ -3,10 +3,13 @@ module Test.Lib.Manifest where
 import Prelude
 
 import Control.Alt ((<|>))
+import Control.Monad.Except (except)
+import Codec.JSON.DecodeError as CJ.DecodeError
 import Data.Array as Array
-import Data.Codec.Argonaut (JsonCodec)
-import Data.Codec.Argonaut as CA
+import Data.Codec as Codec
+import Data.Codec.JSON as CJ
 import Data.Either (Either(..))
+import JSON.Path as JSON.Path
 import Data.String as String
 import Data.Traversable (for)
 import Lib.Nix.Manifest (CombinedManifest, GitHubBinaryManifest, NPMRegistryManifest, NamedManifest, combinedManifestCodec, githubBinaryManifestCodec, namedManifestCodec, npmRegistryManifestCodec)
@@ -38,22 +41,22 @@ data NixManifest
 
 derive instance Eq NixManifest
 
-nixManifestCodec :: JsonCodec NixManifest
-nixManifestCodec = CA.codec' decode encode
+nixManifestCodec :: CJ.Codec NixManifest
+nixManifestCodec = Codec.codec' decode encode
   where
   encode = case _ of
-    SpagoManifest manifest -> CA.encode combinedManifestCodec manifest
-    PursManifest manifest -> CA.encode githubBinaryManifestCodec manifest
-    PursTidyManifest manifest -> CA.encode npmRegistryManifestCodec manifest
-    PursBackendEsManifest manifest -> CA.encode npmRegistryManifestCodec manifest
-    PursLanguageServerManifest manifest -> CA.encode npmRegistryManifestCodec manifest
-    NamedManifest manifest -> CA.encode namedManifestCodec manifest
+    SpagoManifest manifest -> CJ.encode combinedManifestCodec manifest
+    PursManifest manifest -> CJ.encode githubBinaryManifestCodec manifest
+    PursTidyManifest manifest -> CJ.encode npmRegistryManifestCodec manifest
+    PursBackendEsManifest manifest -> CJ.encode npmRegistryManifestCodec manifest
+    PursLanguageServerManifest manifest -> CJ.encode npmRegistryManifestCodec manifest
+    NamedManifest manifest -> CJ.encode namedManifestCodec manifest
 
-  decode json =
-    map SpagoManifest (CA.decode combinedManifestCodec json)
-      <|> map PursManifest (CA.decode githubBinaryManifestCodec json)
-      <|> map PursTidyManifest (CA.decode npmRegistryManifestCodec json)
-      <|> map PursBackendEsManifest (CA.decode npmRegistryManifestCodec json)
-      <|> map PursLanguageServerManifest (CA.decode npmRegistryManifestCodec json)
-      <|> map NamedManifest (CA.decode namedManifestCodec json)
-      <|> Left (CA.TypeMismatch "Expected a CombinedManifest, GitHubBinaryManifest, NPMRegistryManifest, or NamedManifest")
+  decode json = except $
+    map SpagoManifest (CJ.decode combinedManifestCodec json)
+      <|> map PursManifest (CJ.decode githubBinaryManifestCodec json)
+      <|> map PursTidyManifest (CJ.decode npmRegistryManifestCodec json)
+      <|> map PursBackendEsManifest (CJ.decode npmRegistryManifestCodec json)
+      <|> map PursLanguageServerManifest (CJ.decode npmRegistryManifestCodec json)
+      <|> map NamedManifest (CJ.decode namedManifestCodec json)
+      <|> Left (CJ.DecodeError.DecodeError { path: JSON.Path.Tip, message: "Expected a CombinedManifest, GitHubBinaryManifest, NPMRegistryManifest, or NamedManifest", causes: [] })

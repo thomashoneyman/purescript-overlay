@@ -1,10 +1,9 @@
 # PureScript Overlay
 
-[![daily-update](https://github.com/thomashoneyman/purescript-nix/actions/workflows/daily-update.yaml/badge.svg)](https://github.com/thomashoneyman/purescript-nix/actions/workflows/daily-update.yaml)
-[![darwin-support](https://github.com/thomashoneyman/purescript-nix/actions/workflows/darwin-support.yaml/badge.svg)](https://github.com/thomashoneyman/purescript-nix/actions/workflows/darwin-support.yaml)
-[![nix-unit-tests](https://github.com/thomashoneyman/purescript-nix/actions/workflows/nix-unit-tests.yaml/badge.svg)](https://github.com/thomashoneyman/purescript-nix/actions/workflows/nix-unit-tests.yaml)
+[![CI](https://github.com/thomashoneyman/purescript-overlay/actions/workflows/ci.yaml/badge.svg)](https://github.com/thomashoneyman/purescript-overlay/actions/workflows/ci.yaml)
+[![daily-update](https://github.com/thomashoneyman/purescript-overlay/actions/workflows/daily-update.yaml/badge.svg)](https://github.com/thomashoneyman/purescript-overlay/actions/workflows/daily-update.yaml)
 
-Pure and reproducible overlay for the standard PureScript toolchain, including support for Nix flakes. The toolchain is auto-updated every day. Currently supported tools:
+Pure and reproducible Nix overlay for the standard PureScript toolchain. The toolchain is auto-updated every day. Currently supported tools:
 
 - `purs`, the compiler
 - `spago`, the package manager
@@ -27,7 +26,7 @@ If you're looking for a way to *build* your `spago@next`-based projects using Ni
 
 ## Usage
 
-In a Nix flake, use the provided overlay when importing nixpkgs to get access to tools like `purs` and `spago` and functions like `buildSpagoLock`. For example, the below flake creates a development shell with recent versions of the PureScript compiler and Spago package manager:
+In a Nix flake, use the provided overlay when importing nixpkgs to get access to tools like `purs` and `spago`. For example, the below flake creates a development shell with recent versions of the PureScript compiler and Spago package manager:
 
 ```nix
 {
@@ -98,4 +97,21 @@ nix shell github:thomashoneyman/purescript-overlay#purs github:thomashoneyman/pu
 
 ## Tests
 
-You can run the repository tests using a combination of `nix eval .#lib` (to run the unit tests in Nix) and `nix flake check` (to run the derivation-based tests). Both are executed in CI.
+Run all checks locally:
+
+```bash
+# Enter the dev shell
+nix develop
+
+# Run generator tests
+cd generate
+npm ci
+spago test
+
+# Verify manifests can be read correctly
+spago run -p bin -- verify ../manifests
+
+# Check Nix formatting and package derivations
+cd ..
+nix flake check
+```
