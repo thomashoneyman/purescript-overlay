@@ -43,7 +43,7 @@ if isSimpleTarball then
 
     src = fetchurl source;
 
-    nativeBuildInputs = [ nodejs ] ++ lib.optionals hasSpagoCompletions [ installShellFiles ];
+    nativeBuildInputs = [ nodejs ];
 
     buildPhase = ''
       tar xf $src
@@ -60,15 +60,6 @@ if isSimpleTarball then
 
       mkdir -p $out/bin
       ln -s $BIN $out/bin/${name}
-    '';
-
-    # Spago's completion scripts use "bundle.js" as the command name (the internal
-    # script name) instead of "spago". We fix this by post-processing the output.
-    postInstall = lib.optionalString hasSpagoCompletions ''
-      installShellCompletion --cmd ${name} \
-        --bash <($out/bin/${name} --bash-completion-script $out/bin/${name} | sed 's/bundle\.js/${name}/g') \
-        --zsh <($out/bin/${name} --zsh-completion-script $out/bin/${name} | sed 's/bundle\.js/${name}/g') \
-        --fish <($out/bin/${name} --fish-completion-script $out/bin/${name} | sed 's/bundle\.js/${name}/g')
     '';
 
     meta = commonMeta;
