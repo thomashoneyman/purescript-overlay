@@ -107,11 +107,9 @@ prefetchPurs = fetchGitHub
 
   , filterVersion: \(SemVer { version }) -> do
       let
-        -- We only accept compiler releases back to 0.13
+        -- We only accept compiler releases back to 0.13.0
         afterCutoff :: Boolean
-        afterCutoff =
-          Version.major version > 0
-            || Version.major version == 0 && Version.minor version >= 13
+        afterCutoff = version >= unsafeVersion "0.13.0"
 
         -- Some versions are broken and we don't want to include them
         broken :: Boolean
@@ -124,10 +122,10 @@ prefetchPurs = fetchGitHub
       afterCutoff && not broken
 
   , filterSystem: \(SemVer { version, pre }) system ->
-      -- Darwin prereleases from 0.15.0 to 0.15.9 have incorrect version numbers
-      if system == X86_64_darwin && Version.major version == 0 && Version.minor version == 15 then case pre of
+      -- Darwin prereleases from 0.15.0 to 0.15.10 have incorrect version numbers
+      if system == X86_64_darwin && version >= unsafeVersion "0.15.0" && version <= unsafeVersion "0.15.10" then case pre of
         Nothing -> true
-        Just _ -> Version.patch version > 10
+        Just _ -> false
       else
         true
   }
@@ -145,43 +143,21 @@ prefetchSpago = do
     { tool: Spago
     , readManifest: map (Map.mapMaybeWithKey (const Either.blush)) AppM.readSpagoManifest
 
-    , includePackageLock: \(SemVer { version }) -> do
-        let
-          -- spago 0.93.15 and up use better-sqlite3
-          pre_bettersqlite =
-            Version.major version == 0 && Version.major version <= 93 && Version.minor version <= 15
-
-          -- spago versions in this range have malformed package-lock.json files
-          -- which make them unsuitable for remote use. Should be fixed from
-          -- 0.93.19 on.
-          local_0_93 =
-            Version.major version == 0 && Version.minor version == 93 && Version.patch version > 15 && Version.patch version < 19
-
-        if pre_bettersqlite then
-          Nothing
-        else if local_0_93 then
-          Just $ Local $ Path.concat [ "spago", "0.93.x.json" ]
-        else
-          Just Remote
+    , includePackageLock: \_ -> Just Remote
 
     , filterVersion: \(SemVer { version, pre }) -> do
         let
-          -- We only accept Spago releases back to 0.93
+          -- We only accept Spago releases from 0.93.19 onward (when both shell
+          -- completions and proper package-lock.json were available). Earlier
+          -- 0.93.x versions used a simple tarball format or had malformed
+          -- lockfiles that we no longer support.
           satisfiesLowerLimit :: Boolean
-          satisfiesLowerLimit =
-            Version.major version > 0
-              || (Version.major version == 0 && Version.minor version >= 93)
-
-          notBroken :: Boolean
-          notBroken = Array.notElem version
-            [ unsafeVersion "0.93.7" -- bad bundle, fails with 'ReferenceError: __dirname is not defined in ES module scope'
-            , unsafeVersion "0.93.15" -- incorrect version number
-            ]
+          satisfiesLowerLimit = version >= unsafeVersion "0.93.19"
 
           notPrerelease :: Boolean
           notPrerelease = isNothing pre
 
-        satisfiesLowerLimit && notBroken && notPrerelease
+        satisfiesLowerLimit && notPrerelease
     }
 
   -- Spago was rewritten from Haskell to PureScript, so we only get the Haskell
@@ -199,18 +175,11 @@ prefetchSpago = do
 
     , filterVersion: \(SemVer { version, pre }) -> do
         let
-          -- We only accept Spago releases back to 0.18, which is the first one with
-          -- a configurable cache (so we don't get Nix errors trying to run Spago)
-          satisfiesLowerLimit :: Boolean
-          satisfiesLowerLimit =
-            Version.major version > 0
-              || (Version.major version == 0 && Version.minor version >= 18)
-
-          -- We only accept Spago releases up to 0.90, which is the first release
-          -- of spago-next
-          satisfiesUpperLimit :: Boolean
-          satisfiesUpperLimit =
-            Version.major version == 0 && Version.minor version <= 90
+          -- We only accept Spago releases from 0.18.0 to 0.21.0 (legacy Haskell spago).
+          -- 0.18.0 is the first one with a configurable cache (so we don't get Nix errors).
+          -- Versions after 0.21.0 are spago-next (PureScript rewrite) handled by NPM.
+          inRange :: Boolean
+          inRange = version >= unsafeVersion "0.18.0" && version <= unsafeVersion "0.21.0"
 
           -- Some versions are broken and we don't want to include them
           notBroken :: Boolean
@@ -222,7 +191,7 @@ prefetchSpago = do
           notPrerelease :: Boolean
           notPrerelease = isNothing pre
 
-        satisfiesLowerLimit && satisfiesUpperLimit && notBroken && notPrerelease
+        inRange && notBroken && notPrerelease
 
     , filterSystem: \_ _ -> true
     }
@@ -232,15 +201,7 @@ prefetchPursTidy = prefetchNPMRegistry
   { tool: PursTidy
   , readManifest: AppM.readPursTidyManifest
   , includePackageLock: \_ -> Nothing
-  , filterVersion: \(SemVer { version }) -> do
-      let
-        -- We only accept purs-tidy releases back to 0.5.0
-        afterCutoff :: Boolean
-        afterCutoff =
-          Version.major version > 0
-            || (Version.major version == 0 && Version.minor version >= 5)
-
-      afterCutoff
+  , filterVersion: \(SemVer { version }) -> version >= unsafeVersion "0.5.0"
   }
 
 prefetchPursBackendEs :: AppM NPMRegistryManifest
@@ -276,7 +237,7 @@ prefetchPursLanguageServer = do
 
     -- We only accept pre-bundled language server releases, ie. those after 0.15.5
     isBeforeCutoff :: SemVer -> Boolean
-    isBeforeCutoff (SemVer { version }) = Version.major version == 0 && Version.minor version <= 15 && Version.patch version <= 5
+    isBeforeCutoff (SemVer { version }) = version <= unsafeVersion "0.15.5"
 
     supportedReleases :: Map SemVer String
     supportedReleases = Map.filterKeys (not <<< isBeforeCutoff) $ parsePursLanguageServerReleases rawReleases
