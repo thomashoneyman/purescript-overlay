@@ -14,6 +14,7 @@
   nodePackages,
   buildNpmPackage,
   installShellFiles,
+  makeWrapper,
 }:
 version: source:
 let
@@ -31,9 +32,6 @@ let
   # See: https://github.com/purescript/registry-dev/blob/87c5900ff6fb7090cf2b085b7eb3f75371560522/nix/overlay.nix#L152
   isLegacySpago = isSpago && builtins.compareVersions version "0.93.45" < 0;
 
-  # Shell completions are supported for spago >= 0.93.16 (when optparse was added)
-  # See: https://github.com/purescript/spago/pull/980
-  hasSpagoCompletions = isSpago && builtins.compareVersions version "0.93.16" >= 0;
 in
 # Simple tarball without dependencies - just extract and link
 if isSimpleTarball then
@@ -79,6 +77,8 @@ else
     spagoNativeBuildInputs = [
       nodePackages.node-gyp
       python3
+      makeWrapper
+      installShellFiles
     ]
     ++ lib.optionals stdenv.isDarwin [ darwin.cctools ];
   in
@@ -94,11 +94,7 @@ else
 
     npmDepsHash = source.depsHash;
 
-    nativeBuildInputs = [
-      selectedNodejs
-    ]
-    ++ lib.optionals isSpago spagoNativeBuildInputs
-    ++ lib.optionals hasSpagoCompletions [ installShellFiles ];
+    nativeBuildInputs = [ selectedNodejs ] ++ lib.optionals isSpago spagoNativeBuildInputs;
 
     # The prepack script runs the build script, but (so far) all derivations
     # are pre-built.
@@ -110,13 +106,20 @@ else
       "--omit=optional"
     ];
 
-    # Spago's completion scripts use "bundle.js" as the command name (the internal
-    # script name) instead of "spago". We fix this by post-processing the output.
-    postInstall = lib.optionalString hasSpagoCompletions ''
+    # For spago: Replace the symlink with a wrapper that invokes node directly
+    # with the script renamed via a symlink. This fixes spago displaying
+    # "Usage: bundle.js" instead of "Usage: spago" (Node.js uses the script
+    # path for the program name). Also generate shell completions.
+    postInstall = lib.optionalString isSpago ''
+      rm $out/bin/${name}
+      ln -s $out/lib/node_modules/${name}/${js} $out/lib/node_modules/${name}/bin/${name}
+      makeWrapper ${selectedNodejs}/bin/node $out/bin/${name} \
+        --add-flags $out/lib/node_modules/${name}/bin/${name}
+
       installShellCompletion --cmd ${name} \
-        --bash <($out/bin/${name} --bash-completion-script $out/bin/${name} | sed 's/bundle\.js/${name}/g') \
-        --zsh <($out/bin/${name} --zsh-completion-script $out/bin/${name} | sed 's/bundle\.js/${name}/g') \
-        --fish <($out/bin/${name} --fish-completion-script $out/bin/${name} | sed 's/bundle\.js/${name}/g')
+        --bash <($out/bin/${name} --bash-completion-script $out/bin/${name}) \
+        --zsh <($out/bin/${name} --zsh-completion-script $out/bin/${name}) \
+        --fish <($out/bin/${name} --fish-completion-script $out/bin/${name})
     '';
 
     meta = commonMeta;
