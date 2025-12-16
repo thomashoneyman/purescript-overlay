@@ -41,25 +41,28 @@
         };
       in
       {
-        packages = {
-          inherit (pkgs)
-            purs
-            purs-unstable
-            spago
-            spago-unstable
-            purs-tidy
-            purs-tidy-unstable
-            purs-backend-es
-            purs-backend-es-unstable
-            purescript-language-server
-            purescript-language-server-unstable
-            ;
-        }
-        // pkgs.purs-bin
-        // pkgs.spago-bin
-        // pkgs.purs-tidy-bin
-        // pkgs.purs-backend-es-bin
-        // pkgs.purescript-language-server-bin;
+        # Filter out null values (packages unavailable on this system)
+        packages = lib.filterAttrs (_: v: v != null) (
+          {
+            inherit (pkgs)
+              purs
+              purs-unstable
+              spago
+              spago-unstable
+              purs-tidy
+              purs-tidy-unstable
+              purs-backend-es
+              purs-backend-es-unstable
+              purescript-language-server
+              purescript-language-server-unstable
+              ;
+          }
+          // pkgs.purs-bin
+          // pkgs.spago-bin
+          // pkgs.purs-tidy-bin
+          // pkgs.purs-backend-es-bin
+          // pkgs.purescript-language-server-bin
+        );
 
         apps =
           let

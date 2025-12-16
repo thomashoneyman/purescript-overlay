@@ -254,8 +254,9 @@ let
       ;
   };
 
-  # Map named.json entries to actual packages.
-  # Fails at evaluation time if a package isn't available for this system.
+  # Map named.json entries (e.g., "purs-stable" -> "purs-0_15_15") to packages.
+  # Produces friendly names like "purs", "purs-unstable", "spago", etc.
+  # Returns null for packages unavailable on this system (filtered out in flake).
   named =
     let
       entries = builtins.fromJSON (builtins.readFile ./named.json);
@@ -263,18 +264,14 @@ let
     lib.mapAttrs' (
       key: value:
       let
-        name = builtins.replaceStrings [ "-stable" "-unstable" ] [ "" "" ] key;
-        group = "${name}-bin";
-        available = builtins.attrNames (all.${group} or { });
+        toolName = builtins.replaceStrings [ "-stable" "-unstable" ] [ "" "" ] key;
+        group = "${toolName}-bin";
       in
       {
         # Strip -stable suffix but keep -unstable for unstable packages
         name = builtins.replaceStrings [ "-stable" ] [ "" ] key;
-        value =
-          all.${group}.${value} or (throw ''
-            No binary available for ${key} (${value}) on system ${system}.
-            Available versions: ${builtins.concatStringsSep ", " available}
-          '');
+        # Use null for unavailable packages - consumers should filter these out
+        value = all.${group}.${value} or null;
       }
     ) entries;
 in
