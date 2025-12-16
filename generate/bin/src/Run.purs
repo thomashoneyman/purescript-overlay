@@ -145,28 +145,19 @@ prefetchSpago = do
     { tool: Spago
     , readManifest: map (Map.mapMaybeWithKey (const Either.blush)) AppM.readSpagoManifest
 
-    , includePackageLock: \(SemVer { version }) -> do
-        let
-          -- spago versions 0.93.16-0.93.18 have malformed package-lock.json files
-          -- which make them unsuitable for remote use. Fixed from 0.93.19 on.
-          needsLocalLockfile =
-            Version.major version == 0 && Version.minor version == 93 && Version.patch version >= 16 && Version.patch version < 19
-
-        if needsLocalLockfile then
-          Just $ Local $ Path.concat [ "spago", "0.93.x.json" ]
-        else
-          Just Remote
+    , includePackageLock: \_ -> Just Remote
 
     , filterVersion: \(SemVer { version, pre }) -> do
         let
-          -- We only accept Spago releases from 0.93.16 onward (when shell
-          -- completions were added via optparse). Earlier 0.93.x versions used
-          -- a simple tarball format that we no longer support.
+          -- We only accept Spago releases from 0.93.19 onward (when both shell
+          -- completions and proper package-lock.json were available). Earlier
+          -- 0.93.x versions used a simple tarball format or had malformed
+          -- lockfiles that we no longer support.
           satisfiesLowerLimit :: Boolean
           satisfiesLowerLimit =
             Version.major version > 0
               || (Version.major version == 0 && Version.minor version > 93)
-              || (Version.major version == 0 && Version.minor version == 93 && Version.patch version >= 16)
+              || (Version.major version == 0 && Version.minor version == 93 && Version.patch version >= 19)
 
           notBroken :: Boolean
           notBroken = Array.notElem version

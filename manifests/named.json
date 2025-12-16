@@ -1,12 +1,12 @@
 {
-  "purs-stable": "purs-0_15_15",
-  "purs-unstable": "purs-0_15_16-8",
-  "spago-stable": "spago-0_21_0",
-  "spago-unstable": "spago-0_93_45",
-  "purs-tidy-stable": "purs-tidy-0_11_1",
-  "purs-tidy-unstable": "purs-tidy-0_11_1",
-  "purs-backend-es-stable": "purs-backend-es-1_4_3",
-  "purs-backend-es-unstable": "purs-backend-es-1_4_3",
-  "purescript-language-server-stable": "purescript-language-server-0_18_5",
-  "purescript-language-server-unstable": "purescript-language-server-0_18_5"
+    "purs-stable": "purs-0_15_15",
+    "purs-unstable": "purs-0_15_16-8",
+    "spago-stable": "spago-0_21_0",
+    "spago-unstable": "spago-0_93_44",
+    "purs-tidy-stable": "purs-tidy-0_11_1",
+    "purs-tidy-unstable": "purs-tidy-0_11_1",
+    "purs-backend-es-stable": "purs-backend-es-1_4_3",
+    "purs-backend-es-unstable": "purs-backend-es-1_4_3",
+    "purescript-language-server-stable": "purescript-language-server-0_18_5",
+    "purescript-language-server-unstable": "purescript-language-server-0_18_5"
 }
