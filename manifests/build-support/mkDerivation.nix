@@ -13,6 +13,7 @@
   darwin,
   nodePackages,
   buildNpmPackage,
+  installShellFiles,
 }:
 version: source:
 let
@@ -29,6 +30,10 @@ let
   # build issues with Node 22+. Spago 0.93.45+ works with the standard nodejs.
   # See: https://github.com/purescript/registry-dev/blob/87c5900ff6fb7090cf2b085b7eb3f75371560522/nix/overlay.nix#L152
   isLegacySpago = isSpago && builtins.compareVersions version "0.93.45" < 0;
+
+  # Shell completions are supported for spago >= 0.93.16 (when optparse was added)
+  # See: https://github.com/purescript/spago/pull/980
+  hasSpagoCompletions = isSpago && builtins.compareVersions version "0.93.16" >= 0;
 in
 # Simple tarball without dependencies - just extract and link
 if isSimpleTarball then
@@ -38,7 +43,7 @@ if isSimpleTarball then
 
     src = fetchurl source;
 
-    nativeBuildInputs = [ nodejs ];
+    nativeBuildInputs = [ nodejs ] ++ lib.optionals hasSpagoCompletions [ installShellFiles ];
 
     buildPhase = ''
       tar xf $src
@@ -55,6 +60,15 @@ if isSimpleTarball then
 
       mkdir -p $out/bin
       ln -s $BIN $out/bin/${name}
+    '';
+
+    # Spago's completion scripts use "bundle.js" as the command name (the internal
+    # script name) instead of "spago". We fix this by post-processing the output.
+    postInstall = lib.optionalString hasSpagoCompletions ''
+      installShellCompletion --cmd ${name} \
+        --bash <($out/bin/${name} --bash-completion-script $out/bin/${name} | sed 's/bundle\.js/${name}/g') \
+        --zsh <($out/bin/${name} --zsh-completion-script $out/bin/${name} | sed 's/bundle\.js/${name}/g') \
+        --fish <($out/bin/${name} --fish-completion-script $out/bin/${name} | sed 's/bundle\.js/${name}/g')
     '';
 
     meta = commonMeta;
@@ -89,7 +103,11 @@ else
 
     npmDepsHash = source.depsHash;
 
-    nativeBuildInputs = [ selectedNodejs ] ++ lib.optionals isSpago spagoNativeBuildInputs;
+    nativeBuildInputs = [
+      selectedNodejs
+    ]
+    ++ lib.optionals isSpago spagoNativeBuildInputs
+    ++ lib.optionals hasSpagoCompletions [ installShellFiles ];
 
     # The prepack script runs the build script, but (so far) all derivations
     # are pre-built.
@@ -100,6 +118,15 @@ else
       "--logs-max=0"
       "--omit=optional"
     ];
+
+    # Spago's completion scripts use "bundle.js" as the command name (the internal
+    # script name) instead of "spago". We fix this by post-processing the output.
+    postInstall = lib.optionalString hasSpagoCompletions ''
+      installShellCompletion --cmd ${name} \
+        --bash <($out/bin/${name} --bash-completion-script $out/bin/${name} | sed 's/bundle\.js/${name}/g') \
+        --zsh <($out/bin/${name} --zsh-completion-script $out/bin/${name} | sed 's/bundle\.js/${name}/g') \
+        --fish <($out/bin/${name} --fish-completion-script $out/bin/${name} | sed 's/bundle\.js/${name}/g')
+    '';
 
     meta = commonMeta;
   }
