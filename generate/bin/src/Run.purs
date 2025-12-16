@@ -147,30 +147,26 @@ prefetchSpago = do
 
     , includePackageLock: \(SemVer { version }) -> do
         let
-          -- spago 0.93.15 and up use better-sqlite3
-          pre_bettersqlite =
-            Version.major version == 0 && Version.major version <= 93 && Version.minor version <= 15
+          -- spago versions 0.93.16-0.93.18 have malformed package-lock.json files
+          -- which make them unsuitable for remote use. Fixed from 0.93.19 on.
+          needsLocalLockfile =
+            Version.major version == 0 && Version.minor version == 93 && Version.patch version >= 16 && Version.patch version < 19
 
-          -- spago versions in this range have malformed package-lock.json files
-          -- which make them unsuitable for remote use. Should be fixed from
-          -- 0.93.19 on.
-          local_0_93 =
-            Version.major version == 0 && Version.minor version == 93 && Version.patch version > 15 && Version.patch version < 19
-
-        if pre_bettersqlite then
-          Nothing
-        else if local_0_93 then
+        if needsLocalLockfile then
           Just $ Local $ Path.concat [ "spago", "0.93.x.json" ]
         else
           Just Remote
 
     , filterVersion: \(SemVer { version, pre }) -> do
         let
-          -- We only accept Spago releases back to 0.93
+          -- We only accept Spago releases from 0.93.16 onward (when shell
+          -- completions were added via optparse). Earlier 0.93.x versions used
+          -- a simple tarball format that we no longer support.
           satisfiesLowerLimit :: Boolean
           satisfiesLowerLimit =
             Version.major version > 0
-              || (Version.major version == 0 && Version.minor version >= 93)
+              || (Version.major version == 0 && Version.minor version > 93)
+              || (Version.major version == 0 && Version.minor version == 93 && Version.patch version >= 16)
 
           notBroken :: Boolean
           notBroken = Array.notElem version
