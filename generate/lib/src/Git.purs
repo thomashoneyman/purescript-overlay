@@ -18,7 +18,6 @@ import Data.String.CodeUnits as CodeUnits
 import Effect.Aff (Aff)
 import Effect.Aff.Class (class MonadAff, liftAff)
 import Effect.Class (class MonadEffect)
-import Effect.Class.Console as Console
 import Lib.Foreign.Octokit (GitHubToken(..))
 import Node.Library.Execa as Execa
 import Node.Path (FilePath)
@@ -28,7 +27,11 @@ import Parsing.Combinators as Parsing.Combinators
 import Parsing.String as Parsing.String
 import Parsing.String.Basic as Parsing.String.Basic
 
-type GitEnv = { cwd :: FilePath, branch :: String }
+type GitEnv =
+  { cwd :: FilePath
+  , branch :: String
+  , debug :: String -> Aff Unit
+  }
 
 -- | A monad for executing Git CLI commands
 newtype GitM a = GitM (ExceptT String (ReaderT GitEnv Aff) a)
@@ -43,6 +46,12 @@ derive newtype instance MonadEffect GitM
 derive newtype instance MonadAff GitM
 derive newtype instance MonadAsk GitEnv GitM
 derive newtype instance MonadThrow String GitM
+
+-- | Log a debug message (only visible in verbose mode)
+debugLog :: String -> GitM Unit
+debugLog msg = do
+  { debug } <- ask
+  liftAff $ debug msg
 
 -- | A Git tag
 newtype Tag = Tag String
@@ -75,10 +84,12 @@ gitCloneUpstream = do
     url = "https://github.com/thomashoneyman/purescript-nix.git"
     inRepoErr error = " in local checkout " <> cwd <> ": " <> error
 
+  debugLog $ "Cloning " <> url <> " into " <> cwd
   git (Just cwd) [ "clone", url, repoName ] >>= case _ of
     Left err -> Except.throwError $ "Failed to clone repo at url " <> url <> inRepoErr err
     Right _ -> pure unit
 
+  debugLog $ "Checking out branch " <> branch
   git (Just (Path.concat [ cwd, repoName ])) [ "checkout", "-b", branch ] >>= case _ of
     Left err -> Except.throwError $ "Failed to checkout branch " <> branch <> inRepoErr err
     Right _ -> pure unit
@@ -124,11 +135,12 @@ gitCommitManifests message = do
 
   -- If there are no staged files, then we have nothing to commit.
   if String.null staged then do
-    Console.log $ "Not committing paths " <> String.joinWith ", " commitPaths <> " in " <> cwd <> " because no matching files have been modified."
+    debugLog $ "No changes to commit in " <> String.joinWith ", " commitPaths
     pure NothingToCommit
   -- But if there are staged files then we can commit them and report that
   -- we indeed had changes.
   else do
+    debugLog $ "Committing changes: " <> message
     _ <- exec [ "commit", "-m", message ] \error ->
       "Failed to commit path(s) " <> String.joinWith ", " commitPaths <> inRepoErr error
     pure Committed
@@ -145,7 +157,7 @@ gitPushBranch token = do
   -- First we fetch the origin to make sure we're up-to-date.
   status <- gitStatus
   when (status.branch /= branch) do
-    Console.log $ "Expected to be on branch " <> branch <> " in local checkout " <> cwd <> " but found branch " <> status.branch
+    debugLog $ "Expected branch " <> branch <> " but found " <> status.branch
     Except.throwError "Aborting 'git push'."
 
   let
@@ -170,6 +182,7 @@ gitPushBranch token = do
       , ".git"
       ]
 
+  debugLog $ "Pushing branch " <> branch <> " to " <> upstream.owner <> "/" <> upstream.repo
   _ <- exec [ "push", "--set-upstream", origin, branch ] \error ->
     "Failed to push to " <> origin <> " from " <> branch <> inRepoErr error
 

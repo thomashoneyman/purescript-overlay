@@ -62,7 +62,6 @@ import Data.Tuple (Tuple(..))
 import Effect.Aff as Aff
 import Effect.Aff.Class (class MonadAff, liftAff)
 import Effect.Class (class MonadEffect, liftEffect)
-import Effect.Class.Console as Console
 import Effect.Uncurried (EffectFn1, EffectFn6, runEffectFn1, runEffectFn6)
 import Foreign.Object (Object)
 import Foreign.Object as Object
@@ -375,7 +374,6 @@ foreign import paginateImpl :: forall r. EffectFn6 Octokit String (Object String
 request :: forall m a. MonadAff m => Octokit -> Request a -> m (Either GitHubError a)
 request octokit { route, headers, args, paginate, codec } = do
   let printedRoute = printGitHubRoute route
-  Console.log $ "Octokit: requesting " <> printedRoute
   result <- liftAff $ Promise.toAffE $ runEffectFn6 (if paginate then paginateImpl else requestImpl) octokit printedRoute headers args Left Right
   pure $ case result of
     Left githubError -> case decodeGitHubAPIError githubError of
