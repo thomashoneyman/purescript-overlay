@@ -1,60 +1,69 @@
 name: "CI"
 
 on:
-  push:
-    branches: [main]
-  pull_request:
+    push:
+        branches: [main]
+    pull_request:
+
+env:
+    NIX_SHELL: nix develop ..# --command
 
 jobs:
-  check-linux:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
+    check-linux:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v6
 
-      - name: Install Nix
-        uses: DeterminateSystems/nix-installer-action@v21
+            - name: Install Nix
+              uses: DeterminateSystems/nix-installer-action@v21
 
-      - name: Setup Nix cache
-        uses: DeterminateSystems/magic-nix-cache-action@v13
-        with:
-          use-flakehub: false
+            - name: Setup Nix cache
+              uses: DeterminateSystems/magic-nix-cache-action@v13
+              with:
+                  use-flakehub: false
 
-      - name: Cache Spago dependencies
-        uses: actions/cache@v4
-        with:
-          path: |
-            generate/.spago
-            generate/output
-            ~/.cache/spago
-          key: spago-${{ runner.os }}-${{ hashFiles('generate/spago.lock') }}
-          restore-keys: |
-            spago-${{ runner.os }}-
+            - name: Cache Spago dependencies
+              uses: actions/cache@v4
+              with:
+                  path: |
+                      generate/.spago
+                      generate/output
+                      ~/.cache/spago
+                  key: spago-${{ runner.os }}-${{ hashFiles('generate/spago.lock') }}
+                  restore-keys: |
+                      spago-${{ runner.os }}-
 
-      - name: Run spago tests
-        run: |
-          cd generate
-          nix develop ..# --command bash -c "npm ci && spago test"
+            - name: Install npm dependencies
+              run: npm ci
+              working-directory: generate
 
-      - name: Verify manifests
-        run: |
-          cd generate
-          nix develop ..# --command spago run -p bin -- --verbose verify ../manifests
+            - name: Build
+              run: $NIX_SHELL spago build -p bin
+              working-directory: generate
 
-      - name: Run flake checks
-        run: nix flake check --print-build-logs
+            - name: Run spago tests
+              run: $NIX_SHELL spago test
+              working-directory: generate
 
-  check-darwin:
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v6
+            - name: Verify manifests
+              run: $NIX_SHELL spago run -p bin -- --verbose verify ../manifests
+              working-directory: generate
 
-      - name: Install Nix
-        uses: DeterminateSystems/nix-installer-action@v21
+            - name: Run flake checks
+              run: nix flake check --print-build-logs
 
-      - name: Setup Nix cache
-        uses: DeterminateSystems/magic-nix-cache-action@v13
-        with:
-          use-flakehub: false
+    check-darwin:
+        runs-on: macos-latest
+        steps:
+            - uses: actions/checkout@v6
 
-      - name: Run flake check
-        run: nix flake check --print-build-logs
+            - name: Install Nix
+              uses: DeterminateSystems/nix-installer-action@v21
+
+            - name: Setup Nix cache
+              uses: DeterminateSystems/magic-nix-cache-action@v13
+              with:
+                  use-flakehub: false
+
+            - name: Run flake check
+              run: nix flake check --print-build-logs

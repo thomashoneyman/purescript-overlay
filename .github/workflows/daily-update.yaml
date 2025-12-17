@@ -1,33 +1,49 @@
-# Runs the generate script on a daily basis to look for new tooling updates.
 name: "daily-update"
 
-# The importer is run every day at 07:00 UTC and can also be run manually from
-# the 'Actions' tab.
 on:
-  workflow_dispatch:
-  schedule:
-    - cron: "0 7 * * *"
+    workflow_dispatch:
+    schedule:
+        - cron: "0 7 * * *"
+
+env:
+    NIX_SHELL: nix develop ..# --command
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
+    build:
+        runs-on: ubuntu-latest
+        env:
+            REPO_TOKEN: ${{ secrets.REPO_TOKEN }}
 
-    env:
-      REPO_TOKEN: ${{ secrets.REPO_TOKEN }}
+        steps:
+            - uses: actions/checkout@v6
 
-    steps:
-      - uses: actions/checkout@v6
+            - name: Install Nix
+              uses: DeterminateSystems/nix-installer-action@v21
 
-      - name: Install Nix
-        uses: DeterminateSystems/nix-installer-action@v21
+            - name: Setup Nix cache
+              uses: DeterminateSystems/magic-nix-cache-action@v13
+              with:
+                  use-flakehub: false
 
-      - name: Setup Nix cache
-        uses: DeterminateSystems/magic-nix-cache-action@v13
-        with:
-          use-flakehub: false
+            - name: Cache Spago dependencies
+              uses: actions/cache@v4
+              with:
+                  path: |
+                      generate/.spago
+                      generate/output
+                      ~/.cache/spago
+                  key: spago-${{ runner.os }}-${{ hashFiles('generate/spago.lock') }}
+                  restore-keys: |
+                      spago-${{ runner.os }}-
 
-      - name: Run the generate script
-        run: |
-          cd generate
-          npm ci
-          nix develop --command spago run -p bin -- --verbose update ../manifests --commit
+            - name: Install npm dependencies
+              run: npm ci
+              working-directory: generate
+
+            - name: Build the generate script
+              run: $NIX_SHELL spago build -p bin
+              working-directory: generate
+
+            - name: Run the generate script
+              run: $NIX_SHELL spago run -p bin -- --verbose update ../manifests --commit
+              working-directory: generate
