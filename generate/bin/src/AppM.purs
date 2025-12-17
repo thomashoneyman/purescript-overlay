@@ -2,6 +2,7 @@ module Bin.AppM where
 
 import Prelude
 
+import Bin.CLI (Verbosity(..))
 import Control.Monad.Except (runExceptT)
 import Control.Monad.Reader (class MonadAsk, class MonadReader, ReaderT, ask, runReaderT)
 import Control.Monad.Reader as ReaderT
@@ -10,13 +11,12 @@ import Data.Newtype (class Newtype)
 import Effect.Aff (Aff)
 import Effect.Aff.Class (class MonadAff, liftAff)
 import Effect.Class (class MonadEffect)
+import Effect.Class.Console as Console
 import Lib.Foreign.Octokit (GitHubError, Octokit)
 import Lib.Git (GitM(..))
 import Lib.GitHub (GitHubM(..))
-import Lib.Nix.Manifest (CombinedManifest, GitHubBinaryManifest, NamedManifest, NPMRegistryManifest)
+import Lib.Nix.Manifest (ManifestCodec, NamedManifest)
 import Lib.Nix.Manifest as Nix.Manifest
-import Lib.Nix.Manifest as Tool
-import Lib.Tool (Tool(..))
 import Lib.Utils as Utils
 import Node.Path (FilePath)
 import Node.Path as Path
@@ -31,6 +31,7 @@ type Env =
   , tmpDir :: FilePath
   , gitBranch :: String
   , manifestDir :: FilePath
+  , verbosity :: Verbosity
   }
 
 newtype AppM a = AppM (ReaderT Env Aff a)
@@ -48,82 +49,50 @@ derive newtype instance MonadReader Env AppM
 
 instance MonadApp AppM where
   runGitHubM (GitHubM run) = do
-    { octokit } <- ask
-    liftAff $ runReaderT (runExceptT run) octokit
+    { octokit, verbosity } <- ask
+    let debugFn msg = when (verbosity >= Verbose) $ Console.log $ "[DEBUG] " <> msg
+    liftAff $ runReaderT (runExceptT run) { octokit, debug: debugFn }
 
   runGitM (GitM run) = do
-    { tmpDir, gitBranch } <- ask
-    liftAff $ runReaderT (runExceptT run) { cwd: tmpDir, branch: gitBranch }
+    { tmpDir, gitBranch, verbosity } <- ask
+    let debugFn msg = when (verbosity >= Verbose) $ Console.log $ "[DEBUG] " <> msg
+    liftAff $ runReaderT (runExceptT run) { cwd: tmpDir, branch: gitBranch, debug: debugFn }
 
 runAppM :: forall a. Env -> AppM a -> Aff a
 runAppM env (AppM run) = runReaderT run env
 
-getNamedManifestPath :: AppM FilePath
-getNamedManifestPath = do
-  { manifestDir } <- ask
-  pure $ Path.concat [ manifestDir, Nix.Manifest.namedPath ]
-
+-- | Read the named manifest (tool channel -> version mappings)
 readNamedManifest :: AppM NamedManifest
 readNamedManifest = do
-  path <- getNamedManifestPath
-  Utils.readJsonFile path Nix.Manifest.namedManifestCodec
+  { manifestDir } <- ask
+  Utils.readJsonFile (Path.concat [ manifestDir, Nix.Manifest.namedPath ]) Nix.Manifest.namedManifestCodec
 
+-- | Write the named manifest
 writeNamedManifest :: NamedManifest -> AppM Unit
 writeNamedManifest manifest = do
-  path <- getNamedManifestPath
-  Utils.writeJsonFile path Nix.Manifest.namedManifestCodec manifest
-
-getToolManifestPath :: Tool -> AppM FilePath
-getToolManifestPath tool = do
   { manifestDir } <- ask
-  pure $ Path.concat [ manifestDir, Tool.filename tool ]
+  Utils.writeJsonFile (Path.concat [ manifestDir, Nix.Manifest.namedPath ]) Nix.Manifest.namedManifestCodec manifest
 
-readPursManifest :: AppM GitHubBinaryManifest
-readPursManifest = do
-  path <- getToolManifestPath Purs
-  Utils.readJsonFile path Nix.Manifest.githubBinaryManifestCodec
+-- | Read a tool's manifest using its codec
+readManifest :: forall a. ManifestCodec a -> AppM a
+readManifest { codec, tool } = do
+  { manifestDir } <- ask
+  Utils.readJsonFile (Path.concat [ manifestDir, Nix.Manifest.filename tool ]) codec
 
-writePursManifest :: GitHubBinaryManifest -> AppM Unit
-writePursManifest manifest = do
-  path <- getToolManifestPath Purs
-  Utils.writeJsonFile path Nix.Manifest.githubBinaryManifestCodec manifest
+-- | Write a tool's manifest using its codec
+writeManifest :: forall a. ManifestCodec a -> a -> AppM Unit
+writeManifest { codec, tool } manifest = do
+  { manifestDir } <- ask
+  Utils.writeJsonFile (Path.concat [ manifestDir, Nix.Manifest.filename tool ]) codec manifest
 
-readSpagoManifest :: AppM CombinedManifest
-readSpagoManifest = do
-  path <- getToolManifestPath Spago
-  Utils.readJsonFile path Nix.Manifest.combinedManifestCodec
+-- | Log a message (always shown unless Quiet)
+log :: String -> AppM Unit
+log msg = do
+  { verbosity } <- ask
+  when (verbosity > Quiet) $ Console.log $ "[INFO] " <> msg
 
-writeSpagoManifest :: CombinedManifest -> AppM Unit
-writeSpagoManifest manifest = do
-  path <- getToolManifestPath Spago
-  Utils.writeJsonFile path Nix.Manifest.combinedManifestCodec manifest
-
-readPursTidyManifest :: AppM NPMRegistryManifest
-readPursTidyManifest = do
-  path <- getToolManifestPath PursTidy
-  Utils.readJsonFile path Nix.Manifest.npmRegistryManifestCodec
-
-writePursTidyManifest :: NPMRegistryManifest -> AppM Unit
-writePursTidyManifest manifest = do
-  path <- getToolManifestPath PursTidy
-  Utils.writeJsonFile path Nix.Manifest.npmRegistryManifestCodec manifest
-
-readPursBackendEsManifest :: AppM NPMRegistryManifest
-readPursBackendEsManifest = do
-  path <- getToolManifestPath PursBackendEs
-  Utils.readJsonFile path Nix.Manifest.npmRegistryManifestCodec
-
-writePursBackendEsManifest :: NPMRegistryManifest -> AppM Unit
-writePursBackendEsManifest manifest = do
-  path <- getToolManifestPath PursBackendEs
-  Utils.writeJsonFile path Nix.Manifest.npmRegistryManifestCodec manifest
-
-readPursLanguageServerManifest :: AppM NPMRegistryManifest
-readPursLanguageServerManifest = do
-  path <- getToolManifestPath PursLanguageServer
-  Utils.readJsonFile path Nix.Manifest.npmRegistryManifestCodec
-
-writePursLanguageServerManifest :: NPMRegistryManifest -> AppM Unit
-writePursLanguageServerManifest manifest = do
-  path <- getToolManifestPath PursLanguageServer
-  Utils.writeJsonFile path Nix.Manifest.npmRegistryManifestCodec manifest
+-- | Log a message only in Verbose mode
+debug :: String -> AppM Unit
+debug msg = do
+  { verbosity } <- ask
+  when (verbosity >= Verbose) $ Console.log $ "[DEBUG] " <> msg

@@ -1,5 +1,7 @@
 package:
   name: bin
+  run:
+    main: Bin.Main
   dependencies:
     - aff
     - argparse-basic

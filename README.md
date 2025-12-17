@@ -111,6 +111,9 @@ spago test
 # Verify manifests can be read correctly
 spago run -p bin -- verify ../manifests
 
+# Use --verbose for detailed output (shows GitHub API calls, hashes, etc.)
+spago run -p bin -- --verbose verify ../manifests
+
 # Check Nix formatting and package derivations
 cd ..
 nix flake check

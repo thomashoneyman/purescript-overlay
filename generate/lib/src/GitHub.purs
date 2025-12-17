@@ -15,7 +15,6 @@ import Effect.Aff (Aff)
 import Effect.Aff as Aff
 import Effect.Aff.Class (class MonadAff, liftAff)
 import Effect.Class (class MonadEffect)
-import Effect.Class.Console as Console
 import Lib.Foreign.Octokit (GitHubError(..), Octokit, PullRequest, Release, Request)
 import Lib.Foreign.Octokit as Octokit
 import Lib.Git (CommitSha(..), Tag(..))
@@ -23,8 +22,14 @@ import Lib.Tool (Tool(..))
 import Lib.Utils as Utils
 import Node.Path (FilePath)
 
+-- | Environment for GitHubM
+type GitHubEnv =
+  { octokit :: Octokit
+  , debug :: String -> Aff Unit
+  }
+
 -- | A monad for executing requests to GitHub
-newtype GitHubM a = GitHubM (ExceptT GitHubError (ReaderT Octokit Aff) a)
+newtype GitHubM a = GitHubM (ExceptT GitHubError (ReaderT GitHubEnv Aff) a)
 
 derive instance Newtype (GitHubM a) _
 derive newtype instance Functor GitHubM
@@ -34,8 +39,14 @@ derive newtype instance Bind GitHubM
 derive newtype instance Monad GitHubM
 derive newtype instance MonadEffect GitHubM
 derive newtype instance MonadAff GitHubM
-derive newtype instance MonadAsk Octokit GitHubM
+derive newtype instance MonadAsk GitHubEnv GitHubM
 derive newtype instance MonadThrow GitHubError GitHubM
+
+-- | Log a debug message (only visible in verbose mode)
+debugLog :: String -> GitHubM Unit
+debugLog msg = do
+  { debug } <- ask
+  liftAff $ debug msg
 
 newtype GitHubToken = GitHubToken String
 
@@ -63,33 +74,33 @@ rawContentUrl tool (CommitSha gitHead) path = do
 
 listReleases :: Tool -> GitHubM (Array Release)
 listReleases tool = do
-  octokit <- ask
+  { octokit } <- ask
   let address = toolRepo tool
-  Console.log $ "Listing releases for repo " <> address.owner <> "/" <> address.repo
+  debugLog $ "Listing releases for " <> address.owner <> "/" <> address.repo
   let req = requestWithBackoff octokit (Octokit.requestListReleases address)
   GitHubM $ ExceptT req
 
 getLatestRelease :: Tool -> GitHubM Release
 getLatestRelease tool = do
-  octokit <- ask
+  { octokit } <- ask
   let address = toolRepo tool
-  Console.log $ "Getting latest release for repo " <> address.owner <> "/" <> address.repo
+  debugLog $ "Getting latest release for " <> address.owner <> "/" <> address.repo
   let req = requestWithBackoff octokit (Octokit.requestGetLatestRelease address)
   GitHubM $ ExceptT req
 
 getReleaseByTagName :: Tool -> Tag -> GitHubM Release
 getReleaseByTagName tool tag = do
-  octokit <- ask
+  { octokit } <- ask
   let address = toolRepo tool
-  Console.log $ "Getting release identified by tag " <> un Tag tag <> " in repo " <> address.owner <> "/" <> address.repo
+  debugLog $ "Getting release " <> un Tag tag <> " from " <> address.owner <> "/" <> address.repo
   let req = requestWithBackoff octokit (Octokit.requestGetReleaseByTagName address (un Tag tag))
   GitHubM $ ExceptT req
 
 getContent :: Tool -> CommitSha -> FilePath -> GitHubM String
 getContent tool sha path = do
-  octokit <- ask
+  { octokit } <- ask
   let address = toolRepo tool
-  Console.log $ "Getting content for commit SHA " <> un CommitSha sha <> " in repo " <> address.owner <> "/" <> address.repo <> " at path " <> path
+  debugLog $ "Getting content at " <> path <> " (" <> un CommitSha sha <> ") from " <> address.owner <> "/" <> address.repo
   let req = requestWithBackoff octokit (Octokit.requestGetContent { address, ref: un CommitSha sha, path })
   GitHubM $ do
     res <- ExceptT req
@@ -98,17 +109,17 @@ getContent tool sha path = do
 
 getTagCommitSha :: Tool -> Tag -> GitHubM CommitSha
 getTagCommitSha tool tag = do
-  octokit <- ask
+  { octokit } <- ask
   let address = toolRepo tool
-  Console.log $ "Getting commit SHA for tag " <> un Tag tag <> " in repo " <> address.owner <> "/" <> address.repo
+  debugLog $ "Getting commit SHA for tag " <> un Tag tag <> " from " <> address.owner <> "/" <> address.repo
   let req = requestWithBackoff octokit (Octokit.requestGetRefCommitSha { address, ref: un Tag tag })
   GitHubM $ ExceptT $ map CommitSha <$> req
 
 getCommitDate :: Tool -> CommitSha -> GitHubM DateTime
 getCommitDate tool sha = do
-  octokit <- ask
+  { octokit } <- ask
   let address = toolRepo tool
-  Console.log $ "Getting commit date for commit SHA " <> un CommitSha sha <> " in repo " <> address.owner <> "/" <> address.repo
+  debugLog $ "Getting commit date for " <> un CommitSha sha <> " from " <> address.owner <> "/" <> address.repo
   let req = requestWithBackoff octokit (Octokit.requestGetCommitDate { address, commitSha: un CommitSha sha })
   GitHubM $ ExceptT req
 
@@ -120,23 +131,20 @@ type PullRequestData =
 
 createPullRequest :: PullRequestData -> GitHubM { url :: String }
 createPullRequest { title, body, branch } = do
-  octokit <- ask
+  { octokit } <- ask
   let address = { owner: "thomashoneyman", repo: "purescript-nix" }
   let base = "main"
-  Console.log $ "\nCreating pull request in repo " <> address.owner <> "/" <> address.repo <> " from branch " <> branch
-  Console.log $ "Title:"
-  Console.log title
-  Console.log "Body"
-  Console.log body
+  debugLog $ "Creating pull request in " <> address.owner <> "/" <> address.repo <> " from branch " <> branch
+  debugLog $ "  Title: " <> title
   let pull = { head: branch, base, title, body }
   let req = requestWithBackoff octokit (Octokit.requestCreatePullRequest { address, content: pull })
   GitHubM $ ExceptT req
 
 getPullRequests :: GitHubM (Array PullRequest)
 getPullRequests = do
-  octokit <- ask
+  { octokit } <- ask
   let address = { owner: "thomashoneyman", repo: "purescript-nix" }
-  Console.log $ "Fetching pull requests from  repo " <> address.owner <> "/" <> address.repo
+  debugLog $ "Fetching pull requests from " <> address.owner <> "/" <> address.repo
   let req = requestWithBackoff octokit (Octokit.requestGetPullRequests address)
   GitHubM $ ExceptT req
 

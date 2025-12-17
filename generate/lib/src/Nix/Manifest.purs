@@ -28,6 +28,24 @@ filename = case _ of
   PursBackendEs -> "purs-backend-es.json"
   PursLanguageServer -> "purescript-language-server.json"
 
+-- | A pairing of a tool with its codec, used for generic manifest operations
+type ManifestCodec a = { codec :: CJ.Codec a, tool :: Tool }
+
+pursManifest :: ManifestCodec GitHubBinaryManifest
+pursManifest = { codec: githubBinaryManifestCodec, tool: Purs }
+
+spagoManifest :: ManifestCodec CombinedManifest
+spagoManifest = { codec: combinedManifestCodec, tool: Spago }
+
+pursTidyManifest :: ManifestCodec NPMRegistryManifest
+pursTidyManifest = { codec: npmRegistryManifestCodec, tool: PursTidy }
+
+pursBackendEsManifest :: ManifestCodec NPMRegistryManifest
+pursBackendEsManifest = { codec: npmRegistryManifestCodec, tool: PursBackendEs }
+
+pursLanguageServerManifest :: ManifestCodec NPMRegistryManifest
+pursLanguageServerManifest = { codec: npmRegistryManifestCodec, tool: PursLanguageServer }
+
 type NamedManifest = Map ToolChannel ToolPackage
 
 namedPath :: FilePath

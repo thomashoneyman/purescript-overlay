@@ -25,27 +25,26 @@ import Control.Monad.Reader (ask)
 import Data.Array as Array
 import Data.Either (Either(..), fromRight')
 import Data.Either as Either
-import Data.Int as Int
 import Data.Map (Map)
 import Data.Map as Map
 import Data.Maybe (Maybe(..), fromMaybe, isJust, isNothing)
 import Data.Monoid.Additive (Additive(..))
 import Data.Newtype (alaF)
+import Data.Set (Set)
 import Data.Set as Set
 import Data.String as String
 import Data.Traversable (foldMap, for)
 import Data.TraversableWithIndex (forWithIndex)
 import Data.Tuple (Tuple(..))
 import Effect.Aff.Class (liftAff)
-import Effect.Class (liftEffect)
-import Effect.Class.Console as Console
 import Lib.Foreign.Octokit (Release, ReleaseAsset)
 import Lib.Foreign.Octokit as Octokit
 import Lib.Foreign.Tmp as Tmp
 import Lib.GitHub as GitHub
 import Lib.NPMRegistry (NPMVersion)
 import Lib.NPMRegistry as NPMRegistry
-import Lib.Nix.Manifest (CombinedManifest, FetchUrl, GitHubBinaryManifest, NPMFetch(..), NPMRegistryManifest, NamedManifest)
+import Lib.Nix.Manifest (CombinedManifest, FetchUrl, GitHubBinaryManifest, ManifestCodec, NPMFetch(..), NPMRegistryManifest, NamedManifest)
+import Lib.Nix.Manifest as Manifest
 import Lib.Nix.Prefetch as Nix.Prefetch
 import Lib.Nix.System (NixSystem(..))
 import Lib.Nix.System as NixSystem
@@ -58,46 +57,37 @@ import Node.Encoding (Encoding(..))
 import Node.FS.Aff as FS.Aff
 import Node.Path (FilePath)
 import Node.Path as Path
-import Node.Process as Process
 import Partial.Unsafe (unsafeCrashWith)
 import Registry.Sha256 as Sha256
 import Registry.Version (Version)
 import Registry.Version as Version
 
+-- | Generic verify function that reads a manifest and reports entry count
+verify :: forall a. ManifestCodec a -> (a -> Int) -> AppM Unit
+verify manifestCodec countEntries = do
+  manifest <- AppM.readManifest manifestCodec
+  let entries = countEntries manifest
+  AppM.log $ Manifest.filename manifestCodec.tool <> ": " <> show entries <> " entries"
+
 verifyPurs :: AppM Unit
-verifyPurs = do
-  manifest <- AppM.readPursManifest
-  let entries = alaF Additive foldMap Map.size (Map.values manifest)
-  Console.log $ "Successfully parsed purs.json with " <> Int.toStringAs Int.decimal entries <> " entries."
+verifyPurs = verify Manifest.pursManifest (alaF Additive foldMap Map.size <<< Map.values)
 
 verifySpago :: AppM Unit
-verifySpago = do
-  manifest <- AppM.readSpagoManifest
-  let entries = Map.size manifest
-  Console.log $ "Successfully parsed spago.json with " <> Int.toStringAs Int.decimal entries <> " entries."
+verifySpago = verify Manifest.spagoManifest Map.size
 
 verifyPursTidy :: AppM Unit
-verifyPursTidy = do
-  manifest <- AppM.readPursTidyManifest
-  let entries = Map.size manifest
-  Console.log $ "Successfully parsed purs-tidy.json with " <> Int.toStringAs Int.decimal entries <> " entries."
+verifyPursTidy = verify Manifest.pursTidyManifest Map.size
 
 verifyPursBackendEs :: AppM Unit
-verifyPursBackendEs = do
-  manifest <- AppM.readPursBackendEsManifest
-  let entries = Map.size manifest
-  Console.log $ "Successfully parsed purs-backend-es.json with " <> Int.toStringAs Int.decimal entries <> " entries."
+verifyPursBackendEs = verify Manifest.pursBackendEsManifest Map.size
 
 verifyPursLanguageServer :: AppM Unit
-verifyPursLanguageServer = do
-  manifest <- AppM.readPursLanguageServerManifest
-  let entries = Map.size manifest
-  Console.log $ "Successfully parsed purescript-language-server.json with " <> Int.toStringAs Int.decimal entries <> " entries."
+verifyPursLanguageServer = verify Manifest.pursLanguageServerManifest Map.size
 
 prefetchPurs :: AppM GitHubBinaryManifest
 prefetchPurs = fetchGitHub
   { tool: Purs
-  , readManifest: AppM.readPursManifest
+  , readManifest: AppM.readManifest Manifest.pursManifest
 
   , parseAsset: \asset -> do
       guard $ isJust $ String.stripSuffix (String.Pattern ".tar.gz") asset.name
@@ -141,7 +131,7 @@ prefetchSpago = do
   prefetchSpagoNPMRegistry :: AppM NPMRegistryManifest
   prefetchSpagoNPMRegistry = prefetchNPMRegistry
     { tool: Spago
-    , readManifest: map (Map.mapMaybeWithKey (const Either.blush)) AppM.readSpagoManifest
+    , readManifest: map (Map.mapMaybeWithKey (const Either.blush)) (AppM.readManifest Manifest.spagoManifest)
 
     , includePackageLock: \_ -> Just Remote
 
@@ -165,7 +155,7 @@ prefetchSpago = do
   prefetchSpagoGitHub :: AppM GitHubBinaryManifest
   prefetchSpagoGitHub = fetchGitHub
     { tool: Spago
-    , readManifest: map (Map.mapMaybeWithKey (const Either.hush)) AppM.readSpagoManifest
+    , readManifest: map (Map.mapMaybeWithKey (const Either.hush)) (AppM.readManifest Manifest.spagoManifest)
 
     , parseAsset: \asset -> do
         trimmed <- String.stripSuffix (String.Pattern ".tar.gz") asset.name
@@ -199,7 +189,7 @@ prefetchSpago = do
 prefetchPursTidy :: AppM NPMRegistryManifest
 prefetchPursTidy = prefetchNPMRegistry
   { tool: PursTidy
-  , readManifest: AppM.readPursTidyManifest
+  , readManifest: AppM.readManifest Manifest.pursTidyManifest
   , includePackageLock: \_ -> Nothing
   , filterVersion: \(SemVer { version }) -> version >= unsafeVersion "0.5.0"
   }
@@ -207,7 +197,7 @@ prefetchPursTidy = prefetchNPMRegistry
 prefetchPursBackendEs :: AppM NPMRegistryManifest
 prefetchPursBackendEs = prefetchNPMRegistry
   { tool: PursBackendEs
-  , readManifest: AppM.readPursBackendEsManifest
+  , readManifest: AppM.readManifest Manifest.pursBackendEsManifest
   , includePackageLock: \_ -> Nothing
   , filterVersion: \_ -> true
   }
@@ -217,7 +207,7 @@ prefetchPursBackendEs = prefetchNPMRegistry
 -- one instead of using the prefetch helpers.
 prefetchPursLanguageServer :: AppM NPMRegistryManifest
 prefetchPursLanguageServer = do
-  manifest <- AppM.readPursLanguageServerManifest
+  manifest <- AppM.readManifest Manifest.pursLanguageServerManifest
 
   let existing = Map.keys manifest
 
@@ -226,7 +216,7 @@ prefetchPursLanguageServer = do
       die $ "Failed to fetch releases for purescript-language-server\n" <> Octokit.printGitHubError error
     Right releases -> pure releases
 
-  Console.log $ "Retrieved " <> show (Array.length rawReleases) <> " releases for purescript-language-server"
+  AppM.debug $ "Retrieved " <> show (Array.length rawReleases) <> " releases for purescript-language-server"
 
   let
     parsePursLanguageServerReleases :: Array Release -> Map SemVer String
@@ -247,11 +237,11 @@ prefetchPursLanguageServer = do
     newReleases :: Map SemVer String
     newReleases = Map.filterKeys (not <<< flip Set.member existing) supportedReleases
 
-  Console.log $ "Found " <> show (Map.size newReleases) <> " new releases for purescript-language-server"
+  AppM.log $ "purescript-language-server: " <> show (Map.size newReleases) <> " new (" <> show (Map.size supportedReleases) <> " total)"
 
   hashedReleases <- forWithIndex newReleases \version downloadUrl -> do
-    Console.log $ "Processing release " <> SemVer.print version
-    Console.log $ "Fetching hashes for release asset download url " <> downloadUrl
+    AppM.log $ "  Fetching " <> SemVer.print version
+    AppM.debug $ "  URL: " <> downloadUrl
     Nix.Prefetch.nixPrefetchUrl downloadUrl >>= case _ of
       Left error -> do
         die $ "Failed to hash release asset at url " <> downloadUrl <> ": " <> error
@@ -259,227 +249,81 @@ prefetchPursLanguageServer = do
 
   pure hashedReleases
 
-writePursUpdates :: GitHubBinaryManifest -> AppM Unit
-writePursUpdates updates = do
-  manifest <- AppM.readPursManifest
-  let newManifest = Map.unionWith Map.union manifest updates
-  AppM.writePursManifest newManifest
+-- | Update the named manifest (stable/unstable channel pointers) for a tool
+-- | given the set of all versions and a function to determine which are stable.
+updateNamedManifest :: Tool -> Set SemVer -> (Set SemVer -> Set SemVer) -> AppM Unit
+updateNamedManifest tool allVersions getStableVersions = do
   named <- AppM.readNamedManifest
-
   let
+    unstableChannel = ToolChannel { tool, channel: Unstable }
+    stableChannel = ToolChannel { tool, channel: Stable }
+
     named' :: Maybe NamedManifest
     named' = do
-      let unstableChannel = ToolChannel { tool: Purs, channel: Unstable }
-      let stableChannel = ToolChannel { tool: Purs, channel: Stable }
-
       ToolPackage { version: unstable } <- Map.lookup unstableChannel named
       ToolPackage { version: stable } <- Map.lookup stableChannel named
 
       let
-        allVersions = Map.keys newManifest
-        allStableVersions = Set.filter (\(SemVer { pre }) -> isNothing pre) allVersions
+        allStableVersions = getStableVersions allVersions
         maxUnstable = Set.findMax allVersions
         maxStable = Set.findMax allStableVersions
 
-        insertPackage :: ToolChannel -> SemVer -> NamedManifest -> NamedManifest
-        insertPackage channel version = Map.insert channel (ToolPackage { tool: Purs, version })
-
-        updateUnstable :: NamedManifest -> NamedManifest
-        updateUnstable prev = case maxUnstable of
-          Just version | version > unstable -> insertPackage unstableChannel version prev
+        updateChannel :: ToolChannel -> SemVer -> Maybe SemVer -> NamedManifest -> NamedManifest
+        updateChannel channel current newMax prev = case newMax of
+          Just version | version > current -> Map.insert channel (ToolPackage { tool, version }) prev
           _ -> prev
 
-        updateStable :: NamedManifest -> NamedManifest
-        updateStable prev = case maxStable of
-          Just version | version > stable -> insertPackage stableChannel version prev
-          _ -> prev
-
-      pure (updateStable (updateUnstable named))
+      pure $ updateChannel unstableChannel unstable maxUnstable
+        $ updateChannel stableChannel stable maxStable
+        $ named
 
   case named' of
     Nothing -> die "Failed to update named manifest"
     Just result -> AppM.writeNamedManifest result
 
+writePursUpdates :: GitHubBinaryManifest -> AppM Unit
+writePursUpdates updates = do
+  manifest <- AppM.readManifest Manifest.pursManifest
+  let newManifest = Map.unionWith Map.union manifest updates
+  AppM.writeManifest Manifest.pursManifest newManifest
+  updateNamedManifest Purs (Map.keys newManifest) $
+    Set.filter (\(SemVer { pre }) -> isNothing pre)
+
 writeSpagoUpdates :: CombinedManifest -> AppM Unit
 writeSpagoUpdates updates = do
-  manifest <- AppM.readSpagoManifest
-
+  manifest <- AppM.readManifest Manifest.spagoManifest
   let
     newManifest = Map.unionWith unionFn manifest updates
     unionFn l r = case l, r of
       Right m1, Right m2 -> Right $ Map.union m1 m2
       Left x, _ -> Left x
       Right m1, _ -> Right m1
-
-  AppM.writeSpagoManifest newManifest
-
-  named <- AppM.readNamedManifest
-
-  let
-    named' :: Maybe NamedManifest
-    named' = do
-      let unstableChannel = ToolChannel { tool: Spago, channel: Unstable }
-      let stableChannel = ToolChannel { tool: Spago, channel: Stable }
-
-      ToolPackage { version: unstable } <- Map.lookup unstableChannel named
-      ToolPackage { version: stable } <- Map.lookup stableChannel named
-
-      let
-        minSpaghetto = SemVer { version: fromRight' (\_ -> unsafeCrashWith "bad") (Version.parse "0.90.0"), pre: Nothing }
-
-        allVersions = Map.keys newManifest
-        allStableVersions = Set.filter (_ < minSpaghetto) allVersions
-
-        maxUnstable = Set.findMax allVersions
-        maxStable = Set.findMax allStableVersions
-
-        insertPackage :: ToolChannel -> SemVer -> NamedManifest -> NamedManifest
-        insertPackage channel version = Map.insert channel (ToolPackage { tool: Spago, version })
-
-        updateUnstable :: NamedManifest -> NamedManifest
-        updateUnstable prev = case maxUnstable of
-          Just version | version > unstable -> insertPackage unstableChannel version prev
-          _ -> prev
-
-        updateStable :: NamedManifest -> NamedManifest
-        updateStable prev = case maxStable of
-          Just version | version > stable -> insertPackage stableChannel version prev
-          _ -> prev
-
-      pure (updateStable (updateUnstable named))
-
-  case named' of
-    Nothing -> die "Failed to update named manifest"
-    Just result -> AppM.writeNamedManifest result
+    -- For spago, "stable" means pre-spaghetto (< 0.90.0)
+    minSpaghetto = SemVer { version: fromRight' (\_ -> unsafeCrashWith "bad") (Version.parse "0.90.0"), pre: Nothing }
+  AppM.writeManifest Manifest.spagoManifest newManifest
+  updateNamedManifest Spago (Map.keys newManifest) $
+    Set.filter (_ < minSpaghetto)
 
 writePursTidyUpdates :: NPMRegistryManifest -> AppM Unit
 writePursTidyUpdates updates = do
-  manifest <- AppM.readPursTidyManifest
+  manifest <- AppM.readManifest Manifest.pursTidyManifest
   let newManifest = Map.union manifest updates
-  AppM.writePursTidyManifest newManifest
-
-  named <- AppM.readNamedManifest
-
-  let
-    named' :: Maybe NamedManifest
-    named' = do
-      let unstableChannel = ToolChannel { tool: PursTidy, channel: Unstable }
-      let stableChannel = ToolChannel { tool: PursTidy, channel: Stable }
-
-      ToolPackage { version: unstable } <- Map.lookup unstableChannel named
-      ToolPackage { version: stable } <- Map.lookup stableChannel named
-
-      let
-        allVersions = Map.keys newManifest
-        allStableVersions = allVersions
-
-        maxUnstable = Set.findMax allVersions
-        maxStable = Set.findMax allStableVersions
-
-        insertPackage :: ToolChannel -> SemVer -> NamedManifest -> NamedManifest
-        insertPackage channel version = Map.insert channel (ToolPackage { tool: PursTidy, version })
-
-        updateUnstable :: NamedManifest -> NamedManifest
-        updateUnstable prev = case maxUnstable of
-          Just version | version > unstable -> insertPackage unstableChannel version prev
-          _ -> prev
-
-        updateStable :: NamedManifest -> NamedManifest
-        updateStable prev = case maxStable of
-          Just version | version > stable -> insertPackage stableChannel version prev
-          _ -> prev
-
-      pure (updateStable (updateUnstable named))
-
-  case named' of
-    Nothing -> die "Failed to update named manifest"
-    Just result -> AppM.writeNamedManifest result
+  AppM.writeManifest Manifest.pursTidyManifest newManifest
+  updateNamedManifest PursTidy (Map.keys newManifest) identity
 
 writePursBackendEsUpdates :: NPMRegistryManifest -> AppM Unit
 writePursBackendEsUpdates updates = do
-  manifest <- AppM.readPursBackendEsManifest
+  manifest <- AppM.readManifest Manifest.pursBackendEsManifest
   let newManifest = Map.union manifest updates
-  AppM.writePursBackendEsManifest newManifest
-
-  named <- AppM.readNamedManifest
-
-  let
-    named' :: Maybe NamedManifest
-    named' = do
-      let unstableChannel = ToolChannel { tool: PursBackendEs, channel: Unstable }
-      let stableChannel = ToolChannel { tool: PursBackendEs, channel: Stable }
-
-      ToolPackage { version: unstable } <- Map.lookup unstableChannel named
-      ToolPackage { version: stable } <- Map.lookup stableChannel named
-
-      let
-        allVersions = Map.keys newManifest
-        allStableVersions = allVersions
-
-        maxUnstable = Set.findMax allVersions
-        maxStable = Set.findMax allStableVersions
-
-        insertPackage :: ToolChannel -> SemVer -> NamedManifest -> NamedManifest
-        insertPackage channel version = Map.insert channel (ToolPackage { tool: PursBackendEs, version })
-
-        updateUnstable :: NamedManifest -> NamedManifest
-        updateUnstable prev = case maxUnstable of
-          Just version | version > unstable -> insertPackage unstableChannel version prev
-          _ -> prev
-
-        updateStable :: NamedManifest -> NamedManifest
-        updateStable prev = case maxStable of
-          Just version | version > stable -> insertPackage stableChannel version prev
-          _ -> prev
-
-      pure (updateStable (updateUnstable named))
-
-  case named' of
-    Nothing -> die "Failed to update named manifest"
-    Just result -> AppM.writeNamedManifest result
+  AppM.writeManifest Manifest.pursBackendEsManifest newManifest
+  updateNamedManifest PursBackendEs (Map.keys newManifest) identity
 
 writePursLanguageServerUpdates :: NPMRegistryManifest -> AppM Unit
 writePursLanguageServerUpdates updates = do
-  manifest <- AppM.readPursLanguageServerManifest
+  manifest <- AppM.readManifest Manifest.pursLanguageServerManifest
   let newManifest = Map.union manifest updates
-  AppM.writePursLanguageServerManifest newManifest
-
-  named <- AppM.readNamedManifest
-
-  let
-    named' :: Maybe NamedManifest
-    named' = do
-      let unstableChannel = ToolChannel { tool: PursLanguageServer, channel: Unstable }
-      let stableChannel = ToolChannel { tool: PursLanguageServer, channel: Stable }
-
-      ToolPackage { version: unstable } <- Map.lookup unstableChannel named
-      ToolPackage { version: stable } <- Map.lookup stableChannel named
-
-      let
-        allVersions = Map.keys newManifest
-        allStableVersions = allVersions
-
-        maxUnstable = Set.findMax allVersions
-        maxStable = Set.findMax allStableVersions
-
-        insertPackage :: ToolChannel -> SemVer -> NamedManifest -> NamedManifest
-        insertPackage channel version = Map.insert channel (ToolPackage { tool: PursLanguageServer, version })
-
-        updateUnstable :: NamedManifest -> NamedManifest
-        updateUnstable prev = case maxUnstable of
-          Just version | version > unstable -> insertPackage unstableChannel version prev
-          _ -> prev
-
-        updateStable :: NamedManifest -> NamedManifest
-        updateStable prev = case maxStable of
-          Just version | version > stable -> insertPackage stableChannel version prev
-          _ -> prev
-
-      pure (updateStable (updateUnstable named))
-
-  case named' of
-    Nothing -> die "Failed to update named manifest"
-    Just result -> AppM.writeNamedManifest result
+  AppM.writeManifest Manifest.pursLanguageServerManifest newManifest
+  updateNamedManifest PursLanguageServer (Map.keys newManifest) identity
 
 unsafeVersion :: String -> Version
 unsafeVersion = Either.fromRight' (\_ -> unsafeCrashWith "Unexpected Left") <<< Version.parse
@@ -506,7 +350,7 @@ prefetchNPMRegistry { tool, readManifest, filterVersion, includePackageLock } = 
       die $ "Failed to fetch releases from NPM registry for " <> Tool.print tool Tool.Executable <> " at url " <> NPMRegistry.printNPMRegistryUrl tool <> "\n" <> error
     Right releases -> pure releases
 
-  Console.log $ "Retrieved " <> show (Map.size rawReleases) <> " releases for " <> Tool.print tool Tool.Executable
+  AppM.debug $ "Retrieved " <> show (Map.size rawReleases) <> " releases for " <> Tool.print tool Tool.Executable
 
   let
     supportedReleases :: Map SemVer NPMVersion
@@ -515,12 +359,12 @@ prefetchNPMRegistry { tool, readManifest, filterVersion, includePackageLock } = 
     newReleases :: Map SemVer NPMVersion
     newReleases = Map.filterKeys (not <<< flip Set.member existing) supportedReleases
 
-  Console.log $ "Found " <> show (Map.size newReleases) <> " new releases for " <> Tool.print PursLanguageServer Tool.Executable
+  AppM.log $ Tool.print tool Tool.Executable <> " (NPM): " <> show (Map.size newReleases) <> " new (" <> show (Map.size supportedReleases) <> " total)"
 
   forWithIndex newReleases \version { gitHead: mbGitHead, dist } -> do
-    Console.log $ "Processing release " <> SemVer.print version
+    AppM.log $ "  Fetching " <> SemVer.print version
 
-    Console.log $ "Fetching hash for NPM tarball at url " <> dist.tarball
+    AppM.debug $ "  Tarball: " <> dist.tarball
     tarballHash <- Nix.Prefetch.nixPrefetchUrl dist.tarball >>= case _ of
       Left error -> do
         die $ "Failed to hash tarball at url " <> dist.tarball <> ": " <> error
@@ -528,11 +372,11 @@ prefetchNPMRegistry { tool, readManifest, filterVersion, includePackageLock } = 
 
     case includePackageLock version of
       Nothing -> do
-        Console.log $ "Version is bundled, returning tarball hash..."
+        AppM.debug $ "  Version is bundled"
         pure $ Bundled tarballHash
 
       Just (Local path) -> do
-        Console.log "Version is not bundled, fetching local lockfile..."
+        AppM.debug $ "  Fetching local lockfile: " <> path
         { manifestDir } <- ask
         npmDepsHash <- withBackoff' (Nix.Prefetch.prefetchNpmDeps (Path.concat [ manifestDir, "build-support", path ])) >>= case _ of
           Nothing -> do
@@ -540,13 +384,12 @@ prefetchNPMRegistry { tool, readManifest, filterVersion, includePackageLock } = 
           Just (Left error) -> do
             die $ "Failed to prefetch npm deps from local package-lock.json file " <> path <> "\n" <> error
           Just (Right hash) -> do
-            Console.log $ "Got hash of npm deps from local package-lock.json file."
-            Console.log $ Sha256.print hash
+            AppM.debug $ "  NPM deps hash: " <> Sha256.print hash
             pure hash
         pure $ UnbundledLocal { tarball: tarballHash, path, depsHash: npmDepsHash }
 
       Just Remote -> do
-        Console.log "Version is not bundled, fetching lockfile..."
+        AppM.debug $ "  Fetching remote lockfile"
         { lockfileUrl, lockfileHash, npmDepsHash } <- case mbGitHead of
           Nothing -> do
             die "No git commit associated with version, cannot fetch package-lock.json."
@@ -569,12 +412,10 @@ prefetchNPMRegistry { tool, readManifest, filterVersion, includePackageLock } = 
             liftAff $ FS.Aff.writeTextFile UTF8 packageLockPath packageLockContents
             npmDepsHash <- Nix.Prefetch.prefetchNpmDeps packageLockPath >>= case _ of
               Left error -> do
-                Console.log "Failed to prefetch npm deps from package-lock.json file"
-                Console.log error
                 liftAff $ FS.Aff.rm' tmp { force: true, maxRetries: 1, recursive: true, retryDelay: 100 }
-                liftEffect $ Process.exit' 1
+                die $ "Failed to prefetch npm deps from package-lock.json file\n" <> error
               Right hash -> do
-                Console.log $ "Got hash of npm deps: " <> Sha256.print hash
+                AppM.debug $ "  NPM deps hash: " <> Sha256.print hash
                 liftAff $ FS.Aff.rm' tmp { force: true, maxRetries: 1, recursive: true, retryDelay: 100 }
                 pure hash
             pure { lockfileUrl: packageLockUrl, lockfileHash: packageLockRemoteHash, npmDepsHash }
@@ -603,7 +444,7 @@ fetchGitHub { tool, readManifest, parseAsset, filterVersion, filterSystem } = do
         ]
     Right releases -> pure releases
 
-  Console.log $ "Retrieved " <> show (Array.length rawReleases) <> " releases in total for " <> Tool.print tool Tool.Executable
+  AppM.debug $ "Retrieved " <> show (Array.length rawReleases) <> " releases in total for " <> Tool.print tool Tool.Executable
 
   let
     parseReleases :: Array Release -> Map SemVer (Map NixSystem String)
@@ -622,13 +463,12 @@ fetchGitHub { tool, readManifest, parseAsset, filterVersion, filterSystem } = do
     newReleases :: Map SemVer (Map NixSystem String)
     newReleases = Map.filterKeys (not <<< flip Set.member existingReleases) supportedReleases
 
-  Console.log $ "Found " <> show (Map.size newReleases) <> " new releases for " <> Tool.print tool Tool.Executable
+  AppM.log $ Tool.print tool Tool.Executable <> " (GitHub): " <> show (Map.size newReleases) <> " new (" <> show (Map.size supportedReleases) <> " total)"
 
   hashedReleases <- forWithIndex newReleases \version assets -> do
-    Console.log $ "Processing release " <> SemVer.print version
-    Console.log $ "Fetching hashes for release assets"
+    AppM.log $ "  Fetching " <> SemVer.print version
     for assets \asset -> do
-      Console.log $ "  " <> asset
+      AppM.debug $ "    " <> asset
       Nix.Prefetch.nixPrefetchUrl asset >>= case _ of
         Left error -> do
           die $ "Failed to hash release asset at url " <> asset <> ": " <> error

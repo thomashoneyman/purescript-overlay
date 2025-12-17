@@ -15,49 +15,69 @@ data Commit = DoCommit | NoCommit
 
 derive instance Eq Commit
 
+data Verbosity = Quiet | Normal | Verbose
+
+derive instance Eq Verbosity
+derive instance Ord Verbosity
+
 -- TODO: Allow specifying one or more specific tools to include (default to all).
 -- Make the manifest dir optional (default: use git rev-parse to go to the root,
 -- look for a "manifests" directory containing "purs.json" and "spago.json").
 --
 -- Then, commands mean "verify <tool> using <dir>" or "update <tool>"
 data Command
-  = Verify FilePath
-  | Prefetch FilePath
-  | Update FilePath Commit
+  = Verify { dir :: FilePath, verbosity :: Verbosity }
+  | Prefetch { dir :: FilePath, verbosity :: Verbosity }
+  | Update { dir :: FilePath, verbosity :: Verbosity, commit :: Commit }
 
 derive instance Eq Command
 
 parser :: ArgParser Command
-parser =
-  Arg.choose "command"
+parser = ado
+  verbosity <- verbosityFlag
+  command <- Arg.choose "command"
     [ Arg.command [ "verify" ]
         "Verify that the generation script can read and write the manifests."
-        do
-          Verify <$> manifestDir
-            <* Arg.flagHelp
+        ( ado
+            dir <- manifestDir
+            Arg.flagHelp
+            in \v -> Verify { dir, verbosity: v }
+        )
     , Arg.command [ "prefetch" ]
         "Run the generation script without modifying files (print output)."
-        do
-          Prefetch <$> manifestDir
-            <* Arg.flagHelp
+        ( ado
+            dir <- manifestDir
+            Arg.flagHelp
+            in \v -> Prefetch { dir, verbosity: v }
+        )
     , Arg.command [ "update" ]
         "Run the generation script and write files."
-        do
-          Update
-            <$> manifestDir
-            <*> updateOptions
-            <* Arg.flagHelp
-    ] <* Arg.flagHelp
+        ( ado
+            dir <- manifestDir
+            commit <- commitFlag
+            Arg.flagHelp
+            in \v -> Update { dir, verbosity: v, commit }
+        )
+    ]
+  Arg.flagHelp
+  in command verbosity
   where
   manifestDir =
     Arg.anyNotFlag "MANIFEST_DIR" "Location of the tooling manifests"
 
-  updateOptions =
+  commitFlag =
     Arg.flag [ "--commit" ]
       "Whether to commit results and open a pull request. Default: false"
       # Arg.boolean
       # Arg.default false
       # map (if _ then DoCommit else NoCommit)
+
+  verbosityFlag =
+    Arg.flag [ "-v", "--verbose" ]
+      "Enable verbose logging output"
+      # Arg.boolean
+      # Arg.default false
+      # map (if _ then Verbose else Normal)
 
 -- | Execute the CLI parser and return the command to run.
 run :: forall m. MonadEffect m => m Command
