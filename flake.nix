@@ -100,6 +100,22 @@
                   VERSION="$(${lib.getExe bin} --version 2>&1)"
                 fi
 
+                # spago 1.x may emit Node experimental warnings; keep first line
+                if [ ${builtins.toString (name == "spago")} ]; then
+                  VERSION_LINE=""
+                  while IFS= read -r line; do
+                    case "$line" in
+                      [0-9]*.[0-9]*)
+                        VERSION_LINE="$line"
+                        break
+                        ;;
+                    esac
+                  done <<< "$VERSION"
+                  if [ -n "$VERSION_LINE" ]; then
+                    VERSION="$VERSION_LINE"
+                  fi
+                fi
+
                 # purs-tidy includes a 'v' prefix in its output beginning with version 0.9.0
                 if [ ${builtins.toString (name == "purs-tidy" && !(lib.versionOlder version "0.9.0"))} ]; then
                   EXPECTED_VERSION="v${version}"

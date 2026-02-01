@@ -298,11 +298,11 @@ writeSpagoUpdates updates = do
       Right m1, Right m2 -> Right $ Map.union m1 m2
       Left x, _ -> Left x
       Right m1, _ -> Right m1
-    -- For spago, "stable" means pre-spaghetto (< 0.90.0)
-    minSpaghetto = SemVer { version: fromRight' (\_ -> unsafeCrashWith "bad") (Version.parse "0.90.0"), pre: Nothing }
+    -- For spago, "stable" means 1.x and newer
+    minStableSpago = SemVer { version: fromRight' (\_ -> unsafeCrashWith "bad") (Version.parse "1.0.0"), pre: Nothing }
   AppM.writeManifest Manifest.spagoManifest newManifest
   updateNamedManifest Spago (Map.keys newManifest) $
-    Set.filter (_ < minSpaghetto)
+    Set.filter (\v@(SemVer { pre }) -> v >= minStableSpago && isNothing pre)
 
 writePursTidyUpdates :: NPMRegistryManifest -> AppM Unit
 writePursTidyUpdates updates = do
