@@ -10,3 +10,4 @@ package:
     - effect
     - lib
     - node-process
+    - now

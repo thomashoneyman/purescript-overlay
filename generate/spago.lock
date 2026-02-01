@@ -11,7 +11,8 @@
             "dotenv",
             "effect",
             "lib",
-            "node-process"
+            "node-process",
+            "now"
           ]
         },
         "test": {
