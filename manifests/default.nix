@@ -2,7 +2,6 @@
 # directory.
 {
   lib,
-  system,
   callPackage,
   nodejs_20,
   nodejs,
@@ -14,6 +13,7 @@
   stdenv,
 }:
 let
+  system = stdenv.hostPlatform.system;
   mkNodeDerivation = callPackage ./build-support/mkNodeDerivation.nix { };
   mkNativeDerivation = callPackage ./build-support/mkNativeDerivation.nix { };
 
