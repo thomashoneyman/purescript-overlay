@@ -38,6 +38,7 @@ let
         rm $out/bin/spago
         ln -s $out/lib/node_modules/spago/${binPath} $out/lib/node_modules/spago/bin/spago
         makeWrapper ${nodejs}/bin/node $out/bin/spago \
+          --add-flags --disable-warning=ExperimentalWarning \
           --add-flags $out/lib/node_modules/spago/bin/spago
 
         installShellCompletion --cmd spago \
