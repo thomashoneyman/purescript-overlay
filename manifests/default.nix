@@ -7,7 +7,7 @@
   nodejs,
   python3,
   darwin,
-  nodePackages,
+  node-gyp,
   installShellFiles,
   makeWrapper,
   stdenv,
@@ -24,7 +24,7 @@ let
 
     # Native build inputs needed for better-sqlite3
     extraNativeBuildInputs = [
-      nodePackages.node-gyp
+      node-gyp
       python3
       makeWrapper
       installShellFiles
