@@ -17,8 +17,10 @@ The overlay is tested on the following architectures:
 
 - x86_64-linux
 - x86_64-darwin (Intel Mac)
-- aarch64-darwin (M1 Mac)
+- aarch64-darwin (Apple Silicon Mac)
 - aarch64-linux
+
+> :warning: x86_64-darwin is deprecated. [Nixpkgs 26.05 is the last release to support it](https://nixos.org/manual/nixpkgs/stable/release-notes#x86_64-darwin-26.05), so this overlay will drop it when it moves to Nixpkgs 26.11.
 
 The included overlay inserts the latest stable and unstable executables into your packages (ie. `purs`, `purs-unstable`, and so on). You can see all specific versions in the [named.json](./manifests/named.json) file. It also provides many versions of each executable under a `-bin` namespace (ie. `purs-bin`, `spago-bin`, and so on) so you can access specific versions of a tool. For example, you can use `purs-bin.purs-0_15_8` to get the 0.15.8 PureScript compiler. These are tracked in the [manifests](./manifests/) directory.
 
@@ -26,58 +28,51 @@ If you're looking for a way to *build* your `spago`-based projects using Nix, ta
 
 ## Usage
 
-In a Nix flake, use the provided overlay when importing nixpkgs to get access to tools like `purs` and `spago`. For example, the below flake creates a development shell with recent versions of the PureScript compiler and Spago package manager:
+In a Nix flake, apply the overlay when importing nixpkgs to get access to tools like `purs` and `spago`. For example, the below flake creates a development shell with the PureScript compiler, Spago, and a pinned version of `purs-tidy`:
 
 ```nix
 {
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-23.05";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
     purescript-overlay = {
       url = "github:thomashoneyman/purescript-overlay";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
 
-  outputs = { self, nixpkgs, ... }@inputs:
+  outputs =
+    { nixpkgs, purescript-overlay, ... }:
     let
-      supportedSystems = ["x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin"];
-
-      forAllSystems = nixpkgs.lib.genAttrs supportedSystems;
-
-      nixpkgsFor = forAllSystems (system: import nixpkgs {
-        inherit system;
-        config = { };
-        overlays = builtins.attrValues self.overlays;
+      forAllSystems =
+        f:
+        nixpkgs.lib.genAttrs [ "x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin" ] (
+          system:
+          f (
+            import nixpkgs {
+              inherit system;
+              overlays = [ purescript-overlay.overlays.default ];
+            }
+          )
+        );
+    in
+    {
+      # pkgs now has access to the standard PureScript toolchain
+      devShells = forAllSystems (pkgs: {
+        default = pkgs.mkShell {
+          packages = with pkgs; [
+            purs
+            spago
+            purs-tidy-bin.purs-tidy-0_10_0
+            purs-backend-es
+            purescript-language-server
+          ];
+        };
       });
-    in {
-      overlays = {
-        purescript = inputs.purescript-overlay.overlays.default;
-      };
-
-      packages = forAllSystems (system:
-        let pkgs = nixpkgsFor.${system}; in {
-          default = pkgs.hello; # your package here
-        });
-
-      devShells = forAllSystems (system:
-        # pkgs now has access to the standard PureScript toolchain
-        let pkgs = nixpkgsFor.${system}; in {
-          default = pkgs.mkShell {
-            name = "my-purescript-project";
-            inputsFrom = builtins.attrValues self.packages.${system};
-            buildInputs = with pkgs; [
-              purs
-              spago-unstable
-              purs-tidy-bin.purs-tidy-0_10_0
-              purs-backend-es
-            ];
-          };
-        });
-  };
+    };
 }
 ```
 
-The latest versions of all the supported tools are including in the default development shell of this flake. To enter a `nix develop` shell environment with all of the supported tools:
+The latest versions of all the supported tools are included in the default development shell of this flake. To enter a `nix develop` shell environment with all of the supported tools:
 
 ```console
 nix develop github:thomashoneyman/purescript-overlay

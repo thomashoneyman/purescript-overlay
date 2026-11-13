@@ -2,7 +2,7 @@
   description = "Nix derivations for PureScript core language tools.";
 
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-25.11";
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-26.05";
 
     flake-compat.url = "github:edolstra/flake-compat";
     flake-compat.flake = false;
@@ -91,9 +91,6 @@
                 # flags to print their version
                 if [ ${builtins.toString (name == "spago" && lib.versionOlder version "0.90.0")} ]; then
                   VERSION="$(${lib.getExe bin} version --global-cache skip)"
-                # spago@0.93.21 incorrectly reports its version
-                elif [ ${builtins.toString (name == "spago" && version == "0.93.21")} ]; then
-                  VERSION="0.93.21"
                 else
                   # spago-next writes --version to stderr, oddly enough, so we need to
                   # capture both in the VERSION var.
