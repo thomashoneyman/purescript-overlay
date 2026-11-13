@@ -17,8 +17,10 @@ The overlay is tested on the following architectures:
 
 - x86_64-linux
 - x86_64-darwin (Intel Mac)
-- aarch64-darwin (M1 Mac)
+- aarch64-darwin (Apple Silicon Mac)
 - aarch64-linux
+
+> :warning: x86_64-darwin is deprecated. [Nixpkgs 26.05 is the last release to support it](https://nixos.org/manual/nixpkgs/stable/release-notes#x86_64-darwin-26.05), so this overlay will drop it when it moves to Nixpkgs 26.11.
 
 The included overlay inserts the latest stable and unstable executables into your packages (ie. `purs`, `purs-unstable`, and so on). You can see all specific versions in the [named.json](./manifests/named.json) file. It also provides many versions of each executable under a `-bin` namespace (ie. `purs-bin`, `spago-bin`, and so on) so you can access specific versions of a tool. For example, you can use `purs-bin.purs-0_15_8` to get the 0.15.8 PureScript compiler. These are tracked in the [manifests](./manifests/) directory.
 

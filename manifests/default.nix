@@ -3,7 +3,7 @@
 {
   lib,
   callPackage,
-  nodejs_20,
+  nodejs_22,
   nodejs,
   python3,
   darwin,
@@ -19,8 +19,8 @@ let
 
   # Spago-specific configuration for the Node.js-based versions
   spagoConfig = {
-    # Spago < 0.93.45 requires Node.js 20 due to better-sqlite3 build issues
-    selectNodejs = version: if lib.versionOlder version "0.93.45" then nodejs_20 else nodejs;
+    # Spago < 0.93.43 locks better-sqlite3 11.0.0, which does not build on Node.js 24
+    selectNodejs = version: if lib.versionOlder version "0.93.43" then nodejs_22 else nodejs;
 
     # Native build inputs needed for better-sqlite3
     extraNativeBuildInputs = [

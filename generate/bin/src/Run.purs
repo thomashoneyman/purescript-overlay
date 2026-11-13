@@ -137,12 +137,12 @@ prefetchSpago = do
 
     , filterVersion: \(SemVer { version, pre }) -> do
         let
-          -- We only accept Spago releases from 0.93.19 onward (when both shell
-          -- completions and proper package-lock.json were available). Earlier
-          -- 0.93.x versions used a simple tarball format or had malformed
-          -- lockfiles that we no longer support.
+          -- We only accept Spago releases from 0.93.32 onward. Earlier 0.93.x
+          -- versions either lack shell completions and a proper
+          -- package-lock.json, or depend on better-sqlite3 8.x, which only
+          -- builds against the end-of-life Node.js 20.
           satisfiesLowerLimit :: Boolean
-          satisfiesLowerLimit = version >= unsafeVersion "0.93.19"
+          satisfiesLowerLimit = version >= unsafeVersion "0.93.32"
 
           notPrerelease :: Boolean
           notPrerelease = isNothing pre
